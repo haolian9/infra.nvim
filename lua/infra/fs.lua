@@ -1,6 +1,7 @@
 local M = {}
 
 local uv = vim.loop
+local api = vim.api
 
 local fn = require("infra.fn")
 local strlib = require("infra.strlib")
@@ -115,6 +116,15 @@ end
 ---@return boolean
 function M.is_absolute(path)
   return vim.startswith(path, "/")
+end
+
+---@param plugin_name string
+---@param fname string? default=init.lua
+function M.resolve_plugin_root(plugin_name, fname)
+  fname = fname or "init.lua"
+  local files = api.nvim_get_runtime_file(M.joinpath("lua", plugin_name, fname), false)
+  assert(files and #files == 1)
+  return string.sub(files[1], 1, -(#fname + 2))
 end
 
 return M
