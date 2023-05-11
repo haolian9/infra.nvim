@@ -11,9 +11,7 @@ M.sep = "/"
 ---@return string @the resolved file type
 local function resolve_symlink_type(fpath)
   -- todo: vim.fn.resolve?
-  local function istype(mode, mask)
-    return bit.band(mode, mask) == mask
-  end
+  local function istype(mode, mask) return bit.band(mode, mask) == mask end
   local max_link_level = 8
 
   local next = fpath
@@ -69,9 +67,7 @@ M.iterdir = function(root, resolve_symlink)
   if scanner == nil then return function() end end
 
   -- must be set to true explictly
-  if resolve_symlink == true then return function()
-    return uv.fs_scandir_next(scanner)
-  end end
+  if resolve_symlink == true then return function() return uv.fs_scandir_next(scanner) end end
 
   return function()
     local fname, ftype = uv.fs_scandir_next(scanner)
@@ -114,9 +110,7 @@ end
 
 ---@param path string
 ---@return boolean
-function M.is_absolute(path)
-  return vim.startswith(path, "/")
-end
+function M.is_absolute(path) return vim.startswith(path, "/") end
 
 ---@param plugin_name string
 ---@param fname string? default=init.lua

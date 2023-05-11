@@ -75,9 +75,7 @@ function M.rename_filebuf(bufnr, fname)
 end
 
 ---@return string
-function M.whoami()
-  return tostring(uv.getuid())
-end
+function M.whoami() return tostring(uv.getuid()) end
 
 ---@param path string @absolute path
 ---@param mode ?number @default 0o700

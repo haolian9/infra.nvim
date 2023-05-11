@@ -20,19 +20,23 @@ _ = signals
 
 local function blocking_wait(pid)
   local waited_pid, status
-  while true do
+  -- nvim get the value via `luaL_checkinteger`, and math.huge canot be
+  -- converted properly, so we use maxInt(i32) here
+  local inf = math.pow(2, 31) - 1
+  vim.wait(inf, function()
     waited_pid, status = unsafe.waitpid(pid, true)
     if waited_pid == 0 then
-      vim.wait(50)
+      return false
     elseif waited_pid == -1 then
       -- could be: ECHLD
-      break
+      return true
     else
       assert(waited_pid == pid)
       assert(unsafe.WIFEXITED(status))
-      break
+      return true
     end
-  end
+  end)
+  assert(waited_pid ~= nil and status ~= nil, "unreachable")
   return waited_pid, status
 end
 
@@ -55,7 +59,7 @@ local redirect_to_file = (function()
 end)()
 
 -- each chunk of read from stdout can contains multiple lines, and may not ends with `\n`
----@param chunks table @list of chunks
+---@param chunks string[][]
 function M.split_stdout(chunks)
   local del = "\n"
   local chunk_iter = fn.list_iter(chunks)
@@ -90,10 +94,10 @@ function M.split_stdout(chunks)
   end
 end
 
----@param cmd string
----@param opts table|nil
----@param capture_stdout boolean|nil @nil=false
-function M.run(cmd, opts, capture_stdout)
+---@param bin string
+---@param opts {args: string[]?}? @see uv.spawn(opts)
+---@param capture_stdout boolean? @nil=false
+function M.run(bin, opts, capture_stdout)
   opts = opts or {}
   if capture_stdout == nil then capture_stdout = false end
 
@@ -103,7 +107,7 @@ function M.run(cmd, opts, capture_stdout)
 
   opts["stdio"] = { nil, stdout, stderr }
 
-  local _, pid = uv.spawn(cmd, opts, function(code, signal)
+  local _, pid = uv.spawn(bin, opts, function(code, signal)
     rc = code
     local _ = signal
   end)
@@ -128,6 +132,7 @@ function M.run(cmd, opts, capture_stdout)
 
   local wpid, wstatus = blocking_wait(pid)
   -- there is a race condition on waitpid between uv.spawn and blocking_wait
+  -- todo: fix `run('date', nil, true)` got no stdout
   if wpid == -1 then
     assert(rc ~= nil)
     return { pid = pid, exit_code = rc, stdout = "" }
@@ -136,9 +141,11 @@ function M.run(cmd, opts, capture_stdout)
   end
 end
 
----@param cmd string
----@param opts table|nil
-function M.asyncrun(cmd, opts, stdout_callback, exit_callback)
+---@param bin string
+---@param opts {args: string[]?}? see uv.spawn(opts)
+---@param stdout_callback fun(stdout: (fun():string?))
+---@param exit_callback fun(code: number)
+function M.asyncrun(bin, opts, stdout_callback, exit_callback)
   assert(stdout_callback ~= nil and exit_callback)
   opts = opts or {}
 
@@ -147,7 +154,7 @@ function M.asyncrun(cmd, opts, stdout_callback, exit_callback)
 
   opts["stdio"] = { nil, stdout, stderr }
 
-  uv.spawn(cmd, opts, function(code, signal)
+  uv.spawn(bin, opts, function(code, signal)
     local _ = signal
     exit_callback(code)
   end)
@@ -159,17 +166,13 @@ function M.asyncrun(cmd, opts, stdout_callback, exit_callback)
       table.insert(chunks, data)
     else
       stdout:close()
-      vim.schedule(function()
-        stdout_callback(M.split_stdout(chunks))
-      end)
+      vim.schedule(function() stdout_callback(M.split_stdout(chunks)) end)
     end
   end)
 
   redirect_to_file(stderr)
 end
 
-function M.tail_logs()
-  tail.split_below(facts.stdout_fpath)
-end
+function M.tail_logs() tail.split_below(facts.stdout_fpath) end
 
 return M

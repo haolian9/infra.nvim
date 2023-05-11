@@ -40,9 +40,7 @@ M.create_semaphore = function(initial_value, max_value)
     ---@param self table
     acquire = function(self, ms_timeout)
       local timeout = ms_timeout or defaults.timeout
-      return wait(timeout, function()
-        return self:acquire_nowait()
-      end)
+      return wait(timeout, function() return self:acquire_nowait() end)
     end,
 
     ---@param self table
@@ -54,16 +52,12 @@ M.create_semaphore = function(initial_value, max_value)
     ---@param self table
     wait_until_empty = function(self, ms_timeout)
       local timeout = ms_timeout or defaults.timeout
-      return wait(timeout, function()
-        return self.value < 1
-      end)
+      return wait(timeout, function() return self.value < 1 end)
     end,
   }
 end
 
-function M.create_mutex()
-  return M.create_semaphore(0, 1)
-end
+function M.create_mutex() return M.create_semaphore(0, 1) end
 
 M.create_buf_mutex = (function()
   local state = {
@@ -83,9 +77,7 @@ M.create_buf_mutex = (function()
     end,
   }
 
-  return function(bufnr, name)
-    return state:get_or_create(bufnr, name)
-  end
+  return function(bufnr, name) return state:get_or_create(bufnr, name) end
 end)()
 
 return M

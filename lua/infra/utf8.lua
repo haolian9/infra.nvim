@@ -13,9 +13,7 @@ M.maxbytes = #ranges
 ---@param chars string
 ---@param offset ?number @default to 1
 ---@return number
-M.byte0 = function(chars, offset)
-  return string.byte(chars, offset or 1)
-end
+M.byte0 = function(chars, offset) return string.byte(chars, offset or 1) end
 
 ---@param byte0 number
 M.rune_length = function(byte0)

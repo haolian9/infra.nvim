@@ -9,13 +9,9 @@ local cache = {
 
 ---@param key string
 ---@return any?
-function cache:get(key)
-  return self.store[key]
-end
+function cache:get(key) return self.store[key] end
 
-function cache:set(key, val)
-  self.store[key] = val
-end
+function cache:set(key, val) self.store[key] = val end
 
 --cached nvim_replace_termcodes with:
 --* from_part=true

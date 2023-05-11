@@ -47,13 +47,9 @@ local cache = {
 
 ---@param key string
 ---@return any?
-function cache:get(key)
-  return self.store[key]
-end
+function cache:get(key) return self.store[key] end
 
-function cache:set(key, val)
-  self.store[key] = val
-end
+function cache:set(key, val) self.store[key] = val end
 
 -- designed usecases, otherwise please use api.nvim_cmd directly
 -- * ("silent write")

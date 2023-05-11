@@ -41,6 +41,9 @@ ffi.cdef([[
 
   typedef int pid_t;
   pid_t waitpid(pid_t pid, int *wstatus, int options);
+
+  int isatty(int fd);
+
 ]])
 
 local C = ffi.C
@@ -58,9 +61,7 @@ end
 
 local WNOHANG = 1
 
-function M.WIFEXITED(wstatus)
-  return bit.band(wstatus, 0x7f) == 0
-end
+function M.WIFEXITED(wstatus) return bit.band(wstatus, 0x7f) == 0 end
 
 function M.WEXITSTATUS(wstatus)
   -- according to /usr/include/bits/waitstatus.h
@@ -95,16 +96,16 @@ function M.setfname(bufnr, full_name, short_name)
 end
 
 ---@param bufnr number
----@param lnum0b_list table @[]number; 0-based
+---@param range fun():number @iterator of 0-based line numbers
 ---@return {[number]: number}
-function M.lineslen(bufnr, lnum0b_list)
-  assert(bufnr ~= nil and #lnum0b_list > 0)
+function M.lineslen(bufnr, range)
+  assert(bufnr ~= nil)
 
   local buf_p = C.buflist_findnr(bufnr)
   if buf_p == nil then return {} end
 
   local lens = {}
-  for _, lnum in pairs(lnum0b_list) do
+  for lnum in range do
     local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
     lens[lnum] = tonumber(C.strlen(line_p))
   end
@@ -122,9 +123,11 @@ end
 
 ---@param bufnr number
 function M.prepare_help_buffer(bufnr)
-  api.nvim_buf_call(bufnr, function()
-    C.prepare_help_buffer()
-  end)
+  api.nvim_buf_call(bufnr, function() C.prepare_help_buffer() end)
 end
+
+---@param fd number
+---@return boolean
+function M.isatty(fd) return C.isatty(fd) == 1 end
 
 return M

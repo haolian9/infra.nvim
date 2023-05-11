@@ -7,7 +7,7 @@ local function provider(msg, level, opts)
   require("cthulhu").notify.critical(opts.source, msg)
 end
 
----@alias notifier fun(format: string, ...: any)
+---@alias notifier fun(format: string, ...)
 
 ---@param source string @who sent this message
 ---@return notifier

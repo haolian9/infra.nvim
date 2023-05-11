@@ -16,7 +16,7 @@ local canvas = {
   store = {},
 
   ---@param self canvas
-  ---@return number|nil,number|nil @bufnr,win_id
+  ---@return number?,number? @bufnr,win_id
   get = function(self, fpath, tabpage)
     local held = self.store[fpath]
     if held == nil then return end
@@ -66,9 +66,7 @@ local function tail(bufnr, win_id, fpath)
   api.nvim_create_autocmd("TermOpen", {
     buffer = bufnr,
     once = true,
-    callback = function()
-      api.nvim_buf_set_option(bufnr, "scrollback", scrollback)
-    end,
+    callback = function() api.nvim_buf_set_option(bufnr, "scrollback", scrollback) end,
   })
 
   local job

@@ -2,12 +2,18 @@
 
 local M = {}
 
+---@alias infra.Iterator.Any fun(): any?
+---@alias infra.Iterable.Any infra.Iterator.Any|any[]
+--
+---@alias infra.Iterator.Str fun(): string?
+---@alias infra.Iterable.Str infra.Iterator.Str|string[]
+
 -- parts can be empty string
 ---@param str string
 ---@param del string
----@param maxsplit ?number @specified or infinited
----@param keepends ?boolean @specified or false
----@return function @iterator
+---@param maxsplit number? @specified or infinited
+---@param keepends boolean? @specified or false
+---@return infra.Iterator.Str
 function M.split_iter(str, del, maxsplit, keepends)
   keepends = keepends or false
 
@@ -47,13 +53,13 @@ function M.split_iter(str, del, maxsplit, keepends)
 end
 
 -- parts can be empty string
----@return table @list
+---@return string[]
 function M.split(str, del, maxsplit, keepends)
   -- todo: vim.split
   return M.concrete(M.split_iter(str, del, maxsplit, keepends))
 end
 
----@param iterable function|table @iterator of strings
+---@param iterable infra.Iterable.Str
 ---@param del ?string @specified or ""
 ---@return string
 function M.join(iterable, del)
@@ -70,7 +76,8 @@ function M.join(iterable, del)
 end
 
 -- iterate over list.values
----@param list table @list
+---@param list any[]
+---@return infra.Iterator.Any
 function M.list_iter(list)
   local cursor = 1
   return function()
@@ -81,7 +88,7 @@ function M.list_iter(list)
   end
 end
 
----@param list table @[tuple]
+---@param list any[][] list of tuple
 function M.list_iter_unpacked(list)
   local iter = M.list_iter(list)
   return function()
@@ -92,7 +99,7 @@ function M.list_iter_unpacked(list)
 end
 
 ---@param iterable function|table @iterator or list
----@return function @iterable
+---@return infra.Iterator.Any
 function M.iterate(iterable)
   local _type = type(iterable)
   if _type == "function" then
@@ -105,8 +112,8 @@ function M.iterate(iterable)
 end
 
 -- inplace extend
----@param a table @list
----@param b table|function @list
+---@param a any[]
+---@param b infra.Iterable.Any
 function M.list_extend(a, b)
   -- todo: vim.list_extend
   for el in M.iterate(b) do
@@ -114,9 +121,9 @@ function M.list_extend(a, b)
   end
 end
 
----@param iterable function|table @iterable or list
+---@param iterable infra.Iterable.Any
 ---@param size number
----@return function @iterable
+---@return fun(): any[]?
 function M.batch(iterable, size)
   local it = M.iterate(iterable)
   return function()
@@ -129,8 +136,8 @@ function M.batch(iterable, size)
   end
 end
 
----@param it function
----@return table @list
+---@param it infra.Iterable.Any
+---@return any[]
 function M.concrete(it)
   local list = {}
   for el in it do
@@ -139,9 +146,9 @@ function M.concrete(it)
   return list
 end
 
----@param fn function
----@param iterable function|table
----@return function @iterable
+---@param fn fun(el: any): any
+---@param iterable infra.Iterable.Any
+---@return infra.Iterator.Any
 function M.map(fn, iterable)
   local it = M.iterate(iterable)
 
@@ -156,9 +163,9 @@ end
 -- due to lua's for treats first nil as terminate of one iterable
 -- todo: support varargs
 --
----@param a function|table @iterator or list
----@param b function|table @iterator or list
----@return function @iterable -> tuple
+---@param a infra.Iterable.Any
+---@param b infra.Iterable.Any
+---@return fun(): any[]?
 function M.zip_longest(a, b)
   local ai = M.iterate(a)
   local bi = M.iterate(b)
@@ -171,9 +178,9 @@ function M.zip_longest(a, b)
 end
 
 -- zip.length == shortest.length
----@param a function|table @iterator or list
----@param b function|table @iterator or list
----@return function @iterable -> tuple
+---@param a infra.Iterable.Any
+---@param b infra.Iterable.Any
+---@return fun(): any[]?
 function M.zip(a, b)
   local it = M.zip_longest(a, b)
   return function()
@@ -184,8 +191,8 @@ function M.zip(a, b)
   end
 end
 
----@param a function|table @iterator or list
----@param b function|table @iterator or list
+---@param a infra.Iterable.Any
+---@param b infra.Iterable.Any
 ---@return boolean
 function M.iter_equals(a, b)
   for ziped in M.zip_longest(a, b) do
@@ -205,14 +212,16 @@ function M.either(truthy, a, b)
   return evaluate(b)
 end
 
----@param iterable function @iterable -> iterable
+---@param iterable fun(): (infra.Iterable.Any|any[])?
+---@return infra.Iterable.Any
 function M.iter_chained(iterable)
   local it = nil
   return function()
     while true do
       if it == nil then
-        it = iterable()
-        if it == nil then return end
+        local maybe_it = iterable()
+        if maybe_it == nil then return end
+        it = M.iterate(maybe_it)
       end
       local el = it()
       if el ~= nil then return el end
@@ -221,12 +230,12 @@ function M.iter_chained(iterable)
   end
 end
 
----@vararg table|function @iterables
-function M.chained(...)
-  return M.iter_chained(M.map(M.list_iter, { ... }))
-end
+---@param ... infra.Iterable.Any
+---@return infra.Iterable.Any
+function M.chained(...) return M.iter_chained(M.map(M.iterate, { ... })) end
 
----@param fn function @(el) bool
+---@param fn fun(el: any): boolean
+---@return infra.Iterable.Any
 function M.filter(fn, iterable)
   -- todo: vim.tbl_filter
   local it = M.iterate(iterable)
@@ -239,6 +248,9 @@ function M.filter(fn, iterable)
   end
 end
 
+---@param iterable infra.Iterable.Any
+---@param needle any
+---@return boolean
 function M.contains(iterable, needle)
   for el in M.iterate(iterable) do
     if el == needle then return true end
@@ -247,6 +259,10 @@ function M.contains(iterable, needle)
 end
 
 -- inclusive start, inclusive stop
+---@param iterable infra.Iterable.Any
+---@param start number
+---@param stop number
+---@return infra.Iterator.Any
 function M.slice(iterable, start, stop)
   assert(start > 0 and stop >= start)
 
@@ -272,6 +288,10 @@ function M.slice(iterable, start, stop)
 end
 
 -- same to python's range: inclusive start, exclusive stop
+---@param start number
+---@param stop number?
+---@param step number?
+---@return infra.Iterator.Any
 function M.range(start, stop, step)
   if stop == nil then
     stop = start
@@ -289,6 +309,7 @@ function M.range(start, stop, step)
   end
 end
 
+---@param list any[]
 function M.pop(list)
   local len = #list
   if len == 0 then return end
@@ -298,6 +319,8 @@ function M.pop(list)
   return tail
 end
 
+---@param dreams table
+---@param ... string|number
 function M.get(dreams, ...)
   local layer = dreams
   for path in M.list_iter({ ... }) do

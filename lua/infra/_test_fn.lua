@@ -90,9 +90,7 @@ end
 
 -- for filter
 local function test_5()
-  local iter = M.filter(function(el)
-    return el % 2 == 1
-  end, { 1, 2, 3, 4, 5 })
+  local iter = M.filter(function(el) return el % 2 == 1 end, { 1, 2, 3, 4, 5 })
   assert(M.iter_equals(iter, { 1, 3, 5 }))
 end
 
@@ -152,11 +150,25 @@ local function test_8()
     end
   end
 
-  local it = M.map(function(a, b)
-    return a + b
-  end, source(5))
+  local it = M.map(function(a, b) return a + b end, source(5))
 
   assert(M.iter_equals(it, { 2, 4, 6, 8, 10 }))
+end
+
+local function test_9()
+  local iter = M.split_iter("abc\ndef", "\n", nil, true)
+  do
+    local chunk = iter()
+    assert(chunk == "abc\n", chunk)
+  end
+  do
+    local chunk = iter()
+    assert(chunk == "def", chunk)
+  end
+  do
+    local chunk = iter()
+    assert(chunk == nil, chunk)
+  end
 end
 
 test_0()
@@ -168,3 +180,4 @@ test_6()
 test_7()
 
 test_8()
+test_9()

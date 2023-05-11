@@ -1,6 +1,8 @@
 local M = {}
 
-M.coordinates = function(width_percent, height_percent)
+---@param width_percent number float(0~1)
+---@param height_percent number float(0~1)
+function M.coordinates(width_percent, height_percent)
   assert(width_percent < 1 and height_percent < 1)
 
   -- stole from plenary.window.float
