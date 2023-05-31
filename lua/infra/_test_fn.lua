@@ -1,4 +1,5 @@
 local M = require("infra.fn")
+local listlib = require("infra.listlib")
 
 -- for zip_longest
 local test_0 = function()
@@ -50,7 +51,7 @@ local test_1 = function()
     { "a:b:c:d", 4, { "a", "b", "c", "d" } },
   }
 
-  for feed in M.list_iter(feeds) do
+  for feed in listlib.iter(feeds) do
     local str, maxsplit, expected = unpack(feed)
     local splits = M.split(str, ":", maxsplit)
     assert(M.iter_equals(splits, expected), string.format("%s maxsplit=%d", str, maxsplit))
@@ -67,7 +68,7 @@ local test_2 = function()
     { "a:b:c:d", 4, { "a:", "b:", "c:", "d" } },
   }
 
-  for feed in M.list_iter(feeds) do
+  for feed in listlib.iter(feeds) do
     local str, maxsplit, expected = unpack(feed)
     local splits = M.split(str, ":", maxsplit, true)
     assert(M.iter_equals(splits, expected))
@@ -82,7 +83,7 @@ local test_3 = function()
     { { true, true, true }, { true, true }, false },
     { { true, true, true }, { true, nil, true }, false },
   }
-  for feed in M.list_iter(feeds) do
+  for feed in listlib.iter(feeds) do
     local a, b, expected = unpack(feed)
     assert(M.iter_equals(a, b) == expected)
   end
@@ -133,7 +134,7 @@ local function test_7()
     { "a.b..c", ".", { "a", "b", "", "c" } },
     { "a.b..c.", ".", { "a", "b", "", "c", "" } },
   }
-  for feed in M.list_iter(feeds) do
+  for feed in listlib.iter(feeds) do
     local str, del, expected = unpack(feed)
     local splits = M.split(str, del)
     assert(M.iter_equals(splits, expected), string.format("%s del=del", str, del))

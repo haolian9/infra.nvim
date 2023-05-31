@@ -1,4 +1,5 @@
 local coreutils = require("infra.coreutils")
+local strlib = require("infra.strlib")
 
 local M = {}
 
@@ -112,11 +113,12 @@ M.newlogger = (function()
       if #args ~= 0 then return string.format(format, unpack(args)) end
 
       assert(format ~= nil, "missing format")
-      if string.find(format, "%%s") == nil then return format end
+      if strlib.find(format, "%s") == nil then return format end
       error("unmatched args for format")
     end
   end
 
+  -- NB: caller should decide when to close the fd of logfile
   ---@param min_level number @default=INFO
   return function(category, min_level)
     min_level = min_level or M.INFO
@@ -124,7 +126,6 @@ M.newlogger = (function()
     do
       local path, file = M.newfile(category, true)
       if file == nil then
-        -- todo: close
         file = assert(io.open(path, "a"))
         facts.files[category].file = file
       end

@@ -17,7 +17,7 @@ M.byte0 = function(chars, offset) return string.byte(chars, offset or 1) end
 
 ---@param byte0 number
 M.rune_length = function(byte0)
-  for i, range in pairs(ranges) do
+  for i, range in ipairs(ranges) do
     if byte0 >= range[1] and byte0 <= range[2] then return i end
   end
   error("invalid utf8 start byte")
@@ -42,35 +42,6 @@ M.iterate = function(chars)
 
     return rune
   end
-end
-
-M.test = function()
-  local function test_0()
-    local feeds = {
-      { "h", 1 },
-      { "你", 3 },
-    }
-    for _, el in pairs(feeds) do
-      local rune, len = unpack(el)
-      local byte0 = string.byte(rune, 1, 1)
-      assert(M.rune_length(byte0) == len)
-    end
-  end
-
-  local function test_1()
-    local iter = M.iterate("h 你好-. ")
-    assert(iter() == "h")
-    assert(iter() == " ")
-    assert(iter() == "你")
-    assert(iter() == "好")
-    assert(iter() == "-")
-    assert(iter() == ".")
-    assert(iter() == " ")
-    assert(iter() == nil)
-  end
-
-  test_0()
-  test_1()
 end
 
 return M

@@ -1,6 +1,7 @@
 local M = {}
 
-local api = vim.api
+local strlib = require("infra.strlib")
+local prefer = require("infra.prefer")
 
 ---@alias infra.bufdispname.resolver fun(bufnr: number, bufname: string): string?
 
@@ -14,7 +15,7 @@ local api = vim.api
 ---@param bufname string
 ---@return number|false
 function M.is_protocol(bufname)
-  local pos = string.find(bufname, "://")
+  local pos = strlib.find(bufname, "://")
   return pos ~= nil and pos or false
 end
 
@@ -24,11 +25,11 @@ function M.blank(bufnr, bufname)
   if bufname ~= "" then return end
 
   -- todo: name based on buftype, filetype
-  return string.format("[unnamed#%d]", bufnr)
+  return string.format("#%d", bufnr)
 end
 
 function M.filetype_abbr(bufnr, bufname)
-  local ft = api.nvim_buf_get_option(bufnr, "filetype")
+  local ft = prefer.bo(bufnr, "filetype")
   if ft == "qf" then return "quickfix" end
   if ft == "help" then return "help://" .. vim.fn.fnamemodify(bufname, ":t:r") end
   if ft == "git" then return "git" end

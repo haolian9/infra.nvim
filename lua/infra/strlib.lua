@@ -1,5 +1,11 @@
 local M = {}
 
+--forced to match with plain
+---@param haystack string
+---@param substr string
+---@param start? number
+function M.find(haystack, substr, start) return string.find(haystack, substr, start, true) end
+
 ---@param haystack string
 ---@param substr string
 ---@return nil|number
@@ -64,6 +70,14 @@ function M.strip(str, chars)
 
   if start_at == 1 and stop_at == #str then return str end
   return string.sub(str, start_at, stop_at)
+end
+
+function M.list(str)
+  local list = {}
+  for i = 1, #str do
+    table.insert(list, string.sub(str, i, i))
+  end
+  return list
 end
 
 return M

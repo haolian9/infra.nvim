@@ -1,46 +1,5 @@
 local api = vim.api
 
--- sample parsed cmd
--- {
---   addr = "?",
---   args = {},
---   bang = false,
---   cmd = "split",
---   magic = {
---     bar = true,
---     file = true
---   },
---   mods = {
---     browse = false,
---     confirm = false,
---     emsg_silent = false,
---     filter = {
---       force = false,
---       pattern = ""
---     },
---     hide = false,
---     horizontal = false,
---     keepalt = false,
---     keepjumps = false,
---     keepmarks = false,
---     keeppatterns = false,
---     lockmarks = false,
---     noautocmd = false,
---     noswapfile = false,
---     sandbox = false,
---     silent = false,
---     split = "aboveleft",
---     tab = -1,
---     unsilent = false,
---     verbose = -1,
---     vertical = false
---   },
---   nargs = "?",
---   nextcmd = "",
---   range = {}
--- }
-
--- todo: lru?
 local cache = {
   store = {},
 }
@@ -54,6 +13,8 @@ function cache:set(key, val) self.store[key] = val end
 -- designed usecases, otherwise please use api.nvim_cmd directly
 -- * ("silent write")
 -- * ("help", string.format("luaref-%s", keyword))
+-- known bugs
+-- * <leader>, <localleader>
 ---@param cmd string
 ---@param ... string|number
 ---@return string

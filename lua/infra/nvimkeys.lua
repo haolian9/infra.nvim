@@ -2,16 +2,17 @@
 
 local api = vim.api
 
--- todo: lru?
-local cache = {
-  store = {},
-}
+local cache = {}
+do
+  ---@type {[string]: string}
+  cache.store = {}
 
----@param key string
----@return any?
-function cache:get(key) return self.store[key] end
+  ---@param key string
+  ---@return string?
+  function cache:get(key) return self.store[key] end
 
-function cache:set(key, val) self.store[key] = val end
+  function cache:set(key, val) self.store[key] = val end
+end
 
 --cached nvim_replace_termcodes with:
 --* from_part=true

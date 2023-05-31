@@ -1,5 +1,7 @@
 -- for notification
 
+local strlib = require("infra.strlib")
+
 ---@param opts {source: string}
 local function provider(msg, level, opts)
   if true then return vim.notify(msg, level, opts) end
@@ -19,7 +21,7 @@ local function notify(source, level, min_level)
     local opts = { source = source }
     if select("#", ...) ~= 0 then return provider(string.format(format, ...), level, opts) end
     assert(format ~= nil, "missing format")
-    if string.find(format, "%%s") == nil then return provider(format, level, opts) end
+    if strlib.find(format, "%s") == nil then return provider(format, level, opts) end
     error("unmatched args for format")
   end
 end

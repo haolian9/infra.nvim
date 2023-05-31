@@ -4,6 +4,7 @@ local fn = require("infra.fn")
 local logging = require("infra.logging")
 local unsafe = require("infra.unsafe")
 local tail = require("infra.tail")
+local listlib = require("infra.listlib")
 
 local uv = vim.loop
 
@@ -62,7 +63,7 @@ end)()
 ---@param chunks string[][]
 function M.split_stdout(chunks)
   local del = "\n"
-  local chunk_iter = fn.list_iter(chunks)
+  local chunk_iter = listlib.iter(chunks)
   local line_iter = nil
   local short = nil
 
@@ -95,8 +96,9 @@ function M.split_stdout(chunks)
 end
 
 ---@param bin string
----@param opts {args: string[]?}? @see uv.spawn(opts)
+---@param opts? {args: string[]?, cwd: string?} @see uv.spawn(opts)
 ---@param capture_stdout boolean? @nil=false
+---@return {pid: number, exit_code: number, stdout: string|fun():string}
 function M.run(bin, opts, capture_stdout)
   opts = opts or {}
   if capture_stdout == nil then capture_stdout = false end

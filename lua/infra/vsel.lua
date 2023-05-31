@@ -11,26 +11,41 @@
 local M = {}
 
 local utf8 = require("infra.utf8")
-local nvimkeys = require("infra.nvimkeys")
 
 local api = vim.api
 
 -- MAX_COL
-M.dollar = math.pow(2, 31) - 1
+M.max_col = 0x7fffffff
 
---returns start{row,col},stop{row,col}
+---@class infra.vsel.Range
+---@field start_line number @0-indexed, inclusive
+---@field start_col number @0-indexed, inclusive
+---@field stop_line number @0-indexed, inclusive
+---@field stop_col number @0-indexed, inclusive
+
+--could return nil
 --* row is 1-based
 --* col is 0-based
 ---@param bufnr number
----@return number,number,number,number
+---@return infra.vsel.Range?
 function M.range(bufnr)
+  assert(vim.startswith(api.nvim_get_mode().mode, "n"))
+
   bufnr = bufnr or api.nvim_get_current_buf()
 
   local start_row, start_col = unpack(api.nvim_buf_get_mark(bufnr, "<"))
   -- NB: `>` mark returns the position of first byte of multi-bytes rune
   local stop_row, stop_col = unpack(api.nvim_buf_get_mark(bufnr, ">"))
 
-  return start_row, start_col, stop_row, stop_col
+  -- fresh start, no select
+  if start_row == 0 and start_col == 0 and stop_row == 0 and stop_col == 0 then return end
+
+  return {
+    start_line = start_row - 1,
+    start_col = start_col,
+    stop_line = stop_row - 1,
+    stop_col = stop_col,
+  }
 end
 
 -- only support one line select
@@ -39,39 +54,36 @@ end
 function M.oneline_text(bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
 
-  local start_row, start_col, stop_row, stop_col = M.range(bufnr)
+  local range = M.range(bufnr)
+  if range == nil then return end
 
-  if start_row ~= stop_row then return end
-
-  -- fresh start, no select
-  if start_row == 0 and start_col == 0 and stop_row == 0 and stop_col == 0 then return end
+  -- same row
+  if range.start_line ~= range.stop_line then return end
 
   -- shortcut
-  if stop_col == M.dollar then
-    -- -1 for 0-based
-    local row = start_row - 1
-    local lines = api.nvim_buf_get_text(bufnr, row, start_col, row, -1, {})
+  if range.stop_col == M.max_col then
+    local lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, -1, {})
+    assert(#lines == 1)
     return lines[1]
   end
 
   local chars
   do
-    -- -1 for 0-based
-    local row = start_row - 1
-    -- 1 for exclusive
-    local _stop_col = stop_col + 1 + utf8.maxbytes
-    local lines = api.nvim_buf_get_text(bufnr, row, start_col, row, _stop_col, {})
+    local stop_col = range.stop_col + 1 + utf8.maxbytes
+    local lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, stop_col, {})
+    assert(#lines == 1)
     chars = lines[1]
   end
 
   local text
   do
-    local sel_len = stop_col - (start_col - 1)
+    local sel_len = range.stop_col - (range.start_col - 1)
     -- multi-bytes utf-8 rune
     local byte0 = utf8.byte0(chars, sel_len)
     local rune_len = utf8.rune_length(byte0)
     text = chars:sub(1, sel_len + rune_len - 1)
   end
+
   return text
 end
 
@@ -89,32 +101,26 @@ end
 function M.multiline_text(bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
 
-  -- todo: use fn.line('v'), fn.line('.') instead
-  local start_row, start_col, stop_row, stop_col = M.range(bufnr)
-
-  if start_row == 0 and start_col == 0 and stop_row == 0 and stop_col == 0 then return end
+  local range = M.range(bufnr)
+  if range == nil then return end
 
   -- shortcut
-  if stop_col == M.dollar then
-    -- -1 for 0-based
-    return api.nvim_buf_get_text(bufnr, start_row - 1, start_col, stop_row - 1, -1, {})
-  end
+  if range.stop_col == M.max_col then return api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line, -1, {}) end
 
   local lines
   do
-    -- 1 for exclusive
-    local _stop_col = stop_col + 1 + utf8.maxbytes
-    lines = api.nvim_buf_get_text(bufnr, start_row - 1, start_col, stop_row - 1, _stop_col, {})
+    local stop_col = range.stop_col + 1 + utf8.maxbytes
+    lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line, stop_col, {})
   end
 
   -- handles last line
   do
     local chars = lines[#lines]
     local sel_len
-    if stop_row > start_row then
-      sel_len = stop_col + 1
+    if range.stop_line > range.start_line then
+      sel_len = range.stop_col + 1
     else
-      sel_len = stop_col - (start_col - 1)
+      sel_len = range.stop_col - (range.start_col - 1)
     end
     -- multi-bytes utf-8 rune
     local byte0 = utf8.byte0(chars, sel_len)
@@ -125,31 +131,25 @@ function M.multiline_text(bufnr)
   return lines
 end
 
--- the vmap version *
-function M.search_forward()
-  local text = M.oneline_escaped()
-  if text == "" then return end
+--select a region in current window and buffer
+---@param start_line number @0-indexed, inclusive
+---@param start_col  number @0-indexed, inclusive
+---@param stop_line  number @0-indexed, exclusive
+---@param stop_col   number @0-indexed, exclusive
+function M.select_region(start_line, start_col, stop_line, stop_col)
+  local winid = api.nvim_get_current_win()
+  api.nvim_win_set_cursor(winid, { start_line + 1, start_col })
+  api.nvim_feedkeys("v", "nx", false)
+  api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, stop_col - 1 })
 
-  vim.fn.setreg([[/]], text)
-  api.nvim_feedkeys(nvimkeys([[/<cr>]]), "n", false)
-end
-
--- the vmap version #
-function M.search_backward()
-  local text = M.oneline_escaped()
-  if text == nil then return end
-
-  vim.fn.setreg([[/]], text)
-  api.nvim_feedkeys(nvimkeys([[?<cr>]]), "n", false)
-end
-
--- the vmap version :s
-function M.substitute()
-  local text = M.oneline_escaped()
-  if text == nil then return end
-
-  vim.fn.setreg([["]], text)
-  api.nvim_feedkeys(nvimkeys([[:%s/<c-r>"/]]), "n", false)
+  -- -- another approach
+  -- local bufnr = api.nvim_get_current_buf()
+  -- -- necessary for gv to stay in charwise visual mode
+  -- -- see: https://github.com/neovim/neovim/issues/23754
+  -- api.nvim_feedkeys(nvimkeys("v<esc>"), "nx", false)
+  -- api.nvim_buf_set_mark(bufnr, "<", start_line + 1, start_col, {})
+  -- api.nvim_buf_set_mark(bufnr, ">", stop_line + 1 - 1, stop_col - 1, {})
+  -- api.nvim_feedkeys("gv", "nx", false)
 end
 
 return M

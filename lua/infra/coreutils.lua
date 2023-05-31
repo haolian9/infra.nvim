@@ -9,11 +9,12 @@ local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("infra.coreutils")
 local bufrename = require("infra.bufrename")
 local ex = require("infra.ex")
+local prefer = require("infra.prefer")
 
 ---@param bufnr number
 ---@return string?
 local function resolve_buf_fpath(bufnr)
-  local buftype = api.nvim_buf_get_option(bufnr, "buftype")
+  local buftype = prefer.bo(bufnr, "buftype")
   if buftype ~= "" then return jelly.debug("not a regular buffer") end
 
   local path = vim.fn.fnamemodify(api.nvim_buf_get_name(bufnr), ":p")
@@ -25,11 +26,10 @@ local function resolve_buf_fpath(bufnr)
   return path
 end
 
--- todo: rename to relative_edit?
 ---@param fname string
 ---@param root ?string @root for fname
 ---@param open_cmd ?string @vs, sp, e, tabe ...
-function M.relative_touch(fname, root, open_cmd)
+function M.relative_edit(fname, root, open_cmd)
   assert(fname ~= nil and fname ~= "")
   root = root or vim.fn.expand("%:p:h")
   open_cmd = open_cmd or "split"

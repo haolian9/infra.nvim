@@ -1,6 +1,6 @@
--- todo: maybe make use of coroutine? https://www.lua.org/pil/9.3.html
-
 local M = {}
+
+local listlib = require("infra.listlib")
 
 ---@alias infra.Iterator.Any fun(): any?
 ---@alias infra.Iterable.Any infra.Iterator.Any|any[]
@@ -17,7 +17,6 @@ local M = {}
 function M.split_iter(str, del, maxsplit, keepends)
   keepends = keepends or false
 
-  -- todo: no use of string:find
   local pattern = del
   if del == "." then
     pattern = "%."
@@ -54,70 +53,37 @@ end
 
 -- parts can be empty string
 ---@return string[]
-function M.split(str, del, maxsplit, keepends)
-  -- todo: vim.split
-  return M.concrete(M.split_iter(str, del, maxsplit, keepends))
-end
+function M.split(str, del, maxsplit, keepends) return M.concrete(M.split_iter(str, del, maxsplit, keepends)) end
 
 ---@param iterable infra.Iterable.Str
 ---@param del ?string @specified or ""
 ---@return string
 function M.join(iterable, del)
+  del = del or ""
   local list
-  local _type = type(iterable)
-  if _type == "function" then
-    list = M.concrete(iterable)
-  elseif _type == "table" then
-    list = iterable
-  else
-    error("unexpected type: " .. _type)
+  do
+    local iter_type = type(iterable)
+    if iter_type == "function" then
+      list = M.concrete(iterable)
+    elseif iter_type == "table" then
+      list = iterable
+    else
+      error("unexpected type: " .. iter_type)
+    end
   end
-  return table.concat(list, del or "")
-end
-
--- iterate over list.values
----@param list any[]
----@return infra.Iterator.Any
-function M.list_iter(list)
-  local cursor = 1
-  return function()
-    if cursor > #list then return end
-    local el = list[cursor]
-    cursor = cursor + 1
-    return el
-  end
-end
-
----@param list any[][] list of tuple
-function M.list_iter_unpacked(list)
-  local iter = M.list_iter(list)
-  return function()
-    local el = iter()
-    if el == nil then return end
-    return unpack(el)
-  end
+  return table.concat(list, del)
 end
 
 ---@param iterable function|table @iterator or list
 ---@return infra.Iterator.Any
-function M.iterate(iterable)
-  local _type = type(iterable)
-  if _type == "function" then
+function M.iter(iterable)
+  local iter_type = type(iterable)
+  if iter_type == "function" then
     return iterable
-  elseif _type == "table" then
-    return M.list_iter(iterable)
+  elseif iter_type == "table" then
+    return listlib.iter(iterable)
   else
-    error("unknown type of iter: " .. _type)
-  end
-end
-
--- inplace extend
----@param a any[]
----@param b infra.Iterable.Any
-function M.list_extend(a, b)
-  -- todo: vim.list_extend
-  for el in M.iterate(b) do
-    table.insert(a, el)
+    error("unknown type of iter: " .. iter_type)
   end
 end
 
@@ -125,7 +91,7 @@ end
 ---@param size number
 ---@return fun(): any[]?
 function M.batch(iterable, size)
-  local it = M.iterate(iterable)
+  local it = M.iter(iterable)
   return function()
     local stash = {}
     for el in it do
@@ -150,7 +116,7 @@ end
 ---@param iterable infra.Iterable.Any
 ---@return infra.Iterator.Any
 function M.map(fn, iterable)
-  local it = M.iterate(iterable)
+  local it = M.iter(iterable)
 
   return function()
     local el = { it() }
@@ -167,8 +133,8 @@ end
 ---@param b infra.Iterable.Any
 ---@return fun(): any[]?
 function M.zip_longest(a, b)
-  local ai = M.iterate(a)
-  local bi = M.iterate(b)
+  local ai = M.iter(a)
+  local bi = M.iter(b)
   return function()
     local ae = ai()
     local be = bi()
@@ -212,8 +178,8 @@ function M.either(truthy, a, b)
   return evaluate(b)
 end
 
----@param iterable fun(): (infra.Iterable.Any|any[])?
----@return infra.Iterable.Any
+---@param iterable fun():infra.Iterable.Any
+---@return infra.Iterator.Any
 function M.iter_chained(iterable)
   local it = nil
   return function()
@@ -221,7 +187,7 @@ function M.iter_chained(iterable)
       if it == nil then
         local maybe_it = iterable()
         if maybe_it == nil then return end
-        it = M.iterate(maybe_it)
+        it = M.iter(maybe_it)
       end
       local el = it()
       if el ~= nil then return el end
@@ -231,14 +197,13 @@ function M.iter_chained(iterable)
 end
 
 ---@param ... infra.Iterable.Any
----@return infra.Iterable.Any
-function M.chained(...) return M.iter_chained(M.map(M.iterate, { ... })) end
+---@return infra.Iterator.Any
+function M.chained(...) return M.iter_chained(M.map(M.iter, { ... })) end
 
----@param fn fun(el: any): boolean
+---@param fn fun(...): boolean
 ---@return infra.Iterable.Any
 function M.filter(fn, iterable)
-  -- todo: vim.tbl_filter
-  local it = M.iterate(iterable)
+  local it = M.iter(iterable)
   return function()
     while true do
       local el = { it() }
@@ -252,12 +217,13 @@ end
 ---@param needle any
 ---@return boolean
 function M.contains(iterable, needle)
-  for el in M.iterate(iterable) do
+  for el in M.iter(iterable) do
     if el == needle then return true end
   end
   return false
 end
 
+-- when iterable's each stop takes time, fastforward would block for a certain time
 -- inclusive start, inclusive stop
 ---@param iterable infra.Iterable.Any
 ---@param start number
@@ -266,10 +232,8 @@ end
 function M.slice(iterable, start, stop)
   assert(start > 0 and stop >= start)
 
-  local it = M.iterate(iterable)
+  local it = M.iter(iterable)
 
-  -- todo: what if iterable's each stop takes time, fastforward would block
-  -- for a long time
   for _ = 1, start - 1 do
     assert(it())
   end
@@ -287,7 +251,7 @@ function M.slice(iterable, start, stop)
   end
 end
 
--- same to python's range: inclusive start, exclusive stop
+-- same as python's range: inclusive start, exclusive stop
 ---@param start number
 ---@param stop number?
 ---@param step number?
@@ -309,25 +273,25 @@ function M.range(start, stop, step)
   end
 end
 
----@param list any[]
-function M.pop(list)
-  local len = #list
-  if len == 0 then return end
-  -- todo table.remove?
-  local tail = list[len]
-  list[len] = nil
-  return tail
-end
-
 ---@param dreams table
 ---@param ... string|number
 function M.get(dreams, ...)
   local layer = dreams
-  for path in M.list_iter({ ... }) do
+  for path in listlib.iter({ ... }) do
     layer = layer[path]
     if layer == nil then return end
   end
   return layer
+end
+
+---@param iterable infra.Iterable.Any
+---@return {[any]: true}
+function M.set(iterable)
+  local set = {}
+  for k in M.iter(iterable) do
+    set[k] = true
+  end
+  return set
 end
 
 return M

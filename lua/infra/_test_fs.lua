@@ -42,7 +42,7 @@ end
 local function test_1()
   do
     local joined = M.joinpath("/a/", "/b/", "c/")
-    assert(joined == "/a/b/c")
+    assert(joined == "/b/c")
   end
   do
     local joined = M.joinpath("/", "boot/")
@@ -50,7 +50,7 @@ local function test_1()
   end
   do
     local joined = M.joinpath("", "/boot/")
-    assert(joined == "boot")
+    assert(joined == "/boot")
   end
 end
 

@@ -5,12 +5,13 @@ local api = vim.api
 
 local fn = require("infra.fn")
 local strlib = require("infra.strlib")
+local jelly = require("infra.jellyfish")("infra.fs")
 
 M.sep = "/"
 
+--alternative to vim.fn.resolve
 ---@return string @the resolved file type
 local function resolve_symlink_type(fpath)
-  -- todo: vim.fn.resolve?
   local function istype(mode, mask) return bit.band(mode, mask) == mask end
   local max_link_level = 8
 
@@ -56,11 +57,11 @@ end
 
 ---@param root string @absolute path
 ---@param resolve_symlink nil|boolean @nil=true
----@return function @iterator -> {basename, file-type}
-M.iterdir = function(root, resolve_symlink)
+---@return fun():string?,string? @iterator -> {basename, file-type}
+function M.iterdir(root, resolve_symlink)
   local ok, scanner = pcall(uv.fs_scandir, root)
   if not ok then
-    vim.notify(scanner, vim.log.levels.ERROR)
+    jelly.warn("failed to scan dir=%s, err=%s", root, scanner)
     return function() end
   end
 
@@ -76,29 +77,38 @@ M.iterdir = function(root, resolve_symlink)
   end
 end
 
+---@param ... string
+---@return string
 function M.joinpath(...)
-  local args = { ... }
-  assert(#args >= 2)
-
-  local parts = {}
-
-  -- root part
+  local args
   do
-    if args[1] == "/" then
-      table.insert(parts, "")
-    elseif args[1] == "" then
-      -- then no parent
-    else
-      table.insert(parts, strlib.rstrip(args[1], M.sep))
+    args = { ... }
+    if #args == 0 then return "" end
+    if #args == 1 then return args[1] end
+    -- no trailing /
+    args[#args] = strlib.rstrip(args[#args], "/")
+  end
+
+  local parts
+  do
+    parts = args
+    -- new root
+    for i = #args, 2, -1 do
+      if vim.startswith(args[i], "/") then
+        parts = fn.slice(args, i, #args)
+        break
+      end
     end
   end
 
-  -- rest parts
-  for i = 2, #args do
-    table.insert(parts, strlib.strip(args[i], M.sep))
+  local path
+  do
+    -- stole from: https://github.com/neovim/neovim/commit/189fb6203262340e7a59e782be970bcd8ae28e61#diff-fecfd503a1c28e0a28a91da0294b12dbc72f081cb12434459648a44f641b68d9
+    path = fn.join(parts, "/")
+    path = string.gsub(path, [[/+]], "/")
   end
 
-  return fn.join(parts, M.sep)
+  return path
 end
 
 function M.relative_path(root, subdir)
@@ -110,7 +120,17 @@ end
 
 ---@param path string
 ---@return boolean
-function M.is_absolute(path) return vim.startswith(path, "/") end
+function M.is_absolute(path)
+  if not vim.startswith(path, "/") then return false end
+  -- ..
+  if strlib.find(path, "/../") then return false end
+  if vim.endswith(path, "/..") then return false end
+  -- .
+  if strlib.find(path, "/./") then return false end
+  if vim.endswith(path, "/.") then return false end
+
+  return true
+end
 
 ---@param plugin_name string
 ---@param fname string? default=init.lua
@@ -119,6 +139,16 @@ function M.resolve_plugin_root(plugin_name, fname)
   local files = api.nvim_get_runtime_file(M.joinpath("lua", plugin_name, fname), false)
   assert(files and #files == 1)
   return string.sub(files[1], 1, -(#fname + 2))
+end
+
+---@param path string @absolute path, no trailing `/`
+---@return string
+function M.parent(path)
+  assert(path ~= "/", "root has no parent")
+  assert(M.is_absolute(path), "path should be absolute")
+  path = strlib.rstrip(path, "/")
+  local found = assert(strlib.rfind(path, "/"))
+  return string.sub(path, 1, found - 1)
 end
 
 return M
