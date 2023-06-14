@@ -98,7 +98,7 @@ end
 ---@param bin string
 ---@param opts? {args: string[]?, cwd: string?} @see uv.spawn(opts)
 ---@param capture_stdout boolean? @nil=false
----@return {pid: number, exit_code: number, stdout: string|fun():string}
+---@return {pid: number, exit_code: number, stdout: fun():string}
 function M.run(bin, opts, capture_stdout)
   opts = opts or {}
   if capture_stdout == nil then capture_stdout = false end
@@ -128,6 +128,7 @@ function M.run(bin, opts, capture_stdout)
     stdout_lines = M.split_stdout(chunks)
   else
     redirect_to_file(stdout)
+    stdout_lines = function() end
   end
 
   redirect_to_file(stderr)
@@ -137,7 +138,7 @@ function M.run(bin, opts, capture_stdout)
   -- todo: fix `run('date', nil, true)` got no stdout
   if wpid == -1 then
     assert(rc ~= nil)
-    return { pid = pid, exit_code = rc, stdout = "" }
+    return { pid = pid, exit_code = rc, stdout = stdout_lines }
   else
     return { pid = pid, exit_code = unsafe.WEXITSTATUS(wstatus), stdout = stdout_lines }
   end
@@ -147,7 +148,7 @@ end
 ---@param opts {args: string[]?}? see uv.spawn(opts)
 ---@param stdout_callback fun(stdout: (fun():string?))
 ---@param exit_callback fun(code: number)
-function M.asyncrun(bin, opts, stdout_callback, exit_callback)
+function M.spawn(bin, opts, stdout_callback, exit_callback)
   assert(stdout_callback ~= nil and exit_callback)
   opts = opts or {}
 

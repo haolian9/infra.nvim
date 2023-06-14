@@ -11,6 +11,7 @@
 local M = {}
 
 local utf8 = require("infra.utf8")
+local strlib = require("infra.strlib")
 
 local api = vim.api
 
@@ -20,8 +21,8 @@ M.max_col = 0x7fffffff
 ---@class infra.vsel.Range
 ---@field start_line number @0-indexed, inclusive
 ---@field start_col number @0-indexed, inclusive
----@field stop_line number @0-indexed, inclusive
----@field stop_col number @0-indexed, inclusive
+---@field stop_line number @0-indexed, exclusive
+---@field stop_col number @0-indexed, exclusive
 
 --could return nil
 --* row is 1-based
@@ -29,7 +30,7 @@ M.max_col = 0x7fffffff
 ---@param bufnr number
 ---@return infra.vsel.Range?
 function M.range(bufnr)
-  assert(vim.startswith(api.nvim_get_mode().mode, "n"))
+  assert(strlib.startswith(api.nvim_get_mode().mode, "n"))
 
   bufnr = bufnr or api.nvim_get_current_buf()
 
@@ -43,8 +44,8 @@ function M.range(bufnr)
   return {
     start_line = start_row - 1,
     start_col = start_col,
-    stop_line = stop_row - 1,
-    stop_col = stop_col,
+    stop_line = stop_row,
+    stop_col = stop_col + 1,
   }
 end
 
@@ -57,19 +58,15 @@ function M.oneline_text(bufnr)
   local range = M.range(bufnr)
   if range == nil then return end
 
-  -- same row
-  if range.start_line ~= range.stop_line then return end
+  -- not same row
+  if range.start_line + 1 ~= range.stop_line then return end
 
   -- shortcut
-  if range.stop_col == M.max_col then
-    local lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, -1, {})
-    assert(#lines == 1)
-    return lines[1]
-  end
+  if range.stop_col - 1 == M.max_col then return api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, -1, {})[1] end
 
   local chars
   do
-    local stop_col = range.stop_col + 1 + utf8.maxbytes
+    local stop_col = range.stop_col + utf8.maxbytes
     local lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, stop_col, {})
     assert(#lines == 1)
     chars = lines[1]
@@ -77,7 +74,7 @@ function M.oneline_text(bufnr)
 
   local text
   do
-    local sel_len = range.stop_col - (range.start_col - 1)
+    local sel_len = range.stop_col - range.start_col
     -- multi-bytes utf-8 rune
     local byte0 = utf8.byte0(chars, sel_len)
     local rune_len = utf8.rune_length(byte0)
@@ -105,12 +102,12 @@ function M.multiline_text(bufnr)
   if range == nil then return end
 
   -- shortcut
-  if range.stop_col == M.max_col then return api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line, -1, {}) end
+  if range.stop_col - 1 == M.max_col then return api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, -1, {}) end
 
   local lines
   do
-    local stop_col = range.stop_col + 1 + utf8.maxbytes
-    lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line, stop_col, {})
+    local stop_col = range.stop_col + utf8.maxbytes - 1
+    lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, stop_col, {})
   end
 
   -- handles last line
@@ -118,9 +115,10 @@ function M.multiline_text(bufnr)
     local chars = lines[#lines]
     local sel_len
     if range.stop_line > range.start_line then
-      sel_len = range.stop_col + 1
+      sel_len = range.stop_col
     else
-      sel_len = range.stop_col - (range.start_col - 1)
+      error("unreachable")
+      -- sel_len = range.stop_col - range.start_col
     end
     -- multi-bytes utf-8 rune
     local byte0 = utf8.byte0(chars, sel_len)
@@ -131,7 +129,7 @@ function M.multiline_text(bufnr)
   return lines
 end
 
---select a region in current window and buffer
+--select a region in the current {window,buffer}
 ---@param start_line number @0-indexed, inclusive
 ---@param start_col  number @0-indexed, inclusive
 ---@param stop_line  number @0-indexed, exclusive
@@ -150,6 +148,16 @@ function M.select_region(start_line, start_col, stop_line, stop_col)
   -- api.nvim_buf_set_mark(bufnr, "<", start_line + 1, start_col, {})
   -- api.nvim_buf_set_mark(bufnr, ">", stop_line + 1 - 1, stop_col - 1, {})
   -- api.nvim_feedkeys("gv", "nx", false)
+end
+
+--select between start and stop line in the current {window,buffer}
+---@param start_line number @0-indexed, inclusive
+---@param stop_line  number @0-indexed, exclusive
+function M.select_lines(start_line, stop_line)
+  local winid = api.nvim_get_current_win()
+  api.nvim_win_set_cursor(winid, { start_line + 1, 0 })
+  api.nvim_feedkeys("V", "nx", false)
+  api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, M.max_col })
 end
 
 return M

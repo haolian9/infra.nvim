@@ -125,6 +125,16 @@ function M.map(fn, iterable)
   end
 end
 
+function M.walk(fn, iterable)
+  local it = M.iter(iterable)
+  while true do
+    -- todo: optimize when 'it' only returns one value
+    local el = { it() }
+    if #el == 0 then break end
+    fn(unpack(el))
+  end
+end
+
 -- zip.length == longest.length
 -- due to lua's for treats first nil as terminate of one iterable
 -- todo: support varargs
@@ -167,15 +177,21 @@ function M.iter_equals(a, b)
   return true
 end
 
-function M.either(truthy, a, b)
+do
   local function evaluate(thing)
     if type(thing) == "function" then return thing() end
     return thing
   end
 
-  if truthy then return evaluate(a) end
+  function M.either(truthy, a, b)
+    if evaluate(truthy) then return evaluate(a) end
+    return evaluate(b)
+  end
+end
 
-  return evaluate(b)
+function M.nilor(a, b)
+  if a ~= nil then return a end
+  return b
 end
 
 ---@param iterable fun():infra.Iterable.Any
@@ -273,20 +289,9 @@ function M.range(start, stop, step)
   end
 end
 
----@param dreams table
----@param ... string|number
-function M.get(dreams, ...)
-  local layer = dreams
-  for path in listlib.iter({ ... }) do
-    layer = layer[path]
-    if layer == nil then return end
-  end
-  return layer
-end
-
 ---@param iterable infra.Iterable.Any
 ---@return {[any]: true}
-function M.set(iterable)
+function M.toset(iterable)
   local set = {}
   for k in M.iter(iterable) do
     set[k] = true

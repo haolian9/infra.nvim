@@ -1,11 +1,11 @@
 local M = {}
 
-local uv = vim.loop
-local api = vim.api
-
 local fn = require("infra.fn")
 local strlib = require("infra.strlib")
 local jelly = require("infra.jellyfish")("infra.fs")
+
+local uv = vim.loop
+local api = vim.api
 
 M.sep = "/"
 
@@ -94,7 +94,7 @@ function M.joinpath(...)
     parts = args
     -- new root
     for i = #args, 2, -1 do
-      if vim.startswith(args[i], "/") then
+      if strlib.startswith(args[i], "/") then
         parts = fn.slice(args, i, #args)
         break
       end
@@ -112,22 +112,22 @@ function M.joinpath(...)
 end
 
 function M.relative_path(root, subdir)
-  if vim.endswith(root, "/") or vim.endswith(root, "/") then return end
+  if strlib.endswith(root, "/") or vim.endswith(root, "/") then return end
   if root == subdir then return "" end
-  if not vim.startswith(subdir, root) then return end
+  if not strlib.startswith(subdir, root) then return end
   return string.sub(subdir, #root + 2)
 end
 
 ---@param path string
 ---@return boolean
 function M.is_absolute(path)
-  if not vim.startswith(path, "/") then return false end
+  if not strlib.startswith(path, "/") then return false end
   -- ..
   if strlib.find(path, "/../") then return false end
-  if vim.endswith(path, "/..") then return false end
+  if strlib.endswith(path, "/..") then return false end
   -- .
   if strlib.find(path, "/./") then return false end
-  if vim.endswith(path, "/.") then return false end
+  if strlib.endswith(path, "/.") then return false end
 
   return true
 end

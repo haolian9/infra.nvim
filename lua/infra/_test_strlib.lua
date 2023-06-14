@@ -62,6 +62,25 @@ local function test_2()
   end
 end
 
+local function test_3()
+  do
+    assert(M.startswith("abc", "a"))
+    assert(not M.startswith("abc", "b"))
+    assert(M.startswith("a", "a"))
+    assert(not M.startswith("", "a"))
+    assert(M.startswith("", ""))
+  end
+
+  do
+    assert(M.endswith("abc", "c"))
+    assert(not M.endswith("abc", "b"))
+    assert(M.endswith("a", "a"))
+    assert(not M.endswith("", "a"))
+    assert(M.endswith("", ""))
+  end
+end
+
 test_0()
 test_1()
 test_2()
+test_3()

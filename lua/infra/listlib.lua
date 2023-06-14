@@ -38,14 +38,18 @@ function M.extend(a, b)
   end
 end
 
----@param list any[]
-function M.pop(list)
-  local len = #list
+---@param stack any[]
+---@return any?
+function M.pop(stack)
+  local len = #stack
   if len == 0 then return end
   -- idk if table.remove has such optimization
-  local tail = list[len]
-  list[len] = nil
+  local tail = stack[len]
+  stack[len] = nil
   return tail
 end
+
+---@param stack any[]
+function M.push(stack, el) table.insert(stack, 1, el) end
 
 return M

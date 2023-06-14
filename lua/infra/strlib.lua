@@ -1,6 +1,6 @@
 local M = {}
 
---forced to match with plain
+--forced to plain-match
 ---@param haystack string
 ---@param substr string
 ---@param start? number
@@ -39,32 +39,33 @@ local function rstrip_pos(str, mask)
   return stop_at
 end
 
-local function make_strip_mask(chars)
-  local mask = {}
-  for i = 1, #chars do
-    mask[string.sub(chars, i, i)] = true
-  end
-  return mask
-end
-
+---@param str string
+---@param chars string
+---@return string
 function M.lstrip(str, chars)
-  local mask = make_strip_mask(chars)
+  local mask = M.toset(chars)
   local start_at = lstrip_pos(str, mask)
 
   if start_at == 1 then return str end
   return string.sub(str, start_at, #str)
 end
 
+---@param str string
+---@param chars string
+---@return string
 function M.rstrip(str, chars)
-  local mask = make_strip_mask(chars)
+  local mask = M.toset(chars)
   local stop_at = rstrip_pos(str, mask)
 
   if stop_at == #str then return str end
   return string.sub(str, 1, stop_at)
 end
 
+---@param str string
+---@param chars string
+---@return string
 function M.strip(str, chars)
-  local mask = make_strip_mask(chars)
+  local mask = M.toset(chars)
   local start_at = lstrip_pos(str, mask)
   local stop_at = rstrip_pos(str, mask)
 
@@ -72,12 +73,42 @@ function M.strip(str, chars)
   return string.sub(str, start_at, stop_at)
 end
 
-function M.list(str)
+---@param str string
+---@return string[]
+function M.tolist(str)
   local list = {}
   for i = 1, #str do
     table.insert(list, string.sub(str, i, i))
   end
   return list
+end
+
+---@param str string
+---@return {[string]: true}
+function M.toset(str)
+  local set = {}
+  for i = 1, #str do
+    set[string.sub(str, i, i)] = true
+  end
+  return set
+end
+
+---@param a string
+---@param b string
+---@return boolean
+function M.startswith(a, b)
+  if #b > #a then return false end
+  if #b == #a then return a == b end
+  return string.sub(a, 1, #b) == b
+end
+
+---@param a string
+---@param b string
+---@return boolean
+function M.endswith(a, b)
+  if #b > #a then return false end
+  if #b == #a then return a == b end
+  return string.sub(a, -#b) == b
 end
 
 return M

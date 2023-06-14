@@ -15,19 +15,6 @@ local state = {
 
 function M.working_root() return vim.fn.getcwd() end
 
----@param basedir string absolute path
----@return string?
-local function resolve_git_root(basedir)
-  local result = subprocess.run("git", { args = { "rev-parse", "--show-toplevel" }, cwd = basedir }, true)
-
-  if result.exit_code ~= 0 then return jelly.warn("not in a git repo: %s", basedir) end
-
-  local root = result.stdout()
-  assert(root ~= nil and root ~= "")
-
-  return root
-end
-
 ---@param bufnr? number
 ---@return string?
 function M.git_root(bufnr)
