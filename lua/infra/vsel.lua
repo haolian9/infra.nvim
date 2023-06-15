@@ -137,7 +137,8 @@ end
 function M.select_region(start_line, start_col, stop_line, stop_col)
   local winid = api.nvim_get_current_win()
   api.nvim_win_set_cursor(winid, { start_line + 1, start_col })
-  api.nvim_feedkeys("v", "nx", false)
+  -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
+  api.nvim_feedkeys("vo", "nx", false)
   api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, stop_col - 1 })
 
   -- -- another approach
@@ -151,13 +152,15 @@ function M.select_region(start_line, start_col, stop_line, stop_col)
 end
 
 --select between start and stop line in the current {window,buffer}
+--place cursor on the begin of the last line
 ---@param start_line number @0-indexed, inclusive
 ---@param stop_line  number @0-indexed, exclusive
 function M.select_lines(start_line, stop_line)
   local winid = api.nvim_get_current_win()
   api.nvim_win_set_cursor(winid, { start_line + 1, 0 })
-  api.nvim_feedkeys("V", "nx", false)
-  api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, M.max_col })
+  -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
+  api.nvim_feedkeys("Vo", "nx", false)
+  api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, 0 })
 end
 
 return M
