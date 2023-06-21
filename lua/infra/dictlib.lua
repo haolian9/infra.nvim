@@ -5,7 +5,6 @@ local M = {}
 ---@param dict Dict
 ---@return any[]
 function M.keys(dict)
-  -- todo: returns an iterator
   local keys = {}
   for key, _ in pairs(dict) do
     table.insert(keys, key)

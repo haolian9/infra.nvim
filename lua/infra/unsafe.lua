@@ -68,6 +68,9 @@ function M.WEXITSTATUS(wstatus)
   return bit.rshift(bit.band(wstatus, 0xff00), 8)
 end
 
+---@param pid number
+---@param nohang boolean
+---@return number,number @pid,status
 function M.waitpid(pid, nohang)
   assert(pid ~= nil)
   if nohang == nil then nohang = false end

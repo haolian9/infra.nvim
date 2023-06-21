@@ -24,7 +24,6 @@ function M.blank(bufnr, bufname)
   local _ = bufnr
   if bufname ~= "" then return end
 
-  -- todo: name based on buftype, filetype
   return string.format("#%d", bufnr)
 end
 

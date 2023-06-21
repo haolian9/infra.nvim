@@ -7,20 +7,21 @@ local jelly = require("infra.jellyfish")("infra.project")
 local fs = require("infra.fs")
 
 local api = vim.api
+local uv = vim.loop
 
 local state = {
   ---@type {[string]: string} {path: git-root}
   git = {},
 }
 
-function M.working_root() return vim.fn.getcwd() end
+function M.working_root() return uv.cwd() end
 
 ---@param bufnr? number
 ---@return string?
 function M.git_root(bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
 
-  if prefer.bo(bufnr, "buftype") ~= "" then return jelly.err("not a regular buffer") end
+  if prefer.bo(bufnr, "buftype") ~= "" then return jelly.warn("not a regular buffer") end
 
   local basedir
   do
@@ -28,7 +29,13 @@ function M.git_root(bufnr)
     if bufname == "" then
       basedir = M.working_root()
     else
-      basedir = fs.parent(vim.fn.fnamemodify(bufname, "%:p"))
+      if fs.is_absolute(bufname) then
+        basedir = fs.parent(bufname)
+      else
+        basedir = fs.parent(vim.fn.fnamemodify(bufname, "%:p"))
+      end
+      local _, _, err = uv.fs_stat(basedir)
+      if err == "ENOENT" then return jelly.warn("unable to find out basedir") end
     end
   end
 

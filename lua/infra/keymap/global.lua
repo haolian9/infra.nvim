@@ -1,6 +1,8 @@
 local jelly = require("infra.jellyfish")("infra.keymap.global")
 
 local function noremap(mode, lhs, rhs)
+  if mode == "v" then return jelly.err("a keymap for visual+select modes: lhs=%s", lhs) end
+
   local rhs_type = type(rhs)
   if rhs_type == "function" then
     vim.api.nvim_set_keymap(mode, lhs, "", { silent = false, noremap = true, callback = rhs })

@@ -11,8 +11,6 @@ local function wait(ms_timeout, predicate, check_interval)
   -- error("there is no real non-blocking wait in nvim")
 
   local interval = check_interval or defaults.interval
-  -- todo: need to yield explicitly?
-  -- todo: vim.schedule instead of vim.wait to gain more efficient
   local finished, extra = vim.wait(ms_timeout, predicate, interval)
   if extra == -2 then error("canceled by user") end
   return finished

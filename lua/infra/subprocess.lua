@@ -109,10 +109,11 @@ function M.run(bin, opts, capture_stdout)
 
   opts["stdio"] = { nil, stdout, stderr }
 
-  local _, pid = uv.spawn(bin, opts, function(code, signal)
+  local proc_t, pid = uv.spawn(bin, opts, function(code, signal)
     rc = code
     local _ = signal
   end)
+  if proc_t == nil then error(pid) end
 
   local stdout_lines
   if capture_stdout then
