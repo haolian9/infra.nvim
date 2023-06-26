@@ -216,6 +216,10 @@ end
 ---@return infra.Iterator.Any
 function M.chained(...) return M.iter_chained(M.map(M.iter, { ... })) end
 
+---@param iters infra.Iterable.Any[]
+---@return infra.Iterator.Any
+function M.chained_iters(iters) return M.iter_chained(M.map(M.iter, iters)) end
+
 ---@param fn fun(...): boolean
 ---@return infra.Iterable.Any
 function M.filter(fn, iterable)

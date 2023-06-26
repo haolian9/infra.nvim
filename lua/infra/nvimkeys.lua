@@ -1,18 +1,10 @@
 -- nvim_replace_termcodes has a mysterious signature
 
+local dictlib = require("infra.dictlib")
+
 local api = vim.api
 
-local cache = {}
-do
-  ---@type {[string]: string}
-  cache.store = {}
-
-  ---@param key string
-  ---@return string?
-  function cache:get(key) return self.store[key] end
-
-  function cache:set(key, val) self.store[key] = val end
-end
+local cache = dictlib.CappedDict(512)
 
 --cached nvim_replace_termcodes with:
 --* from_part=true
@@ -21,10 +13,10 @@ end
 ---@param vim_keys string
 ---@return string
 return function(vim_keys)
-  local found = cache:get(vim_keys)
+  local found = cache[vim_keys]
   if found then return found end
 
   local missing = api.nvim_replace_termcodes(vim_keys, true, false, true)
-  cache:set(vim_keys, missing)
+  cache[vim_keys] = missing
   return missing
 end

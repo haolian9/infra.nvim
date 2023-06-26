@@ -6,7 +6,7 @@ local M = {}
 function M.editor_central(width_percent, height_percent)
   assert(width_percent < 1 and height_percent < 1)
 
-  local cols, lines = vim.o.columns, vim.o.lines
+  local cols, lines = vim.go.columns, vim.go.lines
 
   -- stole from plenary.window.float
   local width = math.floor(cols * width_percent)

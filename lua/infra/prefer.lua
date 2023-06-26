@@ -37,6 +37,17 @@ do
     group = aug,
     callback = function(args) cache.win[assert(tonumber(args.match))] = nil end,
   })
+  api.nvim_create_autocmd("user", {
+    group = aug,
+    pattern = "bootstrapped",
+    once = true,
+    callback = function()
+      M.def = setmetatable({}, {
+        __index = function() error("not available after bootstrapped") end,
+        __newindex = function() error("not available after bootstrapped") end,
+      })
+    end,
+  })
 end
 
 M.buf = new_local_descriptor("buf", api.nvim_buf_is_valid)
@@ -59,6 +70,9 @@ function M.wo(winid, k, v)
   if v == nil then return descriptor[k] end
   descriptor[k] = v
 end
+
+---define the default value for given option
+M.def = assert(vim.o)
 
 function M.monkeypatch()
   vim.bo = setmetatable({}, {

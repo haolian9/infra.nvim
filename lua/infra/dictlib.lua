@@ -24,4 +24,21 @@ function M.get(dreams, ...)
   return layer
 end
 
+---@param cap integer
+---@return Dict
+function M.CappedDict(cap)
+  local remain = cap
+  return setmetatable({}, {
+    __newindex = function(t, k, v)
+      if remain == 0 then error("full") end
+      rawset(t, k, v)
+      if v == nil then
+        remain = remain + 1
+      else
+        remain = remain - 1
+      end
+    end,
+  })
+end
+
 return M

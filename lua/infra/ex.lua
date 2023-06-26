@@ -1,14 +1,8 @@
+local dictlib = require("infra.dictlib")
+
 local api = vim.api
 
-local cache = {
-  store = {},
-}
-
----@param key string
----@return any?
-function cache:get(key) return self.store[key] end
-
-function cache:set(key, val) self.store[key] = val end
+local cache = dictlib.CappedDict(512)
 
 -- designed usecases, otherwise please use api.nvim_cmd directly
 -- * ("silent write")
@@ -24,10 +18,10 @@ return function(cmd, ...)
   if select("#", ...) > 0 then
     parsed = { cmd = cmd, args = { ... } }
   else
-    parsed = cache:get(cmd)
+    parsed = cache[cmd]
     if parsed == nil then
       parsed = api.nvim_parse_cmd(cmd, {})
-      cache:set(cmd, parsed)
+      cache[cmd] = parsed
     end
   end
 

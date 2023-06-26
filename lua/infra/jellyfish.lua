@@ -1,14 +1,32 @@
--- for notification
+---for notification
+---
+---NB:
+---* err or critical or fatal in here should not raise an error
+---* each method should return nil
 
 local strlib = require("infra.strlib")
+
+local api = vim.api
 local ll = vim.log.levels
 
----@param opts {source: string}
-local function provider(msg, level, opts)
-  assert(opts.source ~= nil)
-  if true then
-    vim.notify(string.format("[%s] %s", opts.source, msg), level, opts)
-  else
+---should not raise errors manually in any level
+---@type fun(msg: string, level: integer, opts: {source: string}): nil
+local provider
+if true then
+  function provider(msg, level, opts)
+    assert(opts.source ~= nil)
+    local bold, normal, dim, red = "StatusLineBufStatus", "Normal", "StatusLineAltFile", "StatusLineFilePath"
+    if level <= ll.DEBUG then
+      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, dim } }, false, {})
+    elseif level < ll.WARN then
+      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, normal } }, true, {})
+    else
+      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, red } }, true, {})
+    end
+  end
+else
+  function provider(msg, level, opts)
+    assert(opts.source ~= nil)
     local meth
     if level <= ll.DEBUG then
       meth = "low"
@@ -22,7 +40,7 @@ local function provider(msg, level, opts)
 end
 
 ---@param source string @who sent this message
----@return fun(format: string, ...: string)
+---@return fun(format: string, ...: any)
 local function notify(source, level, min_level)
   assert(source and level and min_level)
   if level < min_level then return function() end end
