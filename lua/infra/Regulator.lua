@@ -15,7 +15,7 @@ do
   function Regulator:throttled(bufnr)
     local last = self.ticks[bufnr] or 0
     local now = api.nvim_buf_get_changedtick(bufnr)
-    return last ~= now
+    return last == now
   end
 
   ---@param bufnr integer
