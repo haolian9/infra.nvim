@@ -1,9 +1,4 @@
-local M = {}
-
-local strlib = require("infra.strlib")
-local prefer = require("infra.prefer")
-
----@alias infra.bufdispname.resolver fun(bufnr: number, bufname: string): string?
+---@diagnostic disable: unused-local
 
 -- protocol-like bufname used by plugins:
 -- * term://
@@ -12,58 +7,78 @@ local prefer = require("infra.prefer")
 -- * kite://
 -- * pstree://
 -- * nag://
----@param bufname string
----@return number|false
-function M.is_protocol(bufname)
-  local pos = strlib.find(bufname, "://")
-  return pos ~= nil and pos or false
-end
 
----@type infra.bufdispname.resolver
-function M.blank(bufnr, bufname)
-  local _ = bufnr
-  if bufname ~= "" then return end
+local M = {}
 
-  return string.format("#%d", bufnr)
-end
+local prefer = require("infra.prefer")
+local project = require("infra.project")
+local strlib = require("infra.strlib")
 
-function M.filetype_abbr(bufnr, bufname)
-  local ft = prefer.bo(bufnr, "filetype")
-  if ft == "qf" then return "quickfix" end
-  if ft == "help" then return "help://" .. vim.fn.fnamemodify(bufname, ":t:r") end
-  if ft == "git" then return "git" end
-  if ft == "GV" then return "gv" end
-  if ft == "checkhealth" then return "checkhealth" end
-end
+---@alias infra.bufdispname.resolver fun(bufnr: number, bufname: string): string?
 
----@type infra.bufdispname.resolver
-function M.proto(bufnr, bufname)
-  local _ = bufnr
-  if not M.is_protocol(bufname) then return end
-  return bufname
-end
+M.named = {
+  ---http://a.b <- http://a.b
+  ---@param bufnr integer
+  ---@param bufname string
+  ---@return string?
+  protocol = function(bufnr, bufname)
+    if strlib.find(bufname, "://") ~= nil then return bufname end
+  end,
+  ---http <- http://a.b
+  ---@param bufnr integer
+  ---@param bufname string
+  ---@return string?
+  short_protocol = function(bufnr, bufname)
+    local start_at = strlib.find(bufname, "://")
+    if start_at == nil then return end
+    return string.sub(bufname, 1, start_at)
+  end,
+  ---@param bufnr integer
+  ---@param bufname string
+  ---@return string
+  stem = function(bufnr, bufname)
+    assert(bufname ~= "")
+    return vim.fn.fnamemodify(bufname, ":t:r")
+  end,
+  ---@param bufnr integer
+  ---@param bufname string
+  ---@return string
+  relative_stem = function(bufnr, bufname)
+    assert(bufname ~= "")
+    return vim.fn.fnamemodify(bufname, ":.:r")
+  end,
+}
 
----@type infra.bufdispname.resolver
-function M.proto_abbr(bufnr, bufname)
-  local _ = bufnr
-  local pos = M.is_protocol(bufname)
-  if not pos then return end
-  return string.sub(bufname, 1, pos - 1)
-end
-
----@return string
-function M.relative_stem(bufnr, bufname)
-  local _ = bufnr
-  return vim.fn.fnamemodify(bufname, ":.:r")
-end
-
----@return string
-function M.stem(bufnr, bufname)
-  local _ = bufnr
-  return vim.fn.fnamemodify(bufname, ":t:r")
-end
-
----@type infra.bufdispname.resolver
-function M.blank_abbr(bufnr) end
+M.unnamed = {
+  ---@param bufnr integer
+  ---@param bufname string
+  ---@return string?
+  filetype = function(bufnr, bufname)
+    local ft = prefer.bo(bufnr, "filetype")
+    if ft == "qf" then
+      ---todo: maybe include the title
+      return string.format("quickfix://%d", bufnr)
+    end
+    if ft == "help" then return string.format("help://%s", vim.fn.fnamemodify(bufname, ":t:r")) end
+    if ft == "git" then return string.format("git://", project.working_root()) end
+    if ft == "GV" then return string.format("gv://", project.working_root()) end
+    if ft == "checkhealth" then return "checkhealth" end
+  end,
+  ---@param bufnr integer
+  ---@param bufname string
+  ---@return string?
+  short_filetype = function(bufnr, bufname)
+    local ft = prefer.bo(bufnr, "filetype")
+    if ft == "qf" then return "quickfix" end
+    if ft == "help" then return "help" end
+    if ft == "git" then return "git" end
+    if ft == "GV" then return "gv" end
+    if ft == "checkhealth" then return "health" end
+  end,
+  ---@param bufnr integer
+  ---@param bufname string
+  ---@return string
+  number = function(bufnr, bufname) return string.format("#%d", bufnr) end,
+}
 
 return M

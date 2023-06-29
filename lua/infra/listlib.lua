@@ -38,18 +38,18 @@ function M.extend(a, b)
   end
 end
 
----@param stack any[]
+---@param queue any[]
 ---@return any?
-function M.pop(stack)
-  local len = #stack
+function M.pop(queue)
+  local len = #queue
   if len == 0 then return end
   -- idk if table.remove has such optimization
-  local tail = stack[len]
-  stack[len] = nil
+  local tail = queue[len]
+  queue[len] = nil
   return tail
 end
 
----@param stack any[]
-function M.push(stack, el) table.insert(stack, 1, el) end
+---@param queue any[]
+function M.push(queue, el) table.insert(queue, 1, el) end
 
 return M

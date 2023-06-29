@@ -1,10 +1,10 @@
 ---provides project-related specs
 local M = {}
 
-local subprocess = require("infra.subprocess")
-local prefer = require("infra.prefer")
-local jelly = require("infra.jellyfish")("infra.project")
 local fs = require("infra.fs")
+local jelly = require("infra.jellyfish")("infra.project")
+local prefer = require("infra.prefer")
+local subprocess = require("infra.subprocess")
 
 local api = vim.api
 local uv = vim.loop
@@ -14,7 +14,10 @@ local state = {
   git = {},
 }
 
-function M.working_root() return uv.cwd() end
+function M.working_root()
+  --- no uv.cwd() because it's not aware of tcd/cd
+  return vim.fn.getcwd()
+end
 
 ---@param bufnr? number
 ---@return string?
