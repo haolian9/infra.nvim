@@ -2,6 +2,7 @@ local M = {}
 
 ---@alias Dict {[any]: any}
 
+---NB: no order guarantee
 ---@param dict Dict
 ---@return any[]
 function M.keys(dict)
@@ -25,10 +26,22 @@ function M.get(dreams, ...)
 end
 
 ---@param cap integer
+---@param weakable_value? boolean @nil=false
 ---@return Dict
-function M.CappedDict(cap)
+function M.CappedDict(cap, weakable_value)
+  if weakable_value == nil then weakable_value = false end
+
   local remain = cap
+
+  ---'k' makes no sense, since keys are string always in my use
+  local mode = weakable_value and "v" or nil
+
+  ---wrorkaround to maintain a reasonable 'remain' value, as get() and set() always apear in pairs
+  local index = weakable_value and function() remain = remain + 1 end or nil
+
   return setmetatable({}, {
+    __mode = mode,
+    __index = index,
     __newindex = function(t, k, v)
       if remain == 0 then error("full") end
       rawset(t, k, v)

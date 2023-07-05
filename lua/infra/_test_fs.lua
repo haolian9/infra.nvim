@@ -77,6 +77,16 @@ local function test_2()
   end
 end
 
+local function test_3()
+  assert(M.shorten("/") == "/")
+  assert(M.shorten("/foo") == "/foo")
+  assert(M.shorten("/foo/bar/test.lua") == "/f/bar/test.lua")
+  assert(M.shorten("/foo/bar/baz/test.lua") == "/f/b/baz/test.lua")
+  assert(M.shorten("foo/bar/baz/test.lua") == "f/b/baz/test.lua")
+  assert(M.shorten("test.lua") == "test.lua")
+end
+
 test_0()
 test_1()
 test_2()
+test_3()

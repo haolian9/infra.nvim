@@ -1,8 +1,8 @@
 local M = {}
 
 local fn = require("infra.fn")
-local strlib = require("infra.strlib")
 local jelly = require("infra.jellyfish")("infra.fs")
+local strlib = require("infra.strlib")
 
 local uv = vim.loop
 local api = vim.api
@@ -95,7 +95,7 @@ function M.joinpath(...)
     -- new root
     for i = #args, 2, -1 do
       if strlib.startswith(args[i], "/") then
-        parts = fn.slice(args, i, #args)
+        parts = fn.slice(args, i, #args + 1)
         break
       end
     end
@@ -141,7 +141,7 @@ function M.resolve_plugin_root(plugin_name, fname)
   return string.sub(files[1], 1, -(#fname + 2))
 end
 
----@param path string @absolute path, no trailing `/`
+---@param path string @absolute path, no `/` in the tail
 ---@return string
 function M.parent(path)
   assert(path ~= "/", "root has no parent")
@@ -149,6 +149,25 @@ function M.parent(path)
   path = strlib.rstrip(path, "/")
   local found = assert(strlib.rfind(path, "/"))
   return string.sub(path, 1, found - 1)
+end
+
+---like pathshorten() except the **last two** will not be shorten
+---@param path string @absolute path, no `/` in the tail
+---@return string
+function M.shorten(path)
+  assert(path ~= "" and path ~= nil)
+  if path == "/" then return "/" end
+  assert(not strlib.endswith(path, "/"))
+  local parts = fn.split(path, "/")
+  ---head
+  if #parts > 1 and parts[1] ~= "" then parts[1] = string.sub(parts[1], 1, 1) end
+  ---middles if any
+  if #parts > 3 then
+    for i in fn.range(2, #parts - 2 + 1) do
+      parts[i] = string.sub(parts[i], 1, 1)
+    end
+  end
+  return table.concat(parts, "/")
 end
 
 return M

@@ -111,4 +111,8 @@ function M.endswith(a, b)
   return string.sub(a, -#b) == b
 end
 
+---@param s string
+---@return string
+function M.ltrim(s) return M.lstrip(s, "\t ") end
+
 return M

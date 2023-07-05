@@ -243,14 +243,13 @@ function M.contains(iterable, needle)
   return false
 end
 
--- when iterable's each stop takes time, fastforward would block for a certain time
--- inclusive start, inclusive stop
+-- when iterable's each step takes time, fastforward would block for a certain time
 ---@param iterable infra.Iterable.Any
----@param start number
----@param stop number
+---@param start integer @inclusive
+---@param stop integer @exclusive
 ---@return infra.Iterator.Any
 function M.slice(iterable, start, stop)
-  assert(start > 0 and stop >= start)
+  assert(start > 0 and stop > start)
 
   local it = M.iter(iterable)
 
@@ -258,7 +257,7 @@ function M.slice(iterable, start, stop)
     assert(it())
   end
 
-  local remain = stop + 1 - start
+  local remain = stop - start
   return function()
     if remain < 1 then return end
     local el = { it() }
@@ -293,6 +292,7 @@ function M.range(start, stop, step)
   end
 end
 
+---NB: no order guarantee
 ---@param iterable infra.Iterable.Any
 ---@return {[any]: true}
 function M.toset(iterable)
