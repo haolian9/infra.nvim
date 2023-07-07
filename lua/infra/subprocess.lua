@@ -1,52 +1,24 @@
 local M = {}
 
 local fn = require("infra.fn")
-local logging = require("infra.logging")
-local unsafe = require("infra.unsafe")
-local tail = require("infra.tail")
 local listlib = require("infra.listlib")
+local logging = require("infra.logging")
+local tail = require("infra.tail")
 
 local uv = vim.loop
 
 local facts = {
   stdout_fpath = logging.newfile("infra.subprocess"),
+  forever = math.pow(2, 31) - 1,
 }
 
-local signals = {
-  terminate = 15,
-  kill = 9,
-  interrupt = 2,
-}
-_ = signals
-
-local function blocking_wait(pid)
-  local waited_pid, status
-  -- nvim get the value via `luaL_checkinteger`, and math.huge canot be
-  -- converted properly, so we use maxInt(i32) here
-  local inf = math.pow(2, 31) - 1
-  vim.wait(inf, function()
-    waited_pid, status = unsafe.waitpid(pid, true)
-    if waited_pid == 0 then
-      return false
-    elseif waited_pid == -1 then
-      -- could be: ECHLD
-      return true
-    else
-      assert(waited_pid == pid)
-      assert(unsafe.WIFEXITED(status))
-      return true
-    end
-  end)
-  assert(waited_pid ~= nil and status ~= nil, "unreachable")
-  return waited_pid, status
-end
-
-local redirect_to_file = (function()
+local redirect_to_file
+do
   -- NB: meant to be dangling; writes can be interleaving between subprocesses
   local fd = uv.fs_open(facts.stdout_fpath, "a", tonumber("600", 8))
 
   ---@param done function|nil
-  return function(read_pipe, done)
+  function redirect_to_file(read_pipe, done)
     uv.read_start(read_pipe, function(err, data)
       assert(not err, err)
       if data then
@@ -57,11 +29,11 @@ local redirect_to_file = (function()
       end
     end)
   end
-end)()
+end
 
 -- each chunk of read from stdout can contains multiple lines, and may not ends with `\n`
 ---@param chunks string[][]
-function M.split_stdout(chunks)
+local function split_stdout(chunks)
   local del = "\n"
   local chunk_iter = listlib.iter(chunks)
   local line_iter = nil
@@ -109,10 +81,7 @@ function M.run(bin, opts, capture_stdout)
 
   opts["stdio"] = { nil, stdout, stderr }
 
-  local proc_t, pid = uv.spawn(bin, opts, function(code, signal)
-    rc = code
-    local _ = signal
-  end)
+  local proc_t, pid = uv.spawn(bin, opts, function(code) rc = assert(code) end)
   if proc_t == nil then error(pid) end
 
   local stdout_lines
@@ -126,7 +95,7 @@ function M.run(bin, opts, capture_stdout)
         stdout:close()
       end
     end)
-    stdout_lines = M.split_stdout(chunks)
+    stdout_lines = split_stdout(chunks)
   else
     redirect_to_file(stdout)
     stdout_lines = function() end
@@ -134,15 +103,9 @@ function M.run(bin, opts, capture_stdout)
 
   redirect_to_file(stderr)
 
-  local wpid, wstatus = blocking_wait(pid)
-  -- there is a race condition on waitpid between uv.spawn and blocking_wait
-  -- todo: fix `run('date', nil, true)` got no stdout
-  if wpid == -1 then
-    assert(rc ~= nil)
-    return { pid = pid, exit_code = rc, stdout = stdout_lines }
-  else
-    return { pid = pid, exit_code = unsafe.WEXITSTATUS(wstatus), stdout = stdout_lines }
-  end
+  vim.wait(facts.forever, function() return rc ~= nil end, 100)
+
+  return { pid = pid, exit_code = rc, stdout = stdout_lines }
 end
 
 ---@param bin string
@@ -158,10 +121,7 @@ function M.spawn(bin, opts, stdout_callback, exit_callback)
 
   opts["stdio"] = { nil, stdout, stderr }
 
-  uv.spawn(bin, opts, function(code, signal)
-    local _ = signal
-    exit_callback(code)
-  end)
+  uv.spawn(bin, opts, function(code) exit_callback(code) end)
 
   local chunks = {}
   uv.read_start(stdout, function(err, data)
@@ -170,7 +130,7 @@ function M.spawn(bin, opts, stdout_callback, exit_callback)
       table.insert(chunks, data)
     else
       stdout:close()
-      vim.schedule(function() stdout_callback(M.split_stdout(chunks)) end)
+      vim.schedule(function() stdout_callback(split_stdout(chunks)) end)
     end
   end)
 
