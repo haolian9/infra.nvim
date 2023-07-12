@@ -7,7 +7,18 @@
 local strlib = require("infra.strlib")
 
 local api = vim.api
-local ll = vim.log.levels
+
+---log level
+---@type {[string|integer]: integer}
+local ll = {}
+do
+  for _, name in ipairs({ "DEBUG", "INFO", "WARN", "ERROR" }) do
+    local val = vim.log.levels[name]
+    ll[name] = val
+    ll[string.lower(name)] = val
+    ll[val] = val
+  end
+end
 
 ---should not raise errors manually in any level
 ---@type fun(msg: string, level: integer, opts: {source: string}): nil
@@ -55,15 +66,15 @@ local function notify(source, level, min_level)
 end
 
 ---@param source string
----@param min_level number? @vim.log.levels.*; default=INFO
+---@param min_level string|integer|nil @{debug,info,warn,error}; nil=info
 return function(source, min_level)
   assert(source ~= nil)
-  min_level = min_level or ll.INFO
+  min_level = assert(ll[min_level or "info"], "unknown log level")
 
   return {
-    debug = notify(source, ll.DEBUG, min_level),
-    info = notify(source, ll.INFO, min_level),
-    warn = notify(source, ll.WARN, min_level),
-    err = notify(source, ll.ERROR, min_level),
+    debug = notify(source, ll.debug, min_level),
+    info = notify(source, ll.info, min_level),
+    warn = notify(source, ll.warn, min_level),
+    err = notify(source, ll.error, min_level),
   }
 end

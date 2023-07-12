@@ -102,7 +102,7 @@ end
 ---@param range fun():number @iterator of 0-based line numbers
 ---@return {[number]: number}
 function M.lineslen(bufnr, range)
-  assert(bufnr ~= nil)
+  assert(bufnr)
 
   local buf_p = C.buflist_findnr(bufnr)
   if buf_p == nil then return {} end
@@ -113,6 +113,19 @@ function M.lineslen(bufnr, range)
     lens[lnum] = tonumber(C.strlen(line_p))
   end
   return lens
+end
+
+---@param bufnr integer
+---@param lnum integer
+---@return integer?
+function M.linelen(bufnr, lnum)
+  assert(bufnr and lnum)
+
+  local buf_p = C.buflist_findnr(bufnr)
+  if buf_p == nil then return end
+
+  local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+  return tonumber(C.strlen(line_p))
 end
 
 ---@param bufnr number
