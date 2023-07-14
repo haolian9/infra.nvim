@@ -32,7 +32,8 @@ end
 --  * bm.n(lhs, rhs)
 --  * bm(modes, lhs, rhs)
 
-return setmetatable({
+---@overload fun(bufnr: integer, modes: string[]|string, lhs: string, rhs: string|fun())
+local bufmap = setmetatable({
   wraps = function(bufnr)
     return setmetatable({
       n = function(lhs, rhs) noremap(bufnr, "n", lhs, rhs) end,
@@ -47,3 +48,5 @@ return setmetatable({
 }, {
   __call = function(_, bufnr, modes, lhs, rhs) return call(bufnr, modes, lhs, rhs) end,
 })
+
+return bufmap
