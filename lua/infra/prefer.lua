@@ -1,5 +1,7 @@
 local M = {}
 
+local dictlib = require("infra.dictlib")
+
 local api = vim.api
 
 ---@class infra.prefer.Descriptor
@@ -11,9 +13,9 @@ local Descriptor = {
 
 local cache = {
   ---@type {[number]: infra.prefer.Descriptor}
-  buf = {},
+  buf = dictlib.CappedDict(256, true),
   ---@type {[number]: infra.prefer.Descriptor}
-  win = {},
+  win = dictlib.CappedDict(256, true),
 }
 
 ---@param scope 'buf'|'win'
@@ -29,14 +31,6 @@ end
 
 do
   local aug = api.nvim_create_augroup("prefer", { clear = true })
-  api.nvim_create_autocmd("bufwipeout", {
-    group = aug,
-    callback = function(args) cache.buf[assert(tonumber(args.buf))] = nil end,
-  })
-  api.nvim_create_autocmd("winclosed", {
-    group = aug,
-    callback = function(args) cache.win[assert(tonumber(args.match))] = nil end,
-  })
   api.nvim_create_autocmd("user", {
     group = aug,
     pattern = "bootstrapped",

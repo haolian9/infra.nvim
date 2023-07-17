@@ -74,6 +74,8 @@ local function tail(bufnr, winid, fpath)
   do
     local cmd = { "tail", "-n", height + scrollback, "-f", fpath }
     job = vim.fn.termopen(cmd, { stderr_buffered = false, stdout_buffered = false, stdin = "" })
+    --follow
+    api.nvim_win_set_cursor(winid, { api.nvim_buf_line_count(bufnr), 0 })
   end
 
   -- cleanup the process and buffer
@@ -87,7 +89,6 @@ local function tail(bufnr, winid, fpath)
   })
 
   bufrename(bufnr, string.format("tail://%s", fpath))
-  ex("normal", "G")
 end
 
 function M.split_below(fpath)
