@@ -5,26 +5,11 @@ local M = {}
 local api = vim.api
 local uv = vim.loop
 
-local fs = require("infra.fs")
-local jelly = require("infra.jellyfish")("infra.coreutils")
+local bufpath = require("infra.bufpath")
 local bufrename = require("infra.bufrename")
 local ex = require("infra.ex")
-local prefer = require("infra.prefer")
-
----@param bufnr number
----@return string?
-local function resolve_buf_fpath(bufnr)
-  local buftype = prefer.bo(bufnr, "buftype")
-  if buftype ~= "" then return jelly.debug("not a regular buffer") end
-
-  local path = vim.fn.fnamemodify(api.nvim_buf_get_name(bufnr), ":p")
-  if path == "" then return jelly.debug("no corresponding file to this buffer") end
-
-  local stat, errmsg = uv.fs_stat(path)
-  if stat == nil then return jelly.err(errmsg) end
-
-  return path
-end
+local fs = require("infra.fs")
+local jelly = require("infra.jellyfish")("infra.coreutils")
 
 ---@param fname string
 ---@param root ?string @root for fname
@@ -46,7 +31,7 @@ end
 function M.rm_filebuf(bufnr)
   if bufnr == nil or bufnr == 0 then bufnr = api.nvim_get_current_buf() end
 
-  local path = resolve_buf_fpath(bufnr)
+  local path = bufpath.file(bufnr, true)
   if path ~= nil then
     local _, errmsg = uv.fs_unlink(path)
     if errmsg then return jelly.err(errmsg) end
@@ -60,12 +45,19 @@ function M.rename_filebuf(bufnr, fname)
   assert(fname ~= nil and fname ~= "")
   if bufnr == nil or bufnr == 0 then bufnr = api.nvim_get_current_buf() end
 
-  local path = resolve_buf_fpath(bufnr)
-  local newpath = fs.joinpath(vim.fs.dirname(path), fname)
+  local path = bufpath.file(bufnr, true)
 
-  if path == newpath then return jelly.info("same name") end
+  local newpath
+  do
+    if path ~= nil then
+      newpath = fs.joinpath(fs.parent(path), fname)
+    else
+      newpath = fname
+    end
+    if path == newpath then return jelly.debug("same name") end
+  end
 
-  if path ~= nil then
+  if path ~= nil then -- the buf being renamed is a real file
     local _, errmsg = uv.fs_rename(path, newpath)
     if errmsg then return jelly.err(errmsg) end
   end
@@ -90,16 +82,18 @@ function M.mkdir(path, mode, exists_ok)
   return suc == 1
 end
 
----@param path string @relative path
+---@param relpath string @relative path
 ---@param mode ?number @default 0o700
 ---@param exists_ok ?boolean @default true
-function M.relative_mkdir(path, mode, exists_ok)
+function M.relative_mkdir(relpath, mode, exists_ok)
   mode = mode or tonumber("700", 8)
   if exists_ok == nil then exists_ok = true end
 
-  local bufpath = resolve_buf_fpath(api.nvim_get_current_buf())
-  local finalpath = fs.joinpath(vim.fs.dirname(bufpath), path)
-  return M.mkdir(finalpath, mode, exists_ok)
+  local bufnr = api.nvim_get_current_buf()
+  local basepath = bufpath.dir(bufnr)
+  local path = fs.joinpath(basepath, relpath)
+
+  return M.mkdir(path, mode, exists_ok)
 end
 
 return M

@@ -1,6 +1,6 @@
-local unsafe = require("infra.unsafe")
 local jelly = require("infra.jellyfish")("infra.bufrename")
 local prefer = require("infra.prefer")
+local unsafe = require("infra.unsafe")
 
 local api = vim.api
 

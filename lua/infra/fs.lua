@@ -1,3 +1,7 @@
+--best practices
+--* avoid vim.fs
+--* prefer uv.fs_*
+
 local M = {}
 
 local fn = require("infra.fn")
@@ -7,73 +11,73 @@ local strlib = require("infra.strlib")
 local uv = vim.loop
 local api = vim.api
 
-M.sep = "/"
+do
+  --alternative to vim.fn.resolve
+  ---@return string @the resolved file type
+  local function resolve_symlink_type(fpath)
+    local function istype(mode, mask) return bit.band(mode, mask) == mask end
+    local max_link_level = 8
 
---alternative to vim.fn.resolve
----@return string @the resolved file type
-local function resolve_symlink_type(fpath)
-  local function istype(mode, mask) return bit.band(mode, mask) == mask end
-  local max_link_level = 8
+    local next = fpath
+    local remain = max_link_level
+    while remain > 0 do
+      remain = remain - 1
 
-  local next = fpath
-  local remain = max_link_level
-  while remain > 0 do
-    remain = remain - 1
+      next = uv.fs_realpath(next)
+      local stat = uv.fs_stat(next)
 
-    next = uv.fs_realpath(next)
-    local stat = uv.fs_stat(next)
+      -- IFIFO  = 0o010000 -> 0x1000
+      -- IFCHR  = 0o020000 -> 0x2000
+      -- IFDIR  = 0o040000 -> 0x4000
+      -- IFBLK  = 0o060000 -> 0x6000
+      -- IFREG  = 0o100000 -> 0x8000
+      -- IFLNK  = 0o120000 -> 0xa000
+      -- IFSOCK = 0o140000 -> 0xc000
 
-    -- IFIFO  = 0o010000 -> 0x1000
-    -- IFCHR  = 0o020000 -> 0x2000
-    -- IFDIR  = 0o040000 -> 0x4000
-    -- IFBLK  = 0o060000 -> 0x6000
-    -- IFREG  = 0o100000 -> 0x8000
-    -- IFLNK  = 0o120000 -> 0xa000
-    -- IFSOCK = 0o140000 -> 0xc000
-
-    local type
-    if istype(stat.mode, 0xa000) then
-      type = "link"
-    elseif istype(stat.mode, 0x4000) then
-      type = "directory"
-    elseif bit.band(stat.mode, 0x8000) then
-      type = "file"
-    elseif bit.band(stat.mode, 0x1000) then
-      type = "fifo"
-    elseif bit.band(stat.mode, 0x2000) then
-      type = "char"
-    elseif bit.band(stat.mode, 0x6000) then
-      type = "block"
-    elseif bit.band(stat.mode, 0xc000) then
-      type = "socket"
-    else
-      error(string.format("unexpected file type, mode=%s file=%s", stat.mode, fpath))
+      local type
+      if istype(stat.mode, 0xa000) then
+        type = "link"
+      elseif istype(stat.mode, 0x4000) then
+        type = "directory"
+      elseif bit.band(stat.mode, 0x8000) then
+        type = "file"
+      elseif bit.band(stat.mode, 0x1000) then
+        type = "fifo"
+      elseif bit.band(stat.mode, 0x2000) then
+        type = "char"
+      elseif bit.band(stat.mode, 0x6000) then
+        type = "block"
+      elseif bit.band(stat.mode, 0xc000) then
+        type = "socket"
+      else
+        error(string.format("unexpected file type, mode=%s file=%s", stat.mode, fpath))
+      end
+      if type ~= "link" then return type end
     end
-    if type ~= "link" then return type end
+
+    error(string.format("too many levels symlink; file=%s, max=%d", fpath, max_link_level))
   end
 
-  error(string.format("too many levels symlink; file=%s, max=%d", fpath, max_link_level))
-end
+  ---@param root string @absolute path
+  ---@param resolve_symlink nil|boolean @nil=true
+  ---@return fun():string?,string? @iterator -> {basename, file-type}
+  function M.iterdir(root, resolve_symlink)
+    local ok, scanner = pcall(uv.fs_scandir, root)
+    if not ok then
+      jelly.warn("failed to scan dir=%s, err=%s", root, scanner)
+      return function() end
+    end
 
----@param root string @absolute path
----@param resolve_symlink nil|boolean @nil=true
----@return fun():string?,string? @iterator -> {basename, file-type}
-function M.iterdir(root, resolve_symlink)
-  local ok, scanner = pcall(uv.fs_scandir, root)
-  if not ok then
-    jelly.warn("failed to scan dir=%s, err=%s", root, scanner)
-    return function() end
-  end
+    if scanner == nil then return function() end end
 
-  if scanner == nil then return function() end end
+    -- must be set to true explictly
+    if resolve_symlink == true then return function() return uv.fs_scandir_next(scanner) end end
 
-  -- must be set to true explictly
-  if resolve_symlink == true then return function() return uv.fs_scandir_next(scanner) end end
-
-  return function()
-    local fname, ftype = uv.fs_scandir_next(scanner)
-    if ftype ~= "link" then return fname, ftype end
-    return fname, resolve_symlink_type(M.joinpath(root, fname))
+    return function()
+      local fname, ftype = uv.fs_scandir_next(scanner)
+      if ftype ~= "link" then return fname, ftype end
+      return fname, resolve_symlink_type(M.joinpath(root, fname))
+    end
   end
 end
 
@@ -132,8 +136,9 @@ function M.is_absolute(path)
   return true
 end
 
+---assumes it's a lua plugin and with filesystem layout &rtp/lua/{plugin_name}/*.lua
 ---@param plugin_name string
----@param fname string? default=init.lua
+---@param fname string? @nil=init.lua
 function M.resolve_plugin_root(plugin_name, fname)
   fname = fname or "init.lua"
   local files = api.nvim_get_runtime_file(M.joinpath("lua", plugin_name, fname), false)
@@ -145,10 +150,25 @@ end
 ---@return string
 function M.parent(path)
   assert(path ~= "/", "root has no parent")
-  assert(M.is_absolute(path), "path should be absolute")
+  assert(path ~= "")
   path = strlib.rstrip(path, "/")
+
   local found = assert(strlib.rfind(path, "/"))
-  return string.sub(path, 1, found - 1)
+  local parent = string.sub(path, 1, found - 1)
+  if parent == "" then return "/" end
+  return parent
+end
+
+---@param path string
+---@return string
+function M.basename(path)
+  assert(path ~= "/", "root has no basename")
+  assert(path ~= "")
+  path = strlib.rstrip(path, "/")
+
+  local found = strlib.rfind(path, "/")
+  if found == nil then return path end
+  return string.sub(path, found + 1)
 end
 
 ---like pathshorten() except the **last two** will not be shorten
@@ -168,6 +188,15 @@ function M.shorten(path)
     end
   end
   return table.concat(parts, "/")
+end
+
+---@param fpath string
+---@return boolean
+function M.exists(fpath)
+  local stat, msg, err = uv.fs_stat(fpath)
+  if stat ~= nil then return true end
+  if err == "ENOENT" then return false end
+  error(msg)
 end
 
 return M

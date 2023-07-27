@@ -18,12 +18,6 @@ function M.split_iter(str, del, maxsplit, keepends)
   keepends = keepends or false
 
   local pattern = del
-  if del == "." then
-    pattern = "%."
-  elseif del == "%" then
-    pattern = "%%"
-  end
-
   local finished = false
   local cursor = 1
   local remain = (maxsplit or math.huge) + 1
@@ -36,8 +30,8 @@ function M.split_iter(str, del, maxsplit, keepends)
       return str:sub(cursor)
     end
 
-    local del_start, del_stop = str:find(pattern, cursor)
-    if del_start == nil then
+    local del_start, del_stop = str:find(pattern, cursor, true)
+    if del_start == nil or del_stop == nil then
       finished = true
       return str:sub(cursor)
     end

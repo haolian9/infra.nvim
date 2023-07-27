@@ -104,20 +104,19 @@ local function test_6()
 
   do
     local range = M.range(1, 5)
-    local iter = M.slice(range, 1, 1)
-    assert(M.iter_equals(iter, { 1 }))
+    assert(not pcall(M.slice, range, 1, 1), "start < stop")
   end
 
   do
     local range = M.range(1, 5)
     local iter = M.slice(range, 1, 2)
-    assert(M.iter_equals(iter, { 1, 2 }))
+    assert(M.iter_equals(iter, { 1 }))
   end
 
   do
     local range = M.range(1, 5)
     local iter = M.slice(range, 2, 4)
-    assert(M.iter_equals(iter, { 2, 3, 4 }))
+    assert(M.iter_equals(iter, { 2, 3 }))
   end
 
   do
@@ -172,6 +171,35 @@ local function test_9()
   end
 end
 
+local function test_10()
+  local iter = M.split_iter("infra.fn", ".")
+  do
+    local chunk = iter()
+    assert(chunk == "infra", chunk)
+  end
+  do
+    local chunk = iter()
+    assert(chunk == "fn", chunk)
+  end
+  do
+    local chunk = iter()
+    assert(chunk == nil, chunk)
+  end
+end
+
+local function test_11()
+  do
+    local iter = M.split_iter("", ".")
+    assert(iter() == "")
+    assert(iter() == nil)
+  end
+  do
+    local iter = M.split_iter("infra", ".")
+    assert(iter() == "infra")
+    assert(iter() == nil)
+  end
+end
+
 test_0()
 test_1()
 test_2()
@@ -182,3 +210,5 @@ test_7()
 
 test_8()
 test_9()
+test_10()
+test_11()

@@ -10,8 +10,8 @@
 
 local M = {}
 
-local utf8 = require("infra.utf8")
 local strlib = require("infra.strlib")
+local utf8 = require("infra.utf8")
 
 local api = vim.api
 

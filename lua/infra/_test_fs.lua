@@ -86,7 +86,26 @@ local function test_3()
   assert(M.shorten("test.lua") == "test.lua")
 end
 
+local function test_4()
+  assert(M.basename("/a") == "a")
+  assert(M.basename("a") == "a")
+  assert(M.basename("/a/b") == "b")
+  assert(M.basename("a/b") == "b")
+
+  assert(not pcall(M.basename, "/"))
+  assert(not pcall(M.basename, ""))
+
+  assert(M.parent("/a") == "/")
+  assert(M.parent("/a/b") == "/a")
+  assert(M.parent("a/b") == "a")
+
+  assert(not pcall(M.parent, "a"))
+  assert(not pcall(M.parent, ""))
+  assert(not pcall(M.parent, "/"))
+end
+
 test_0()
 test_1()
 test_2()
 test_3()
+test_4()
