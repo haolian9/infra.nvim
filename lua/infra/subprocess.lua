@@ -3,6 +3,7 @@ local M = {}
 local fn = require("infra.fn")
 local listlib = require("infra.listlib")
 local logging = require("infra.logging")
+local strlib = require("infra.strlib")
 local tail = require("infra.tail")
 
 local uv = vim.loop
@@ -43,18 +44,26 @@ local function split_stdout(chunks)
     while true do
       if line_iter == nil then
         local chunk = chunk_iter()
-        if chunk == nil then return end
+        if chunk == nil then
+          if short ~= nil then
+            local last_line = short
+            short = nil
+            --due to fn.split_iter, "a\nb\n" will end with "", which is worked as expected of course
+            if last_line ~= "" then return last_line end
+          end
+          return
+        end
         line_iter = fn.split_iter(chunk, del, nil, true)
       end
 
       local line = line_iter()
       if line ~= nil then
-        if line:sub(#line) == del then
+        if strlib.endswith(line, del) then
           if short ~= nil then
             line = short .. line
             short = nil
           end
-          return line:sub(0, #line - 1)
+          return string.sub(line, 0, #line - #del)
         else
           -- last part but not a complete line
           assert(short == nil)

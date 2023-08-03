@@ -47,7 +47,7 @@ end
 
 -- parts can be empty string
 ---@return string[]
-function M.split(str, del, maxsplit, keepends) return M.concrete(M.split_iter(str, del, maxsplit, keepends)) end
+function M.split(str, del, maxsplit, keepends) return M.tolist(M.split_iter(str, del, maxsplit, keepends)) end
 
 ---@param iterable infra.Iterable.Str
 ---@param del ?string @specified or ""
@@ -58,7 +58,7 @@ function M.join(iterable, del)
   do
     local iter_type = type(iterable)
     if iter_type == "function" then
-      list = M.concrete(iterable)
+      list = M.tolist(iterable)
     elseif iter_type == "table" then
       list = iterable
     else
@@ -96,9 +96,9 @@ function M.batch(iterable, size)
   end
 end
 
----@param it infra.Iterable.Any
+---@param it infra.Iterator.Any
 ---@return any[]
-function M.concrete(it)
+function M.tolist(it)
   local list = {}
   for el in it do
     table.insert(list, el)
@@ -110,6 +110,20 @@ end
 ---@param iterable infra.Iterable.Any
 ---@return infra.Iterator.Any
 function M.map(fn, iterable)
+  local it = M.iter(iterable)
+
+  return function()
+    local el = it()
+    if el == nil then return end
+    return fn(el)
+  end
+end
+
+---for iters which return more than one value in each iteration
+---@param fn fun(el: any): any
+---@param iterable infra.Iterable.Any
+---@return infra.Iterator.Any
+function M.mapn(fn, iterable)
   local it = M.iter(iterable)
 
   return function()
@@ -209,10 +223,6 @@ end
 ---@param ... infra.Iterable.Any
 ---@return infra.Iterator.Any
 function M.chained(...) return M.iter_chained(M.map(M.iter, { ... })) end
-
----@param iters infra.Iterable.Any[]
----@return infra.Iterator.Any
-function M.chained_iters(iters) return M.iter_chained(M.map(M.iter, iters)) end
 
 ---@param fn fun(...): boolean
 ---@return infra.Iterable.Any

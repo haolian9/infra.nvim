@@ -111,6 +111,7 @@ function M.endswith(a, b)
   return string.sub(a, -#b) == b
 end
 
+--ltrim tabs and spaces
 ---@param s string
 ---@return string
 function M.ltrim(s) return M.lstrip(s, "\t ") end

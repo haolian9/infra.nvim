@@ -78,15 +78,9 @@ local function tail(bufnr, winid, fpath)
     api.nvim_win_set_cursor(winid, { api.nvim_buf_line_count(bufnr), 0 })
   end
 
-  -- cleanup the process and buffer
-  api.nvim_create_autocmd("WinClosed", {
-    callback = function(args)
-      if winid ~= tonumber(args.match) then return end
-      vim.fn.jobstop(job)
-      api.nvim_buf_delete(bufnr, { force = true })
-      return true
-    end,
-  })
+  --cleanup the process and buffer
+  --intended to use bufwipeout rather than winclosed, due to :sp/:vs
+  api.nvim_create_autocmd("bufwipeout", { buffer = bufnr, once = true, callback = function() vim.fn.jobstop(job) end })
 
   bufrename(bufnr, string.format("tail://%s", fpath))
 end
@@ -98,11 +92,16 @@ function M.split_below(fpath)
 
   local bufnr, winid
   do
-    local held_bufnr, held_win_id = canvas:get(fpath, tabpage)
-    if held_bufnr and held_win_id then return end
-    bufnr = held_bufnr or api.nvim_create_buf(false, true)
-    if held_win_id ~= nil then
-      winid = held_win_id
+    local held_bufnr, held_winid = canvas:get(fpath, tabpage)
+    if held_bufnr and held_winid then return end
+    if held_bufnr ~= nil then
+      bufnr = held_bufnr
+    else
+      bufnr = api.nvim_create_buf(false, true)
+      prefer.bo(bufnr, "bufhidden", "wipe")
+    end
+    if held_winid ~= nil then
+      winid = held_winid
     else
       ex("rightbelow split")
       winid = api.nvim_get_current_win()

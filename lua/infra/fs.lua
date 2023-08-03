@@ -172,13 +172,13 @@ function M.basename(path)
 end
 
 ---like pathshorten() except the **last two** will not be shorten
----@param path string @absolute path, no `/` in the tail
+---trailing `/` will be erased
+---@param path string @absolute path
 ---@return string
 function M.shorten(path)
   assert(path ~= "" and path ~= nil)
   if path == "/" then return "/" end
-  assert(not strlib.endswith(path, "/"))
-  local parts = fn.split(path, "/")
+  local parts = fn.split(strlib.rstrip(path, "/"), "/")
   ---head
   if #parts > 1 and parts[1] ~= "" then parts[1] = string.sub(parts[1], 1, 1) end
   ---middles if any

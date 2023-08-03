@@ -150,7 +150,7 @@ local function test_8()
     end
   end
 
-  local it = M.map(function(a, b) return a + b end, source(5))
+  local it = M.mapn(function(a, b) return a + b end, source(5))
 
   assert(M.iter_equals(it, { 2, 4, 6, 8, 10 }))
 end
@@ -200,6 +200,16 @@ local function test_11()
   end
 end
 
+local function test_12()
+  do
+    local iter = M.split_iter("a\nb\n", "\n", nil, true)
+    assert(iter() == "a\n")
+    assert(iter() == "b\n")
+    assert(iter() == "")
+    assert(iter() == nil)
+  end
+end
+
 test_0()
 test_1()
 test_2()
@@ -212,3 +222,4 @@ test_8()
 test_9()
 test_10()
 test_11()
+test_12()

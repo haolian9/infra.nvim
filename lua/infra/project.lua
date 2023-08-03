@@ -3,7 +3,6 @@ local M = {}
 
 local bufpath = require("infra.bufpath")
 local dictlib = require("infra.dictlib")
-local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("infra.project")
 local prefer = require("infra.prefer")
 local subprocess = require("infra.subprocess")
@@ -19,13 +18,6 @@ do
   ---@type {[string]: string|false} {path: git-root}
   local cache = dictlib.CappedDict(64)
 
-  ---@param bufnr integer
-  ---@return string?
-  local function resolve_basedir(bufnr)
-    local basedir = bufpath.dir(bufnr)
-    if fs.exists(basedir) then return basedir end
-  end
-
   ---@param bufnr? number
   ---@return string?
   function M.git_root(bufnr)
@@ -33,7 +25,7 @@ do
 
     if prefer.bo(bufnr, "buftype") ~= "" then return jelly.warn("not a regular buffer") end
 
-    local basedir = resolve_basedir(bufnr)
+    local basedir = bufpath.dir(bufnr, true)
     if basedir == nil then return jelly.info("cant resolve the basedir using buf#%d", bufnr) end
 
     local root
