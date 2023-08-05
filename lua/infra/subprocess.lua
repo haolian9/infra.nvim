@@ -1,6 +1,7 @@
 local M = {}
 
 local fn = require("infra.fn")
+local jelly = require("infra.jellyfish")("infra.subprocess")
 local listlib = require("infra.listlib")
 local logging = require("infra.logging")
 local strlib = require("infra.strlib")
@@ -57,20 +58,23 @@ local function split_stdout(chunks)
       end
 
       local line = line_iter()
-      if line ~= nil then
+      if line == nil then
+        line_iter = nil
+      else
         if strlib.endswith(line, del) then
           if short ~= nil then
             line = short .. line
             short = nil
           end
-          return string.sub(line, 0, #line - #del)
+          return string.sub(line, 1, #line - #del)
         else
-          -- last part but not a complete line
-          assert(short == nil)
-          short = line
+          if short ~= nil then
+            --a very long line
+            short = short .. line
+          else
+            short = line
+          end
         end
-      else
-        line_iter = nil
       end
     end
   end

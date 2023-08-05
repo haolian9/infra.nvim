@@ -1,5 +1,7 @@
 local M = {}
 
+local jelly = require("infra.jellyfish")("infra.dictlib")
+
 ---@alias Dict {[any]: any}
 
 ---NB: no order guarantee
@@ -43,12 +45,17 @@ function M.CappedDict(cap, weakable_value)
     __mode = mode,
     __index = index,
     __newindex = function(t, k, v)
-      if remain == 0 then error("full") end
-      rawset(t, k, v)
-      if v == nil then
-        remain = remain + 1
+      local exists = rawget(t, k) ~= nil
+      if exists then
+        rawset(t, k, v)
+        if v == nil then remain = remain + 1 end
       else
-        remain = remain - 1
+        if remain == 0 then
+          jelly.err("keys: %s", table.concat(M.keys(t), " "))
+          error("full", cap)
+        end
+        rawset(t, k, v)
+        if v ~= nil then remain = remain - 1 end
       end
     end,
   })
