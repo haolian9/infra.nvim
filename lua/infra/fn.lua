@@ -249,8 +249,8 @@ end
 
 -- when iterable's each step takes time, fastforward would block for a certain time
 ---@param iterable infra.Iterable.Any
----@param start integer @inclusive
----@param stop integer @exclusive
+---@param start integer @1-based, inclusive
+---@param stop integer @1-based, exclusive
 ---@return infra.Iterator.Any
 function M.slice(iterable, start, stop)
   assert(start > 0 and stop > start)
