@@ -13,6 +13,7 @@ do
   ---@param bufnr integer
   ---@return boolean
   function Regulator:throttled(bufnr)
+    --todo: take the current undo block into account
     local last = self.ticks[bufnr] or 0
     local now = api.nvim_buf_get_changedtick(bufnr)
     return last == now
@@ -23,6 +24,5 @@ do
 end
 
 return function(cap)
-  ---todo: is it worth to have a bufwipeout autocmd to clear the .ticks?
   return setmetatable({ ticks = dictlib.CappedDict(cap) }, Regulator)
 end

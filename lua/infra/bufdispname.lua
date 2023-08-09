@@ -55,10 +55,7 @@ M.unnamed = {
   ---@return string?
   filetype = function(bufnr, bufname)
     local ft = prefer.bo(bufnr, "filetype")
-    if ft == "qf" then
-      ---todo: maybe include the title
-      return string.format("quickfix://%d", bufnr)
-    end
+    if ft == "qf" then return string.format("quickfix://%d", bufnr) end
     if ft == "help" then return string.format("help://%s", vim.fn.fnamemodify(bufname, ":t:r")) end
     if ft == "git" then return string.format("git://", project.working_root()) end
     if ft == "GV" then return string.format("gv://", project.working_root()) end

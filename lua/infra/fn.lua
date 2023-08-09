@@ -133,20 +133,19 @@ function M.mapn(fn, iterable)
   end
 end
 
+---@param fn fun(el: any): any
+---@param iterable infra.Iterable.Any
 function M.walk(fn, iterable)
   local it = M.iter(iterable)
   while true do
-    -- todo: optimize when 'it' only returns one value
-    local el = { it() }
+    local el = it()
     if #el == 0 then break end
-    fn(unpack(el))
+    fn(el)
   end
 end
 
 -- zip.length == longest.length
 -- due to lua's for treats first nil as terminate of one iterable
--- todo: support varargs
---
 ---@param a infra.Iterable.Any
 ---@param b infra.Iterable.Any
 ---@return fun(): any[]?
