@@ -2,18 +2,26 @@ local M = {}
 
 local prefer = require("infra.prefer")
 
----@param bufnr integer|infra.prefer.Descriptor
+---@param bufnr integer
 ---@param logic fun()
 function M.no_undo(bufnr, logic)
-  local bo
-  if type(bufnr) == "number" then
-    bo = prefer.buf(bufnr)
-  else
-    bo = bufnr
-  end
+  local bo = prefer.buf(bufnr)
   local orig = bo.undolevels
   bo.undolevels = -1
-  local ok, err = pcall(logic)
+  local ok, err = xpcall(logic, debug.traceback)
+  bo.undolevels = orig
+  if not ok then error(err) end
+end
+
+---@param bufnr integer
+---@param logic fun()
+function M.undoblock(bufnr, logic)
+  --no need to wrap buf_set_lines with `undojoin`, as it will not close the undo block
+  local bo = prefer.buf(bufnr)
+  --close previous undo block
+  local orig = bo.undolevels
+  local ok, err = xpcall(logic, debug.traceback)
+  --close this undo block
   bo.undolevels = orig
   if not ok then error(err) end
 end
