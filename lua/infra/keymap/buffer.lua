@@ -7,9 +7,9 @@ local function noremap(bufnr, mode, lhs, rhs)
 
   local rhs_type = type(rhs)
   if rhs_type == "function" then
-    api.nvim_buf_set_keymap(bufnr, mode, lhs, "", { silent = false, noremap = true, callback = rhs })
+    api.nvim_buf_set_keymap(bufnr, mode, lhs, "", { silent = false, noremap = true, nowait = true, callback = rhs })
   elseif rhs_type == "string" then
-    api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, { silent = false, noremap = true })
+    api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, { silent = false, noremap = true, nowait = true })
   else
     return jelly.err("unexpected rhs type: %s", rhs_type)
   end
@@ -26,13 +26,13 @@ local function call(bufnr, modes, lhs, rhs)
   end
 end
 
+--mandatory options: noremap=true, nowait=true, silent=false
+--
 --calling forms
 --* M(bufnr, modes, lhs, rhs)
 --* M.wraps(bufnr)
 --  * bm.n(lhs, rhs)
 --  * bm(modes, lhs, rhs)
-
----@overload fun(bufnr: integer, modes: string[]|string, lhs: string, rhs: string|fun())
 local bufmap = setmetatable({
   wraps = function(bufnr)
     return setmetatable({
@@ -49,4 +49,5 @@ local bufmap = setmetatable({
   __call = function(_, bufnr, modes, lhs, rhs) return call(bufnr, modes, lhs, rhs) end,
 })
 
+---@overload fun(bufnr: integer, modes: string[]|string, lhs: string, rhs: string|fun())
 return bufmap

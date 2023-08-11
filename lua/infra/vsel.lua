@@ -24,9 +24,10 @@ M.max_col = 0x7fffffff
 ---@field stop_line number @0-indexed, exclusive
 ---@field stop_col number @0-indexed, exclusive
 
---could return nil
---* row is 1-based
---* col is 0-based
+--* start_line 0-based, inclusive
+--* start_col  0-based, inclusive
+--* stop_line  0-based, exclusive
+--* stop_col   0-based, exclusive
 ---@param bufnr number
 ---@return infra.vsel.Range?
 function M.range(bufnr)
@@ -35,11 +36,17 @@ function M.range(bufnr)
   bufnr = bufnr or api.nvim_get_current_buf()
 
   local start_row, start_col = unpack(api.nvim_buf_get_mark(bufnr, "<"))
-  -- NB: `>` mark returns the position of first byte of multi-bytes rune
+  --NB: `>` mark returns the position of first byte of multi-bytes rune
   local stop_row, stop_col = unpack(api.nvim_buf_get_mark(bufnr, ">"))
 
-  -- fresh start, no select
+  --fresh start, no select
   if start_row == 0 and start_col == 0 and stop_row == 0 and stop_col == 0 then return end
+
+  --start_row is always smaller then stop_row
+  if start_row > stop_row then
+    start_row, stop_row = stop_row, start_row
+    start_col, stop_col = stop_col, start_col
+  end
 
   return {
     start_line = start_row - 1,
@@ -113,13 +120,7 @@ function M.multiline_text(bufnr)
   -- handles last line
   do
     local chars = lines[#lines]
-    local sel_len
-    if range.stop_line > range.start_line then
-      sel_len = range.stop_col
-    else
-      error("unreachable")
-      -- sel_len = range.stop_col - range.start_col
-    end
+    local sel_len = range.stop_col
     -- multi-bytes utf-8 rune
     local byte0 = utf8.byte0(chars, sel_len)
     local rune_len = utf8.rune_length(byte0)

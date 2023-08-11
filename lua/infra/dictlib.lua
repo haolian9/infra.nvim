@@ -20,7 +20,7 @@ end
 function M.get(dreams, ...)
   local layer = dreams
   for _, path in ipairs({ ... }) do
-    assert(type(layer) == "table")
+    assert(type(layer) == "table", path)
     layer = layer[path]
     if layer == nil then return end
   end
