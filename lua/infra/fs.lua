@@ -149,8 +149,8 @@ end
 ---@param path string @absolute path, no `/` in the tail
 ---@return string
 function M.parent(path)
-  assert(path ~= "/", "root has no parent")
   assert(path ~= "")
+  if path == "/" then return "/" end
   path = strlib.rstrip(path, "/")
 
   local found = assert(strlib.rfind(path, "/"))
@@ -162,8 +162,8 @@ end
 ---@param path string
 ---@return string
 function M.basename(path)
-  assert(path ~= "/", "root has no basename")
   assert(path ~= "")
+  if path == "/" then return "/" end
   path = strlib.rstrip(path, "/")
 
   local found = strlib.rfind(path, "/")

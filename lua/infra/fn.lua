@@ -223,9 +223,22 @@ end
 ---@return infra.Iterator.Any
 function M.chained(...) return M.iter_chained(M.map(M.iter, { ... })) end
 
----@param fn fun(...): boolean
+---@param fn fun(el: any): boolean
 ---@return infra.Iterable.Any
 function M.filter(fn, iterable)
+  local it = M.iter(iterable)
+  return function()
+    while true do
+      local el = it()
+      if el == nil then return end
+      if fn(el) then return el end
+    end
+  end
+end
+
+---@param fn fun(...): boolean
+---@param iterable infra.Iterable.Any
+function M.filtern(fn, iterable)
   local it = M.iter(iterable)
   return function()
     while true do

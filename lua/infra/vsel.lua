@@ -130,34 +130,25 @@ function M.multiline_text(bufnr)
   return lines
 end
 
---select a region in the current {window,buffer}
+---select a region
+---@param winid integer
 ---@param start_line number @0-indexed, inclusive
 ---@param start_col  number @0-indexed, inclusive
 ---@param stop_line  number @0-indexed, exclusive
 ---@param stop_col   number @0-indexed, exclusive
-function M.select_region(start_line, start_col, stop_line, stop_col)
-  local winid = api.nvim_get_current_win()
+function M.select_region(winid, start_line, start_col, stop_line, stop_col)
   api.nvim_win_set_cursor(winid, { start_line + 1, start_col })
   -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
   api.nvim_feedkeys("vo", "nx", false)
   api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, stop_col - 1 })
-
-  -- -- another approach
-  -- local bufnr = api.nvim_get_current_buf()
-  -- -- necessary for gv to stay in charwise visual mode
-  -- -- see: https://github.com/neovim/neovim/issues/23754
-  -- api.nvim_feedkeys(nvimkeys("v<esc>"), "nx", false)
-  -- api.nvim_buf_set_mark(bufnr, "<", start_line + 1, start_col, {})
-  -- api.nvim_buf_set_mark(bufnr, ">", stop_line + 1 - 1, stop_col - 1, {})
-  -- api.nvim_feedkeys("gv", "nx", false)
 end
 
---select between start and stop line in the current {window,buffer}
---place cursor on the begin of the last line
+---select lines between start and stop
+---place cursor on the begin of the last line
+---@param winid integer
 ---@param start_line number @0-indexed, inclusive
 ---@param stop_line  number @0-indexed, exclusive
-function M.select_lines(start_line, stop_line)
-  local winid = api.nvim_get_current_win()
+function M.select_lines(winid, start_line, stop_line)
   api.nvim_win_set_cursor(winid, { start_line + 1, 0 })
   -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
   api.nvim_feedkeys("Vo", "nx", false)
