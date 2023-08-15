@@ -104,8 +104,25 @@ local function test_4()
   assert(not pcall(M.parent, "/"))
 end
 
+local function test_5()
+  assert(M.suffix("/") == nil)
+  assert(M.suffix("a") == nil)
+  assert(M.suffix("a.c") == ".c")
+  assert(M.suffix(".a") == ".a")
+  assert(M.suffix("/a/b/c.d") == ".d")
+  assert(M.suffix("/a/b/c.d.e.f") == ".f")
+
+  assert(M.stem("/") == "/")
+  assert(M.stem("a") == "a")
+  assert(M.stem("a.c") == "a")
+  assert(M.stem(".a") == ".a")
+  assert(M.stem("/a/b/c.d") == "c")
+  assert(M.stem("/a/b/c.d.e.f") == "c.d.e")
+end
+
 test_0()
 test_1()
 test_2()
 test_3()
 test_4()
+test_5()

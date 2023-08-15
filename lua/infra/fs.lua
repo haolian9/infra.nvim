@@ -199,4 +199,28 @@ function M.exists(fpath)
   error(msg)
 end
 
+---@param path string
+---@return string
+function M.stem(path)
+  assert(path ~= "")
+  if path == "/" then return "/" end
+
+  local base = M.basename(path)
+  local at = strlib.rfind(base, ".")
+  if at == nil then return base end
+  if at == 1 then return base end
+  return string.sub(base, 1, at - 1)
+end
+
+---@param path string
+---@return string? @contains the leading dot
+function M.suffix(path)
+  assert(path ~= "")
+  if path == "/" then return end
+
+  local at = strlib.rfind(path, ".")
+  if at == nil then return end
+  return string.sub(path, at)
+end
+
 return M
