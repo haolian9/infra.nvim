@@ -81,6 +81,11 @@ function M.monkeypatch()
       return M.wo(0, k)
     end,
   })
+
+  vim.o = setmetatable({}, {
+    __index = function() error("use vim.{g,b,w}o instead") end,
+    __newindex = function() error("use vim.{g,b,w}o instead") end,
+  })
 end
 
 return M

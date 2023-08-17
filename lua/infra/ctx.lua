@@ -26,4 +26,15 @@ function M.undoblock(bufnr, logic)
   if not ok then error(err) end
 end
 
+---@param bufnr integer
+---@param logic fun()
+function M.modifiable(bufnr, logic)
+  local bo = prefer.buf(bufnr)
+  if bo.modifiable then return logic() end
+  bo.modifiable = true
+  local ok, err = xpcall(logic, debug.traceback)
+  bo.modifiable = false
+  if not ok then error(err) end
+end
+
 return M

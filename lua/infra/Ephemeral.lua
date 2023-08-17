@@ -20,9 +20,12 @@ do
   ---@param specified? infra.ephemerals.CreateOptions
   ---@return infra.ephemerals.CreateOptions
   function resolve_opts(specified)
-    if #specified == 0 then return defaults end
-    ---@diagnostic disable-next-line: param-type-mismatch
-    return setmetatable(specified, { __index = defaults })
+    ---@diagnostic disable: param-type-mismatch
+    if specified and next(specified) ~= nil then
+      return setmetatable(specified, { __index = defaults })
+    else
+      return defaults
+    end
   end
 end
 
@@ -40,8 +43,8 @@ end
 ---@return integer
 return function(opts, lines)
   opts = opts or {}
-  local has_lines = lines ~= nil and #lines > 0
-  if has_lines and opts.modifiable == nil then opts.modifable = false end
+  -- lines={}
+  if lines ~= nil and opts.modifiable == nil then opts.modifiable = false end
   --order matters, as we access .modifiabe above
   opts = resolve_opts(opts)
 
@@ -51,7 +54,7 @@ return function(opts, lines)
   ---intented to no use pairs() here, to keep things obviously
   bo.bufhidden = opts.bufhidden
 
-  if has_lines then --avoid being recorded by the undo history
+  if lines ~= nil and #lines > 0 then --avoid being recorded by the undo history
     bo.undolevels = -1
     local offset = 0
     ---@diagnostic disable-next-line: param-type-mismatch
