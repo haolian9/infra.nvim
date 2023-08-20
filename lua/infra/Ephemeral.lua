@@ -8,6 +8,7 @@ local api = vim.api
 ---@field undolevels? integer @nil=-1
 ---@field bufhidden? string @nil="wipe"
 ---@field modifiable? boolean @nil=true
+---@field buftype? string @nil="nofile"
 
 local resolve_opts
 do
@@ -15,6 +16,7 @@ do
     undolevels = -1,
     bufhidden = "wipe",
     modifiable = true,
+    buftype = "nofile",
   }
 
   ---@param specified? infra.ephemerals.CreateOptions
@@ -53,6 +55,7 @@ return function(opts, lines)
   local bo = prefer.buf(bufnr)
   ---intented to no use pairs() here, to keep things obviously
   bo.bufhidden = opts.bufhidden
+  bo.buftype = opts.buftype
 
   if lines ~= nil and #lines > 0 then --avoid being recorded by the undo history
     bo.undolevels = -1

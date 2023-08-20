@@ -15,8 +15,28 @@ function M.keys(dict)
   return keys
 end
 
+---@param dict Dict
+---@return any[]
+function M.values(dict)
+  local values = {}
+  for _, val in pairs(dict) do
+    table.insert(values, val)
+  end
+  return values
+end
+
+---@param dict Dict
+---@return Dict
+function M.flipped(dict)
+  local flipped = {}
+  for key, val in pairs(dict) do
+    flipped[val] = key
+  end
+  return flipped
+end
+
 ---@param dreams Dict
----@param ... string|number trace
+---@param ... string|number @trace
 function M.get(dreams, ...)
   local layer = dreams
   for _, path in ipairs({ ... }) do
