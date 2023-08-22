@@ -1,3 +1,5 @@
+local bufrename = require("infra.bufrename")
+local handyclosekeys = require("infra.handyclosekeys")
 local prefer = require("infra.prefer")
 
 local api = vim.api
@@ -9,6 +11,10 @@ local api = vim.api
 ---@field bufhidden? string @nil="wipe"
 ---@field modifiable? boolean @nil=true
 ---@field buftype? string @nil="nofile"
+---@field name? string
+---@field namefn? fun(bufnr: integer):string
+---@field namepat? string @{bufnr}
+---@field handyclose? boolean
 
 local resolve_opts
 do
@@ -17,6 +23,7 @@ do
     bufhidden = "wipe",
     modifiable = true,
     buftype = "nofile",
+    handyclose = false,
   }
 
   ---@param specified? infra.ephemerals.CreateOptions
@@ -40,6 +47,9 @@ end
 ---* bufhidden=wipe
 ---* modifiable=true @but with lines, it'd be false
 ---
+---NB: there are operations always change the bufname, from what i know, termopen does,
+---so in these cases, opts.bufname should not be used here
+---
 ---@param opts? infra.ephemerals.CreateOptions
 ---@param lines? (string|string[])[]
 ---@return integer
@@ -51,33 +61,47 @@ return function(opts, lines)
   opts = resolve_opts(opts)
 
   local bufnr = api.nvim_create_buf(false, true)
-
   local bo = prefer.buf(bufnr)
-  ---intented to no use pairs() here, to keep things obviously
+
+  ---intented to use no pairs(opts) here, to keep things obviously
+
   bo.bufhidden = opts.bufhidden
   bo.buftype = opts.buftype
 
-  if lines ~= nil and #lines > 0 then --avoid being recorded by the undo history
-    bo.undolevels = -1
-    local offset = 0
-    ---@diagnostic disable-next-line: param-type-mismatch
-    for _, line in ipairs(lines) do
-      local lntype = type(line)
-      if lntype == "string" then
-        api.nvim_buf_set_lines(bufnr, offset, offset + 1, false, { line })
-        offset = offset + 1
-      elseif lntype == "table" then
-        api.nvim_buf_set_lines(bufnr, offset, offset + #line, false, line)
-        offset = offset + #line
-      else
-        error("unreachable: unknown line type: " .. lntype)
+  do
+    if lines ~= nil and #lines > 0 then --avoid being recorded by the undo history
+      bo.undolevels = -1
+      local offset = 0
+      ---@diagnostic disable-next-line: param-type-mismatch
+      for _, line in ipairs(lines) do
+        local lntype = type(line)
+        if lntype == "string" then
+          api.nvim_buf_set_lines(bufnr, offset, offset + 1, false, { line })
+          offset = offset + 1
+        elseif lntype == "table" then
+          api.nvim_buf_set_lines(bufnr, offset, offset + #line, false, line)
+          offset = offset + #line
+        else
+          error("unreachable: unknown line type: " .. lntype)
+        end
       end
+      assert(api.nvim_buf_line_count(bufnr) == offset)
     end
-    assert(api.nvim_buf_line_count(bufnr) == offset)
+
+    bo.undolevels = opts.undolevels
+    bo.modifiable = opts.modifiable
   end
 
-  bo.undolevels = opts.undolevels
-  bo.modifiable = opts.modifiable
+  do
+    local name = (function()
+      if opts.name then return opts.name end
+      if opts.namefn then return opts.namefn(bufnr) end
+      if opts.namepat then return string.gsub(opts.namepat, "{bufnr}", bufnr) end
+    end)()
+    if name then bufrename(bufnr, name) end
+  end
+
+  if opts.handyclose then handyclosekeys(bufnr) end
 
   return bufnr
 end

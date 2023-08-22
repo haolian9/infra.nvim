@@ -35,6 +35,19 @@ function M.flipped(dict)
   return flipped
 end
 
+--the later keys win
+---@param ... Dict
+---@return Dict
+function M.merged(...)
+  local merged = {}
+  for i = 1, select("#", ...) do
+    for k, v in pairs(select(i, ...)) do
+      merged[k] = v
+    end
+  end
+  return merged
+end
+
 ---@param dreams Dict
 ---@param ... string|number @trace
 function M.get(dreams, ...)

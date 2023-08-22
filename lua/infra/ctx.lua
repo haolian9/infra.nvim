@@ -2,6 +2,8 @@ local M = {}
 
 local prefer = require("infra.prefer")
 
+local api = vim.api
+
 ---@param bufnr integer
 ---@param logic fun()
 function M.no_undo(bufnr, logic)
@@ -35,6 +37,23 @@ function M.modifiable(bufnr, logic)
   local ok, err = xpcall(logic, debug.traceback)
   bo.modifiable = false
   if not ok then error(err) end
+end
+
+do
+  ---@return integer
+  local function get_nonfloat_winid()
+    local tabid = api.nvim_get_current_tabpage()
+    for _, winid in ipairs(api.nvim_tabpage_list_wins(tabid)) do
+      if api.nvim_win_get_config(winid).relative == "" then return winid end
+    end
+    error("unreachable")
+  end
+  ---wincall in a land/nonfloatwin in the current tabpage
+  ---created for win_set_config(relative=editor) originally
+  ---@param logic fun()
+  function M.landwincall(logic)
+    api.nvim_win_call(get_nonfloat_winid(), function() logic() end)
+  end
 end
 
 return M

@@ -5,16 +5,11 @@
 
 local M = {}
 
-local bufrename = require("infra.bufrename")
 local dictlib = require("infra.dictlib")
 local Ephemeral = require("infra.Ephemeral")
 local prefer = require("infra.prefer")
 
-local bufnr
-do
-  bufnr = Ephemeral({ buftype = "" })
-  bufrename(bufnr, "barrier://quit")
-end
+local bufnr = Ephemeral({ buftype = "", name = "barrier://quit" })
 
 local tokens = {}
 local count = 0

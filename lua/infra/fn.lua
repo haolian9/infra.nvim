@@ -7,6 +7,9 @@ local listlib = require("infra.listlib")
 --
 ---@alias infra.Iterator.Str fun(): string?
 ---@alias infra.Iterable.Str infra.Iterator.Str|string[]
+--
+---@alias infra.Iterator.Int fun(): integer?
+---@alias infra.Iterable.Str infra.Iterator.Int|integer[]
 
 -- parts can be empty string
 ---@param str string
@@ -317,6 +320,17 @@ function M.toset(iterable)
     set[k] = true
   end
   return set
+end
+
+---@param iterable infra.Iterator.Int
+---@return integer?
+function M.max(iterable)
+  local val
+  for el in M.iter(iterable) do
+    if val == nil then val = el end
+    if val < el then val = el end
+  end
+  return val
 end
 
 return M
