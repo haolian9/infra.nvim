@@ -1,7 +1,9 @@
 --possess a modified buffer to abort `:qa` for:
 --* daemon but non-detached processes
 --
---and of course it wont stop `:qa!`
+--some other impl notes:
+--* of course it wont stop `:qa!`
+--* it wont hurt `:wa`
 
 local M = {}
 
@@ -9,7 +11,13 @@ local dictlib = require("infra.dictlib")
 local Ephemeral = require("infra.Ephemeral")
 local prefer = require("infra.prefer")
 
-local bufnr = Ephemeral({ buftype = "", name = "barrier://quit" })
+local api = vim.api
+
+local bufnr
+do
+  bufnr = Ephemeral({ buftype = "acwrite", name = "barrier://quit" })
+  api.nvim_create_autocmd("bufwritecmd", { buffer = bufnr, callback = function() end })
+end
 
 local tokens = {}
 local count = 0
