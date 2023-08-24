@@ -1,5 +1,5 @@
 local coreutils = require("infra.coreutils")
-local strlib = require("infra.strlib")
+local strfmt = require("infra.strfmt")
 
 local M = {}
 
@@ -99,35 +99,12 @@ do
     }
   end
 
-  local inteprete_msg
-  do
-    local inspect_opts = { newline = " ", indent = "" }
-
-    inteprete_msg = function(format, ...)
-      local args = {}
-      for i = 1, select("#", ...) do
-        local arg = select(i, ...)
-        local t = type(arg)
-        local repr = arg
-        if not (t == "boolean" or t == "number" or t == "string") then
-          --
-          repr = vim.inspect(arg, inspect_opts)
-        end
-        table.insert(args, repr)
-      end
-
-      if #args ~= 0 then return string.format(format, unpack(args)) end
-
-      assert(format ~= nil, "missing format")
-      if strlib.find(format, "%s") == nil then return format end
-      error("unmatched args for format")
-    end
-  end
-
   -- NB: caller should decide when to close the fd of logfile
   ---@param min_level string? @{debug,info,warn,error}; nil=info
   function M.newlogger(category, min_level)
+    ---@diagnostic disable-next-line: cast-local-type
     min_level = ll[min_level or "info"]
+
     local writer
     do
       local path, file = M.newfile(category, true)
@@ -142,9 +119,11 @@ do
     ---@param flush_after_log boolean
     ---@return fun(format: string, ...)
     local function log(level, flush_after_log)
+      ---@diagnostic disable-next-line: unused-local
       if level < min_level then return function(format, ...) end end
+
       return function(format, ...)
-        writer.write(inteprete_msg(format, ...))
+        writer.write(strfmt(format, ...))
         writer.write("\n")
         if flush_after_log then writer.flush() end
       end

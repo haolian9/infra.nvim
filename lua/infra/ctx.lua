@@ -32,11 +32,15 @@ end
 ---@param logic fun()
 function M.modifiable(bufnr, logic)
   local bo = prefer.buf(bufnr)
+
   if bo.modifiable then return logic() end
+
   bo.modifiable = true
-  local ok, err = xpcall(logic, debug.traceback)
+  local ok, result = xpcall(logic, debug.traceback)
   bo.modifiable = false
-  if not ok then error(err) end
+
+  if not ok then error(result) end
+  return result
 end
 
 do
@@ -50,10 +54,48 @@ do
   end
   ---wincall in a land/nonfloatwin in the current tabpage
   ---created for win_set_config(relative=editor) originally
-  ---@param logic fun()
+  ---@param logic fun(): any
+  ---@return any @depends on logic()
   function M.landwincall(logic)
-    api.nvim_win_call(get_nonfloat_winid(), function() logic() end)
+    return api.nvim_win_call(get_nonfloat_winid(), function() logic() end)
   end
+end
+
+---for buf_set_lines/text as them always disorder the cursor
+---@param winid integer
+---@param logic fun(): any
+---@return any @depends on logic()
+function M.winview(winid, logic)
+  local view = api.nvim_win_call(winid, function() return vim.fn.winsaveview() end)
+  local ok, result = xpcall(logic, debug.traceback)
+  api.nvim_win_call(winid, function() vim.fn.winrestview(view) end)
+
+  if not ok then error(result) end
+  return result
+end
+
+---do to all the windows being attached of a bufnr
+---@param bufnr integer
+---@param logic fun(): any
+---@return any @depends on logic()
+function M.bufviews(bufnr, logic)
+  ---@type {[integer]: any} @{winid: view}
+  local views = {}
+  do
+    local bufinfo = assert(vim.fn.getbufinfo(bufnr)[1])
+    for _, winid in ipairs(bufinfo.windows) do
+      views[winid] = api.nvim_win_call(winid, function() return vim.fn.winsaveview() end)
+    end
+  end
+
+  local ok, result = xpcall(logic, debug.traceback)
+
+  for winid, view in pairs(views) do
+    api.nvim_win_call(winid, function() vim.fn.winrestview(view) end)
+  end
+
+  if not ok then error(result) end
+  return result
 end
 
 return M

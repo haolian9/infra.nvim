@@ -61,9 +61,10 @@ return function(opts, lines)
   opts = resolve_opts(opts)
 
   local bufnr = api.nvim_create_buf(false, true)
+  --todo: support passing in bufnr, tabnew
   local bo = prefer.buf(bufnr)
 
-  ---intented to use no pairs(opts) here, to keep things obviously
+  ---intented to use no pairs(opts) here, to keep things obvious
 
   bo.bufhidden = opts.bufhidden
   bo.buftype = opts.buftype

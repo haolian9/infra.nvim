@@ -4,6 +4,7 @@
 ---* err or critical or fatal in here should not raise an error
 ---* each method should return nil
 
+local strfmt = require("infra.strfmt")
 local strlib = require("infra.strlib")
 
 local api = vim.api
@@ -28,7 +29,7 @@ if true then
     assert(opts.source ~= nil)
     local bold, normal, dim, red = "StatusLineBufStatus", "Normal", "StatusLineAltFile", "StatusLineFilePath"
     if level <= ll.DEBUG then
-      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, dim } }, false, {})
+      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, dim } }, true, {})
     elseif level < ll.WARN then
       api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, normal } }, true, {})
     else
@@ -52,13 +53,13 @@ end
 
 ---@param source string @who sent this message
 ---@return fun(format: string, ...: any)
-local function notify(source, level, min_level)
+local function shock(source, level, min_level)
   assert(source and level and min_level)
   if level < min_level then return function() end end
 
   return function(format, ...)
     local opts = { source = source }
-    if select("#", ...) ~= 0 then return provider(string.format(format, ...), level, opts) end
+    if select("#", ...) ~= 0 then return provider(strfmt(format, ...), level, opts) end
     assert(format ~= nil, "missing format")
     if strlib.find(format, "%s") == nil then return provider(format, level, opts) end
     error("unmatched args for format")
@@ -72,9 +73,9 @@ return function(source, min_level)
   min_level = assert(ll[min_level or "info"], "unknown log level")
 
   return {
-    debug = notify(source, ll.debug, min_level),
-    info = notify(source, ll.info, min_level),
-    warn = notify(source, ll.warn, min_level),
-    err = notify(source, ll.error, min_level),
+    debug = shock(source, ll.debug, min_level),
+    info = shock(source, ll.info, min_level),
+    warn = shock(source, ll.warn, min_level),
+    err = shock(source, ll.error, min_level),
   }
 end
