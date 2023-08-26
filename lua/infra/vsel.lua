@@ -24,6 +24,8 @@ M.max_col = 0x7fffffff
 ---@field stop_line number @0-indexed, exclusive
 ---@field stop_col number @0-indexed, exclusive
 
+--NB: it only works in normal mode
+--no plans to use line/col('v') here so far
 --* start_line 0-based, inclusive
 --* start_col  0-based, inclusive
 --* stop_line  0-based, exclusive

@@ -11,6 +11,8 @@ function M.editor(width, height, horizontal, vertical, border)
   border = border or 0
   assert(border < 3)
 
+  --todo: statusline and tabline matter too?
+
   local cols, lines = vim.go.columns, vim.go.lines
 
   local w = width < 1 and math.floor(cols * width) or width

@@ -97,7 +97,7 @@ return function(opts, lines)
     local name = (function()
       if opts.name then return opts.name end
       if opts.namefn then return opts.namefn(bufnr) end
-      if opts.namepat then return string.gsub(opts.namepat, "{bufnr}", bufnr) end
+      if opts.namepat then return select(1, string.gsub(opts.namepat, "{bufnr}", bufnr)) end
     end)()
     if name then bufrename(bufnr, name) end
   end
