@@ -79,6 +79,18 @@ do
       return fname, resolve_symlink_type(M.joinpath(root, fname))
     end
   end
+
+  ---@param root string @absolute path
+  ---@param resolve_symlink nil|boolean @nil=true
+  ---@return fun():string? @iterator -> basename
+  function M.iterfiles(root, resolve_symlink)
+    local iter = M.iterdir(root, resolve_symlink)
+    return function()
+      for fname, ftype in iter do
+        if ftype == "file" then return fname end
+      end
+    end
+  end
 end
 
 ---@param ... string

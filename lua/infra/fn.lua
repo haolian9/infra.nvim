@@ -199,8 +199,15 @@ do
   end
 end
 
+---equals to `a == nil and a or b`
 function M.nilor(a, b)
   if a ~= nil then return a end
+  return b
+end
+
+---the corrected version of `s == '' and nil or s`
+function M.neqor(eql, a, b)
+  if a ~= eql then return a end
   return b
 end
 
