@@ -1,5 +1,6 @@
 local M = {}
 
+local Augroup = require("infra.Augroup")
 local dictlib = require("infra.dictlib")
 
 local api = vim.api
@@ -30,11 +31,9 @@ local function new_local_descriptor(scope, checker)
 end
 
 do
-  local aug = api.nvim_create_augroup("prefer", { clear = true })
-  api.nvim_create_autocmd("user", {
-    group = aug,
+  local aug = Augroup("prefer")
+  aug:once("user", {
     pattern = "bootstrapped",
-    once = true,
     callback = function()
       M.def = setmetatable({}, {
         __index = function() error("not available after bootstrapped") end,

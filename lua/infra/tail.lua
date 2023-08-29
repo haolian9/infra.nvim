@@ -5,6 +5,7 @@
 local M = {}
 
 local api = vim.api
+local Augroup = require("infra.Augroup")
 local bufrename = require("infra.bufrename")
 local ex = require("infra.ex")
 local prefer = require("infra.prefer")
@@ -64,23 +65,23 @@ local function tail(bufnr, winid, fpath)
   local height = math.max(100, vim.fn.winheight(winid))
   local scrollback = math.floor(height / 2)
 
-  api.nvim_create_autocmd("TermOpen", {
-    buffer = bufnr,
-    once = true,
-    callback = function() prefer.bo(bufnr, "scrollback", scrollback) end,
+  local job
+
+  local aug = Augroup.buf(bufnr)
+  aug:once("TermOpen", { callback = function() prefer.bo(bufnr, "scrollback", scrollback) end })
+  aug:once("bufwipeout", {
+    callback = function()
+      aug:unlink()
+      vim.fn.jobstop(job)
+    end,
   })
 
-  local job
   do
     local cmd = { "tail", "-n", height + scrollback, "-f", fpath }
     job = vim.fn.termopen(cmd, { stderr_buffered = false, stdout_buffered = false, stdin = "" })
     --follow
     api.nvim_win_set_cursor(winid, { api.nvim_buf_line_count(bufnr), 0 })
   end
-
-  --cleanup the process and buffer
-  --intended to use bufwipeout rather than winclosed, due to :sp/:vs
-  api.nvim_create_autocmd("bufwipeout", { buffer = bufnr, once = true, callback = function() vim.fn.jobstop(job) end })
 
   bufrename(bufnr, string.format("tail://%s", fpath))
 end
