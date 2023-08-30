@@ -31,7 +31,7 @@ local function new_local_descriptor(scope, checker)
 end
 
 do
-  local aug = Augroup("prefer")
+  local aug = Augroup("prefer://")
   aug:once("user", {
     pattern = "bootstrapped",
     callback = function()

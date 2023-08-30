@@ -60,22 +60,59 @@ do
 end
 
 ---@param bufnr integer
+---@param autounlink? boolean @nil=false
 ---@return infra.Augroup
 function M.buf(bufnr, autounlink)
   assert(bufnr ~= nil and bufnr ~= 0)
   if autounlink == nil then autounlink = false end
-  local aug = Augroup("aug/buf/%d", bufnr)
+  local aug = Augroup("aug://buf/%d", bufnr)
 
-  ---@diagnostic disable: invisible
-  local orig = aug.append_aucmd
-  function aug:append_aucmd(event, opts)
-    if self.autounlink and string.lower(event) == "bufwipeout" then error("conflicted with autounlink") end
-    opts.buffer = bufnr
-    return orig(aug, event, opts)
+  do
+    aug.autounlink = false -- set it to false explicitly
+    ---@diagnostic disable: invisible
+    local orig = aug.append_aucmd
+    function aug:append_aucmd(event, opts)
+      if self.autounlink and string.lower(event) == "bufwipeout" then error("conflicted with autounlink") end
+      opts.buffer = bufnr
+      return orig(aug, event, opts)
+    end
   end
 
   if autounlink then
     aug:once("bufwipeout", { callback = function() aug:unlink() end })
+    aug.autounlink = autounlink
+  end
+
+  return aug
+end
+
+---@param winid integer
+---@param autounlink? boolean @nil=false
+---@return infra.Augroup
+function M.win(winid, autounlink)
+  assert(winid ~= nil and winid ~= 0)
+  if autounlink == nil then autounlink = false end
+  local aug = Augroup("aug://win/%d", winid)
+
+  do
+    aug.autounlink = false -- set it to false explicitly
+    ---@diagnostic disable: invisible
+    local orig = aug.append_aucmd
+    function aug:append_aucmd(event, opts)
+      if self.autounlink and string.lower(event) == "winclosed" then error("conflicted with autounlink") end
+      return orig(aug, event, opts)
+    end
+  end
+
+  if autounlink then
+    aug:repeats("winclosed", {
+      callback = function(args)
+        local this_winid = assert(tonumber(args.match))
+        if this_winid ~= winid then return end
+        aug:unlink()
+        return true
+      end,
+    })
     aug.autounlink = autounlink
   end
 
