@@ -7,8 +7,8 @@ local M = {}
 local api = vim.api
 local Augroup = require("infra.Augroup")
 local bufrename = require("infra.bufrename")
-local ex = require("infra.ex")
 local prefer = require("infra.prefer")
+local winsplit = require("infra.winsplit")
 
 ---@class canvas
 local canvas = {
@@ -104,7 +104,7 @@ function M.split_below(fpath)
     if held_winid ~= nil then
       winid = held_winid
     else
-      ex("rightbelow split")
+      winsplit("below")
       winid = api.nvim_get_current_win()
       api.nvim_win_set_height(winid, 10)
       prefer.wo(winid, "winfixheight", true)

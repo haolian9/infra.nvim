@@ -29,6 +29,8 @@ end
 --* <esc> to cancel; #return == 0
 --* <space> to finish early; #return < n
 --
+--NB: no ware of multibyte esc-seq
+--
 ---@param n number @n > 0
 ---@return string @#return >= 0
 function M.read_chars(n)
@@ -49,12 +51,15 @@ function M.read_chars(n)
       -- finished by space, cr
       break
     else
-      -- regardless of esc-sequence
+      --ignore other inputs
     end
     if #chars >= n then break end
   end
 
   return table.concat(chars, "")
 end
+
+---@return string,integer @char,code
+function M.read_raw() return read_char() end
 
 return M

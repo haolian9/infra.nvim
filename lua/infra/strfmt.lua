@@ -1,7 +1,7 @@
 local fn = require("infra.fn")
 local strlib = require("infra.strlib")
-local inspect_opts = { newline = " ", indent = "" }
 
+local inspect_opts = { newline = " ", indent = "" }
 local scalars = fn.toset({ "boolean", "number", "string" })
 
 ---@param format string
