@@ -234,7 +234,7 @@ end
 function M.chained(...) return M.iter_chained(M.map(M.iter, { ... })) end
 
 ---@param fn fun(el: any): boolean
----@return infra.Iterable.Any
+---@return infra.Iterator.Any
 function M.filter(fn, iterable)
   local it = M.iter(iterable)
   return function()

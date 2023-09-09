@@ -9,6 +9,8 @@ local cache = dictlib.CappedDict(512)
 -- * ("help", string.format("luaref-%s", keyword))
 -- known bugs
 -- * <leader>, <localleader>
+-- * ('ll', 1); `cc` as well
+-- * ('copen', 10)
 ---@param cmd string
 ---@param ... string|number
 ---@return string

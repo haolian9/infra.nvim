@@ -1,15 +1,6 @@
 local api = vim.api
 
-do
-  ---@enum infra.winsplit.Side
-  local side = {
-    above = "above",
-    below = "below",
-    left = "left",
-    right = "right",
-  }
-  local _ = side
-end
+---@alias infra.winsplit.Side 'above'|'below'|'left'|'right'
 
 local cmds = {
   above = { "split", "aboveleft" },
@@ -20,7 +11,7 @@ local cmds = {
 
 ---split current window, put new window according to the 'side' param
 ---@param side infra.winsplit.Side
----@param path? string
+---@param path? string @a path or bufname
 return function(side, path)
   local cmd, split = unpack(assert(cmds[side]))
   local args = { path }
