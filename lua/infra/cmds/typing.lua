@@ -1,9 +1,9 @@
-local api = vim.api
+---@alias infra.cmds.CompFn fun(prompt: ""|string, line: string, cursor: 1|integer): string[]
 
 do
   ---:h command-complete
-  ---@enum wizard.UsercmdComplete
-  local UsercmdComplete = {
+  ---@enum infra.cmds.CompLit
+  local Complete = {
     ---file names in argument list
     arglist = "arglist",
     ---autocmd groups
@@ -74,12 +74,12 @@ do
     var = "var",
   }
 
-  local _ = UsercmdComplete
+  local _ = Complete
 end
 
 do
   ---:h command-addr
-  ---@enum wizard.UsercmdAddr
+  ---@enum infra.cmds.Addr
   local UsercmdAddr = {
     ---Range of lines (this is the default for -range)
     lines = "lines",
@@ -102,14 +102,14 @@ do
 end
 
 ---:h command-attributes
----@class wizard.UsercmdAttrs
+---@class infra.cmds.Attrs
 ---
 ---@field nargs 0|1|'*'|'?'|'+'
----@field complete? wizard.UsercmdComplete|fun(prompt: ""|string, line: string, cursor: 1|integer): string[]
+---@field complete? infra.cmds.CompLit|infra.cmds.CompFn
 ---
 ---@field range? true|'%'|integer
 ---@field count? true|integer
----@field addr? wizard.UsercmdAddr
+---@field addr? infra.cmds.Addr
 ---
 ---The command can take a ! modifier (like :q or :w)
 ---@field bang? true
@@ -123,7 +123,7 @@ end
 ---Do not use the location of where the user command was defined for verbose messages, use the location of where the user command was invoked.
 ---@field keepscript? true
 
----@class UsercmdArgsSmods
+---@class infra.cmds.ArgsSmods
 ---@field browse        boolean
 ---@field confirm       boolean
 ---@field emsg_silent   boolean
@@ -145,7 +145,7 @@ end
 ---@field vertical      boolean
 
 ---:h command-args
----@class UsercmdArgs
+---@class infra.cmds.Args
 ---@field args   ""|string
 ---@field bang   boolean
 ---@field count  integer
@@ -156,14 +156,4 @@ end
 ---@field name   string
 ---@field range  integer
 ---@field reg    ""|string
----@field smod UsercmdArgsSmods
-
-local default_attrs = { nargs = 0 }
-
----@param name string
----@param handler fun(args: UsercmdArgs)|string
----@param attrs? wizard.UsercmdAttrs
-return function(name, handler, attrs)
-  attrs = attrs or default_attrs
-  api.nvim_create_user_command(name, handler, attrs)
-end
+---@field smod infra.cmds.ArgsSmods

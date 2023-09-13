@@ -340,4 +340,15 @@ function M.max(iterable)
   return val
 end
 
+---@param dict Dict
+---@return any,any
+function M.items(dict)
+  local i
+  return function()
+    local k, v = next(dict, i)
+    i = k
+    return k, v
+  end
+end
+
 return M
