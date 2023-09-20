@@ -48,6 +48,17 @@ function M.merged(...)
   return merged
 end
 
+--inplace merge
+---@param a Dict
+---@param ... Dict
+function M.merge(a, ...)
+  for i = 1, select("#", ...) do
+    for k, v in pairs(select(i, ...)) do
+      a[k] = v
+    end
+  end
+end
+
 ---@param dreams Dict
 ---@param ... string|number @trace
 function M.get(dreams, ...)

@@ -1,12 +1,14 @@
 local M = {}
 
+local dictlib = require("infra.dictlib")
+local fn = require("infra.fn")
 local prefer = require("infra.prefer")
 
 local api = vim.api
 
 ---@param bufnr integer
 ---@param logic fun()
-function M.no_undo(bufnr, logic)
+function M.noundo(bufnr, logic)
   local bo = prefer.buf(bufnr)
   local orig = bo.undolevels
   bo.undolevels = -1
@@ -96,6 +98,36 @@ function M.bufviews(bufnr, logic)
 
   if not ok then error(result) end
   return result
+end
+
+do
+  local function resolve_events(raw)
+    local t = type(raw)
+    if t == "table" then return fn.toset(raw) end
+    if t == "string" then return { [raw] = true } end
+    error("value error")
+  end
+
+  ---@param old string @`,` separated
+  ---@param adds string[]
+  ---@return string
+  local function resolve_new_setopt(old, adds)
+    local olds = fn.toset(fn.split_iter(old, ","))
+    local news = dictlib.merge(olds, adds)
+    return fn.join(dictlib.keys(news), ",")
+  end
+
+  ---@param event 'all'|string|string[]
+  ---@param logic fun()
+  function M.noautocmd(event, logic)
+    local events = resolve_events(event)
+
+    local old = vim.go.eventignore
+    vim.go.eventignore = resolve_new_setopt(old, events)
+    local ok, err = xpcall(logic, debug.traceback)
+    vim.go.eventignore = old
+    if not ok then error(err) end
+  end
 end
 
 return M
