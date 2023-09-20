@@ -13,11 +13,12 @@ end
 ---@param provider string[]|fun(): string[]
 ---@return fun(prompt: string): string[]
 function M.constant(provider)
-  local enum = enum_values(provider)
-
-  if #enum == 0 then return function() return {} end end
+  local enum
 
   return function(prompt)
+    if enum == nil then enum = assert(enum_values(provider)) end
+    if #enum == 0 then return {} end
+
     if #prompt == 0 then return enum end
     return fn.tolist(fn.filter(function(i) return strlib.startswith(i, prompt) end, enum))
   end
