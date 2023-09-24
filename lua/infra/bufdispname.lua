@@ -2,7 +2,6 @@
 
 -- protocol-like bufname used by plugins:
 -- * term://
--- * fugitive://
 -- * man://
 -- * kite://
 -- * pstree://
@@ -58,7 +57,6 @@ M.unnamed = {
     if ft == "qf" then return string.format("quickfix://%d", bufnr) end
     if ft == "help" then return string.format("help://%s", vim.fn.fnamemodify(bufname, ":t:r")) end
     if ft == "git" then return string.format("git://", project.working_root()) end
-    if ft == "GV" then return string.format("gv://", project.working_root()) end
     if ft == "checkhealth" then return "checkhealth" end
   end,
   ---@param bufnr integer
@@ -69,7 +67,6 @@ M.unnamed = {
     if ft == "qf" then return "quickfix" end
     if ft == "help" then return "help" end
     if ft == "git" then return "git" end
-    if ft == "GV" then return "gv" end
     if ft == "checkhealth" then return "health" end
   end,
   ---@param bufnr integer

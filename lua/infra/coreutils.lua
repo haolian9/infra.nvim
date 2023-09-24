@@ -7,20 +7,8 @@ local uv = vim.loop
 
 local bufpath = require("infra.bufpath")
 local bufrename = require("infra.bufrename")
-local ex = require("infra.ex")
 local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("infra.coreutils")
-
----@param fname string
----@param root ?string @root for fname
----@param open_cmd ?string @vs, sp, e, tabe ...
-function M.relative_edit(fname, root, open_cmd)
-  assert(fname ~= nil and fname ~= "")
-  root = root or vim.fn.expand("%:p:h")
-  open_cmd = open_cmd or "split"
-
-  ex(open_cmd, fs.joinpath(root, fname))
-end
 
 function M.touch(fpath)
   local file, err = uv.fs_open(fpath, "a", tonumber("600", 8))
@@ -80,20 +68,6 @@ function M.mkdir(path, mode, exists_ok)
   -- uv.fs_mkdir did not support `p` flag
   local suc = vim.fn.mkdir(path, "p", mode)
   return suc == 1
-end
-
----@param relpath string @relative path
----@param mode ?number @default 0o700
----@param exists_ok ?boolean @default true
-function M.relative_mkdir(relpath, mode, exists_ok)
-  mode = mode or tonumber("700", 8)
-  if exists_ok == nil then exists_ok = true end
-
-  local bufnr = api.nvim_get_current_buf()
-  local basepath = bufpath.dir(bufnr)
-  local path = fs.joinpath(basepath, relpath)
-
-  return M.mkdir(path, mode, exists_ok)
 end
 
 return M
