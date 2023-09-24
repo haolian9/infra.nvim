@@ -113,7 +113,7 @@ do
   ---@return string
   local function resolve_new_setopt(old, adds)
     local olds = fn.toset(fn.split_iter(old, ","))
-    local news = dictlib.merge(olds, adds)
+    local news = dictlib.merged(olds, adds)
     return fn.join(dictlib.keys(news), ",")
   end
 
