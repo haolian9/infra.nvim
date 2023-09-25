@@ -109,12 +109,15 @@ do
   end
 
   ---@param old string @`,` separated
-  ---@param adds string[]
+  ---@param adds {[string]: true}
   ---@return string
   local function resolve_new_setopt(old, adds)
-    local olds = fn.toset(fn.split_iter(old, ","))
-    local news = dictlib.merged(olds, adds)
-    return fn.join(dictlib.keys(news), ",")
+    local union = adds
+    if old ~= "" then
+      local olds = fn.toset(fn.split_iter(old, ","))
+      union = dictlib.merged(olds, adds)
+    end
+    return fn.join(dictlib.keys(union), ",")
   end
 
   ---@param event 'all'|string|string[]
