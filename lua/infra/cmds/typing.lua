@@ -1,105 +1,52 @@
 ---@alias infra.cmds.CompFn fun(prompt: ""|string, line: string, cursor: 1|integer): string[]
 
-do
-  ---:h command-complete
-  ---@enum infra.cmds.CompLit
-  local Complete = {
-    ---file names in argument list
-    arglist = "arglist",
-    ---autocmd groups
-    augroup = "augroup",
-    ---buffer names
-    buffer = "buffer",
-    ---:behave suboptions
-    behave = "behave",
-    ---color schemes
-    color = "color",
-    ---Ex command (and arguments)
-    command = "command",
-    ---compilers
-    compiler = "compiler",
-    ---directory names
-    dir = "dir",
-    ---environment variable names
-    environment = "environment",
-    ---autocommand events
-    event = "event",
-    ---Vim expression
-    expression = "expression",
-    ---file and directory names
-    file = "file",
-    ---file and directory names in |'path'|
-    file_in_path = "file_in_path",
-    ---filetype names |'filetype'|
-    filetype = "filetype",
-    ---function name
-    ["function"] = "function",
-    ---help subjects
-    help = "help",
-    ---highlight groups
-    highlight = "highlight",
-    ---:history suboptions
-    history = "history",
-    ---locale names (as output of locale -a)
-    locale = "locale",
-    ---Lua expression
-    lua = "lua",
-    ---buffer argument
-    mapclear = "mapclear",
-    ---mapping name
-    mapping = "mapping",
-    ---menus
-    menu = "menu",
-    ---|:messages| suboptions
-    messages = "messages",
-    ---options
-    option = "option",
-    ---optional package |pack-add| names
-    packadd = "packadd",
-    ---Shell command
-    shellcmd = "shellcmd",
-    ---|:sign| suboptions
-    sign = "sign",
-    ---syntax file names |'syntax'|
-    syntax = "syntax",
-    ---|:syntime| suboptions
-    syntime = "syntime",
-    ---tags
-    tag = "tag",
-    ---tags, file names are shown when CTRL-D is hit
-    tag_listfiles = "tag_listfiles",
-    ---user names
-    user = "user",
-    ---user variables
-    var = "var",
-  }
+---:h command-complete
+---@alias infra.cmds.CompLit
+---| '"arglist"'       # file names in argument list
+---| '"augroup"'       # autocmd groups
+---| '"buffer"'        # buffer names
+---| '"behave"'        # :behave suboptions
+---| '"color"'         # color schemes
+---| '"command"'       # Ex command (and arguments)
+---| '"compiler"'      # compilers
+---| '"dir"'           # directory names
+---| '"environment"'   # environment variable names
+---| '"event"'         # autocommand events
+---| '"expression"'    # Vim expression
+---| '"file"'          # file and directory names
+---| '"file_in_path"'  # file and directory names in |'path'|
+---| '"filetype"'      # filetype names |'filetype'|
+---| '"function"'      # function name
+---| '"help"'          # help subjects
+---| '"highlight"'     # highlight groups
+---| '"history"'       # :history suboptions
+---| '"locale"'        # locale names (as output of locale -a)
+---| '"lua"'           # Lua expression
+---| '"mapclear"'      # buffer argument
+---| '"mapping"'       # mapping name
+---| '"menu"'          # menus
+---| '"messages"'      # |:messages| suboptions
+---| '"option"'        # options
+---| '"packadd"'       # optional package |pack-add| names
+---| '"shellcmd"'      # Shell command
+---| '"sign"'          # |:sign| suboptions
+---| '"syntax"'        # syntax file names |'syntax'|
+---| '"syntime"'       # |:syntime| suboptions
+---| '"tag"'           # tags
+---| '"tag_listfiles"' # tags, file names are shown when CTRL-D is hit
+---| '"user"'          # user names
+---| '"var"'           # user variables
 
-  local _ = Complete
-end
-
-do
-  ---:h command-addr
-  ---@enum infra.cmds.Addr
-  local UsercmdAddr = {
-    ---Range of lines (this is the default for -range)
-    lines = "lines",
-    ---Range for arguments
-    arguments = "arguments",
-    ---Range for buffers (also not loaded buffers)
-    buffers = "buffers",
-    ---Range for loaded buffers
-    loaded_buffers = "loaded_buffers",
-    ---Range for windows
-    windows = "windows",
-    ---Range for tab pages
-    tabs = "tabs",
-    ---Range for quickfix entries
-    quickfix = "quickfix",
-    ---Other kind of range; can use ".", "$" and "%" as with "lines" (this is the default for -count)
-    other = "other",
-  }
-  local _ = UsercmdAddr
-end
+---:h command-addr
+---@alias infra.cmds.Addr
+---| '"lines"'          # Range of lines (this is the default for -range)
+---| '"arguments"'      # Range for arguments
+---| '"buffers"'        # Range for buffers (also not loaded buffers)
+---| '"loaded_buffers"' # Range for loaded buffers
+---| '"windows"'        # Range for windows
+---| '"tabs"'           # Range for tab pages
+---| '"quickfix"'       # Range for quickfix entries
+---| '"other"'          # Other kind of range; can use ".", "$" and "%" as with "lines" (this is the default for -count)
 
 ---:h command-attributes
 ---@class infra.cmds.Attrs
@@ -157,3 +104,4 @@ end
 ---@field range  integer
 ---@field reg    ""|string
 ---@field smod infra.cmds.ArgsSmods
+

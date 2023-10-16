@@ -230,6 +230,38 @@ local function test_13()
   assert(counts(dict) == counts(seen))
 end
 
+local function test_14()
+  do
+    local iter = M.range(5, 0, 1)
+    assert(M.iter_equals(iter, {}))
+  end
+
+  do
+    local iter = M.range(0, 5, -1)
+    assert(M.iter_equals(iter, {}))
+  end
+
+  do
+    local iter = M.range(5, 0, -1)
+    assert(M.iter_equals(iter, { 5, 4, 3, 2, 1 }))
+  end
+
+  do
+    local iter = M.range(0, 5, 1)
+    assert(M.iter_equals(iter, { 0, 1, 2, 3, 4 }))
+  end
+
+  do
+    local iter = M.range(0, 5)
+    assert(M.iter_equals(iter, { 0, 1, 2, 3, 4 }))
+  end
+
+  do
+    local iter = M.range(5)
+    assert(M.iter_equals(iter, { 0, 1, 2, 3, 4 }))
+  end
+end
+
 test_0()
 test_1()
 test_2()
@@ -244,3 +276,4 @@ test_10()
 test_11()
 test_12()
 test_13()
+test_14()

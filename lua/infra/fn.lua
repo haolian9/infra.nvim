@@ -296,25 +296,38 @@ function M.slice(iterable, start, stop)
   end
 end
 
--- same as python's range: inclusive start, exclusive stop
----@param start number
----@param stop number?
----@param step number?
----@return infra.Iterator.Any
-function M.range(start, stop, step)
-  if stop == nil then
-    stop = start
-    start = 0
-  end
-  assert(stop >= start)
-  step = step or 1
-  assert(step > 0)
+---forms:
+---* (3)
+---* (0, 3)
+---* (0, 3, 1)
+---* (3, 0, -1)
+---@param from integer @inclusive
+---@param to? integer @exclusive, nil=0
+---@param step? integer @nil=1
+function M.range(from, to, step)
+  assert(step ~= 0)
 
-  local cursor = start - step
-  return function()
-    cursor = cursor + step
-    if stop <= cursor then return end
-    return cursor
+  if to == nil then
+    assert(step == nil)
+    from, to, step = 0, from, 1
+  end
+
+  if step == nil then step = 1 end
+
+  if step > 0 then --asc
+    local cursor = from - step
+    return function()
+      cursor = cursor + step
+      if cursor >= to then return end
+      return cursor
+    end
+  else --desc
+    local cursor = from - step
+    return function()
+      cursor = cursor + step
+      if cursor <= to then return end
+      return cursor
+    end
   end
 end
 
