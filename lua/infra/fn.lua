@@ -13,36 +13,34 @@ local listlib = require("infra.listlib")
 
 -- parts can be empty string
 ---@param str string
----@param del string
+---@param delimiter string
 ---@param maxsplit number? @specified or infinited
----@param keepends boolean? @specified or false
+---@param keepend boolean? @specified or false
 ---@return infra.Iterator.Str
-function M.split_iter(str, del, maxsplit, keepends)
-  keepends = keepends or false
+function M.split_iter(str, delimiter, maxsplit, keepend)
+  keepend = keepend or false
 
-  local pattern = del
-  local finished = false
   local cursor = 1
-  local remain = (maxsplit or math.huge) + 1
+  local remain_splits = (maxsplit or math.huge) + 1
 
   return function()
-    if finished then return end
+    if remain_splits < 1 then return end
 
-    if remain == 1 then
-      finished = true
+    if remain_splits == 1 then
+      remain_splits = 0
       return str:sub(cursor)
     end
 
-    local del_start, del_stop = str:find(pattern, cursor, true)
+    local del_start, del_stop = str:find(delimiter, cursor, true)
     if del_start == nil or del_stop == nil then
-      finished = true
+      remain_splits = 0
       return str:sub(cursor)
     end
 
-    remain = remain - 1
+    remain_splits = remain_splits - 1
     local start = cursor
     local stop = del_start - 1
-    if keepends then stop = del_stop end
+    if keepend then stop = del_stop end
     cursor = del_stop + 1
     return str:sub(start, stop)
   end
@@ -50,13 +48,13 @@ end
 
 -- parts can be empty string
 ---@return string[]
-function M.split(str, del, maxsplit, keepends) return M.tolist(M.split_iter(str, del, maxsplit, keepends)) end
+function M.split(str, delimiter, maxsplit, keepend) return M.tolist(M.split_iter(str, delimiter, maxsplit, keepend)) end
 
 ---@param iterable infra.Iterable.Str
----@param del ?string @specified or ""
+---@param separator ?string @specified or ""
 ---@return string
-function M.join(iterable, del)
-  del = del or ""
+function M.join(iterable, separator)
+  separator = separator or ""
   local list
   do
     local iter_type = type(iterable)
@@ -68,7 +66,7 @@ function M.join(iterable, del)
       error("unexpected type: " .. iter_type)
     end
   end
-  return table.concat(list, del)
+  return table.concat(list, separator)
 end
 
 ---@param iterable function|table @iterator or list
