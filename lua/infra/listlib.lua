@@ -26,7 +26,7 @@ end
 function M.extend(a, b)
   local b_type = type(b)
   if b_type == "table" then
-    for el in M.iter(b) do
+    for _, el in ipairs(b) do
       table.insert(a, el)
     end
   elseif b_type == "function" then

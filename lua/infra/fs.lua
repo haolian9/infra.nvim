@@ -12,12 +12,12 @@ local uv = vim.loop
 local api = vim.api
 
 do
+  local function istype(mode, mask) return bit.band(mode, mask) == mask end
+  local max_link_level = 8
+
   --alternative to vim.fn.resolve
   ---@return string @the resolved file type
   local function resolve_symlink_type(fpath)
-    local function istype(mode, mask) return bit.band(mode, mask) == mask end
-    local max_link_level = 8
-
     local next = fpath
     local remain = max_link_level
     while remain > 0 do

@@ -91,17 +91,17 @@
 ---@field verbose       -1|integer
 ---@field vertical      boolean
 
----:h command-args
+---:h nvim_create_user_command
 ---@class infra.cmds.Args
----@field args   ""|string
----@field bang   boolean
----@field count  integer
----@field fargs  string[]
----@field line1  integer
----@field line2  integer
----@field mods   ""|string
----@field name   string
----@field range  integer
----@field reg    ""|string
----@field smod infra.cmds.ArgsSmods
+---@field name  string               @Command name
+---@field args  ""|string            @The args passed to the command, if any
+---@field fargs string[]
+---@field bang  boolean              @the bang modifier
+---@field count integer              @Any count supplied
+---@field line1 integer              @The starting line of the command range
+---@field line2 integer              @The final line of the command range
+---@field mods  ""|string            @Command modifiers, if any
+---@field range integer              @The number of items in the command range: 0, 1, or 2
+---@field reg   ""|string            @The optional register, if specified
+---@field smod  infra.cmds.ArgsSmods @Command modifiers in a structured format. Has the same structure as the "mods" key of |nvim_parse_cmd()|
 
