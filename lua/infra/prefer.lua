@@ -32,7 +32,7 @@ end
 
 do
   local aug = Augroup("prefer://")
-  aug:once("user", {
+  aug:once("User", {
     pattern = "bootstrapped",
     callback = function()
       M.def = setmetatable({}, {

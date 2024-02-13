@@ -202,7 +202,7 @@ do
     end
 
     if autounlink then
-      aug:once("bufwipeout", { callback = function() aug:unlink() end })
+      aug:once("BufWipeout", { callback = function() aug:unlink() end })
       aug.autounlink = autounlink
     end
 
@@ -228,7 +228,7 @@ do
     end
 
     if autounlink then
-      aug:repeats("winclosed", {
+      aug:repeats("WinClosed", {
         callback = function(args)
           local this_winid = assert(tonumber(args.match))
           if this_winid ~= winid then return end

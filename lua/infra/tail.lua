@@ -69,7 +69,7 @@ local function tail(bufnr, winid, fpath)
 
   local aug = Augroup.buf(bufnr)
   aug:once("TermOpen", { callback = function() prefer.bo(bufnr, "scrollback", scrollback) end })
-  aug:once("bufwipeout", {
+  aug:once("BufWipeout", {
     callback = function()
       aug:unlink()
       vim.fn.jobstop(job)
