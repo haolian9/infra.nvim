@@ -2,9 +2,9 @@ local M = {}
 
 --forced to plain-match
 ---@param haystack string
----@param substr string
+---@param needle string
 ---@param start? number
-function M.find(haystack, substr, start) return string.find(haystack, substr, start, true) end
+function M.find(haystack, needle, start) return string.find(haystack, needle, start, true) end
 
 do
   local function rfind(haystack, needle)
