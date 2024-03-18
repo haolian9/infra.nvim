@@ -34,6 +34,24 @@ do
   end
 end
 
+---a wrapper on api.nvim_open_win without alternate-file
+---@param bufnr integer
+---@param enter boolean
+---@param opts table
+---@return integer
+function M.win(bufnr, enter, opts)
+  local winid = api.nvim_open_win(bufnr, enter, opts)
+
+  --to clear alternate-file, thanks to ii14
+  if enter then
+    vim.fn.setreg("#", bufnr)
+  else
+    api.nvim_win_call(winid, function() vim.fn.setreg("#", bufnr) end)
+  end
+
+  return winid
+end
+
 do
   ---@class infra.rifts.ExtraOpenOpts
   ---@field width       number @<1, &columns%; >=1, columns
@@ -51,7 +69,7 @@ do
     return dictlib.merged(basic, geo.editor(extra.width, extra.height, extra.horizontal, extra.vertical, resolve_border(basic)))
   end
 
-  ---opinionated nvim_open_win
+  ---opinionated api.nvim_open_win
   ---* relative     to editor
   ---* width/height float|integer
   ---* horizontal   for col
@@ -67,14 +85,20 @@ do
     assert(basic_opts.relative == "editor")
 
     if extra_opts == nil then
-      local winid = api.nvim_open_win(bufnr, enter, basic_opts)
+      local winid = M.win(bufnr, enter, basic_opts)
       api.nvim_win_set_hl_ns(winid, facts.ns)
       return winid
     end
 
-    local winid = api.nvim_open_win(bufnr, enter, resolve_winopts(basic_opts, extra_opts))
-    if extra_opts.ns == false then return winid end
-    api.nvim_win_set_hl_ns(winid, fn.nilor(extra_opts.ns, facts.ns))
+    local winid = M.win(bufnr, enter, resolve_winopts(basic_opts, extra_opts))
+    if extra_opts.ns == nil then
+      api.nvim_win_set_hl_ns(winid, facts.ns)
+    elseif extra_opts.ns == false then
+      --pass, no setting ns
+    else
+      api.nvim_win_set_hl_ns(winid, extra_opts.ns)
+    end
+
     return winid
   end
 end
@@ -87,18 +111,22 @@ do
     return dictlib.merged(basic, geo.fullscreen(resolve_border(basic)))
   end
 
+  ---no covering cmdline
+  ---todo: may conflict with vim.ui.ext.cmdline
   ---@param bufnr integer
   ---@param enter boolean
   ---@param basic_opts infra.rifts.BasicOpenOpts
-  ---@param extra_opts? {ns: nil|integer|false}
+  ---@param extra_opts? {ns: nil|integer|false, laststatus3?: boolean}
   function M.fullscreen(bufnr, enter, basic_opts, extra_opts)
     assert(basic_opts ~= nil)
     assert(basic_opts.relative == "editor")
     extra_opts = extra_opts or {}
 
-    local winid = api.nvim_open_win(bufnr, enter, resolve_winopts(basic_opts))
-    if extra_opts.ns ~= false then api.nvim_win_set_hl_ns(winid, extra_opts.ns or facts.ns) end
+    local winopts = resolve_winopts(basic_opts)
+    if extra_opts.laststatus3 and vim.go.laststatus == 3 then winopts.height = winopts.height - 1 end
 
+    local winid = M.win(bufnr, enter, winopts)
+    if extra_opts.ns ~= false then api.nvim_win_set_hl_ns(winid, extra_opts.ns or facts.ns) end
     return winid
   end
 end
