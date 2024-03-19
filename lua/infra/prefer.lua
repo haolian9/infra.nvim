@@ -71,13 +71,21 @@ function M.monkeypatch()
   vim.bo = setmetatable({}, {
     __index = function(_, k)
       if type(k) == "number" then return M.buf(k) end
-      return M.bo(0, k)
+      return M.bo(api.nvim_get_current_buf(), k)
+    end,
+    __newindex = function(_, k, v)
+      assert(type(k) == "string")
+      M.bo(api.nvim_get_current_buf(), k, v)
     end,
   })
   vim.wo = setmetatable({}, {
     __index = function(_, k)
       if type(k) == "number" then return M.win(k) end
-      return M.wo(0, k)
+      return M.wo(api.nvim_get_current_win(), k)
+    end,
+    __newindex = function(_, k, v)
+      assert(type(k) == "string")
+      M.wo(api.nvim_get_current_win(), k, v)
     end,
   })
 
