@@ -17,16 +17,16 @@ function M.file(bufnr, should_exist)
   local bufname = api.nvim_buf_get_name(bufnr)
   if bufname == "" then return end
 
-  local path
+  local fpath
   if fs.is_absolute(bufname) then
-    path = bufname
+    fpath = bufname
   else
-    path = vim.fn.fnamemodify(bufname, "%:p")
+    fpath = vim.fn.fnamemodify(bufname, "%:p")
   end
 
-  if should_exist and not fs.exists(path) then return end
+  if should_exist and not fs.file_exists(fpath) then return end
 
-  return path
+  return fpath
 end
 
 ---based on buftype={help,""} and bufname
@@ -44,15 +44,15 @@ function M.dir(bufnr, should_exists)
   local bufname = api.nvim_buf_get_name(bufnr)
   if bufname == "" then return getcwd() end
 
-  local path
+  local dir
   if fs.is_absolute(bufname) then
-    path = fs.parent(bufname)
+    dir = fs.parent(bufname)
   else
-    path = vim.fn.fnamemodify(bufname, "%:p:h")
+    dir = vim.fn.fnamemodify(bufname, "%:p:h")
   end
 
-  if should_exists and not fs.exists(path) then return end
-  return path
+  if should_exists and not fs.dir_exists(dir) then return end
+  return dir
 end
 
 return M

@@ -11,12 +11,28 @@ local strlib = require("infra.strlib")
 local uv = vim.loop
 local api = vim.api
 
+---see /usr/include/linux/stat.h
+---* IFIFO  = 0o010000 -> 0x1000
+---* IFCHR  = 0o020000 -> 0x2000
+---* IFDIR  = 0o040000 -> 0x4000
+---* IFBLK  = 0o060000 -> 0x6000
+---* IFREG  = 0o100000 -> 0x8000
+---* IFLNK  = 0o120000 -> 0xa000
+---* IFSOCK = 0o140000 -> 0xc000
+local IFIFO = 0x1000
+local IFCHR = 0x2000
+local IFDIR = 0x4000
+local IFBLK = 0x6000
+local IFREG = 0x8000
+local IFLNK = 0xa000
+local IFSOCK = 0xc000
+
+local function is_type(mode, mask) return bit.band(mode, mask) == mask end
+
 do
-  local function istype(mode, mask) return bit.band(mode, mask) == mask end
   local max_link_level = 8
 
-  --alternative to vim.fn.resolve
-  ---@return string @the resolved file type
+  ---@return 'directory'|'file'|'fifo'|'char'|'block'|'socket'
   local function resolve_symlink_type(fpath)
     local next = fpath
     local remain = max_link_level
@@ -26,32 +42,25 @@ do
       next = uv.fs_realpath(next)
       local stat = uv.fs_stat(next)
 
-      -- IFIFO  = 0o010000 -> 0x1000
-      -- IFCHR  = 0o020000 -> 0x2000
-      -- IFDIR  = 0o040000 -> 0x4000
-      -- IFBLK  = 0o060000 -> 0x6000
-      -- IFREG  = 0o100000 -> 0x8000
-      -- IFLNK  = 0o120000 -> 0xa000
-      -- IFSOCK = 0o140000 -> 0xc000
-
       local type
-      if istype(stat.mode, 0xa000) then
+      if is_type(stat.mode, IFLNK) then
         type = "link"
-      elseif istype(stat.mode, 0x4000) then
+      elseif is_type(stat.mode, IFDIR) then
         type = "directory"
-      elseif bit.band(stat.mode, 0x8000) then
+      elseif is_type(stat.mode, IFREG) then
         type = "file"
-      elseif bit.band(stat.mode, 0x1000) then
+      elseif is_type(stat.mode, IFIFO) then
         type = "fifo"
-      elseif bit.band(stat.mode, 0x2000) then
+      elseif is_type(stat.mode, IFCHR) then
         type = "char"
-      elseif bit.band(stat.mode, 0x6000) then
+      elseif is_type(stat.mode, IFBLK) then
         type = "block"
-      elseif bit.band(stat.mode, 0xc000) then
+      elseif is_type(stat.mode, IFSOCK) then
         type = "socket"
       else
         error(string.format("unexpected file type, mode=%s file=%s", stat.mode, fpath))
       end
+      ---@diagnostic disable-next-line: return-type-mismatch
       if type ~= "link" then return type end
     end
 
@@ -202,13 +211,16 @@ function M.shorten(path)
   return table.concat(parts, "/")
 end
 
----@param fpath string
----@return boolean
-function M.exists(fpath)
-  local stat, msg, err = uv.fs_stat(fpath)
-  if stat ~= nil then return true end
-  if err == "ENOENT" then return false end
-  error(msg)
+function M.file_exists(fpath)
+  local stat = uv.fs_stat(fpath)
+  if stat == nil then return false end
+  return is_type(stat.mode, IFREG)
+end
+
+function M.dir_exists(fpath)
+  local stat = uv.fs_stat(fpath)
+  if stat == nil then return false end
+  return is_type(stat.mode, IFDIR)
 end
 
 ---@param path string

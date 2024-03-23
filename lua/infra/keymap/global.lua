@@ -26,6 +26,7 @@ do
     c = function(lhs, rhs) noremap("c", lhs, rhs) end,
     x = function(lhs, rhs) noremap("x", lhs, rhs) end,
     o = function(lhs, rhs) noremap("o", lhs, rhs) end,
+    s = function(lhs, rhs) noremap("s", lhs, rhs) end,
   }, {
     __call = function(_, modes, lhs, rhs)
       if type(modes) == "string" then return noremap(modes, lhs, rhs) end
