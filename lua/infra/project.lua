@@ -9,6 +9,7 @@ local subprocess = require("infra.subprocess")
 
 local api = vim.api
 
+---@return string
 function M.working_root()
   --- no uv.cwd() because it's not aware of tcd/cd
   return vim.fn.getcwd()
@@ -23,10 +24,8 @@ do
   function M.git_root(bufnr)
     bufnr = bufnr or api.nvim_get_current_buf()
 
-    if prefer.bo(bufnr, "buftype") ~= "" then return jelly.warn("not a regular buffer") end
-
     local basedir = bufpath.dir(bufnr, true)
-    if basedir == nil then return jelly.info("cant resolve the basedir using buf#%d", bufnr) end
+    if basedir == nil then return end
 
     local root
     local held = cache[basedir]

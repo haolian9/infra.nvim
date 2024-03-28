@@ -1,7 +1,6 @@
 local M = {}
 
 local dictlib = require("infra.dictlib")
-local fn = require("infra.fn")
 local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
 
