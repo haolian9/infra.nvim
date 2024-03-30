@@ -1,31 +1,96 @@
 -- inspired by vim-repeat
 
+--todo: ex("normal! ,") vs feedkeys
+
 local M = {}
 
 local api = vim.api
-local ex = require("infra.ex")
 
-local state = {
-  ---@type table<number, fun()>
-  callback = {},
-  ---@type table<number, fun()>
-  tick = {},
-}
+do
+  local state = {
+    ---@type {[integer]: fun()}
+    redo = {},
+    ---@type {[integer]: integer}
+    tick = {},
+  }
 
-function M.remember(bufnr, callback)
-  state.tick[bufnr] = api.nvim_buf_get_changedtick(bufnr)
-  state.callback[bufnr] = callback
+  ---@param bufnr integer
+  ---@param redo fun()
+  function M.remember_redo(bufnr, redo)
+    state.tick[bufnr] = api.nvim_buf_get_changedtick(bufnr)
+    state.redo[bufnr] = redo
+  end
+
+  --should be only used in normal mode
+  function M.rhs_dot(bufnr)
+    local last_tick = state.tick[bufnr]
+    if last_tick == nil then return api.nvim_feedkeys(".", "n", false) end
+
+    local held_tick = api.nvim_buf_get_changedtick(bufnr)
+    if held_tick ~= last_tick then
+      state.tick[bufnr] = nil
+      state.redo[bufnr] = nil
+      return api.nvim_feedkeys(".", "n", false)
+    end
+
+    assert(state.redo[bufnr])()
+  end
 end
 
-local function vanilla_dot() ex("normal", ".") end
+do
+  --to repeat f/t/F/T, using `,` and `;`
+  --global, no buffer-local
 
-function M.dot(bufnr)
-  local held_tick = api.nvim_buf_get_changedtick(bufnr)
-  local repeatfn = state.callback[bufnr]
-  local last_tick = state.tick[bufnr]
-  if held_tick ~= last_tick then return vanilla_dot() end
-  assert(repeatfn, "unreachable")
-  repeatfn()
+  local state = {
+    ---@type fun()
+    next = nil,
+    ---@type fun()
+    prev = nil,
+  }
+
+  ---@param next fun()
+  ---@param prev fun()
+  function M.remember_charsearch(next, prev)
+    vim.fn.setcharsearch({ char = "" })
+    state.next = next
+    state.prev = prev
+  end
+
+  local function comma()
+    if state.prev == nil then return api.nvim_feedkeys(",", "n", false) end
+
+    if vim.fn.getcharsearch().char ~= "" then
+      state.prev = nil
+      return api.nvim_feedkeys(",", "n", false)
+    end
+
+    if state.prev then return state.prev() end
+  end
+
+  --should be only used in normal mode
+  function M.rhs_comma()
+    for _ = 1, vim.v.count1 do
+      comma()
+    end
+  end
+
+  local function semicolon()
+    if state.next == nil then return api.nvim_feedkeys(";", "n", false) end
+
+    if vim.fn.getcharsearch().char ~= "" then
+      state.next = nil
+      return api.nvim_feedkeys(";", "n", false)
+    end
+
+    if state.next then return state.next() end
+  end
+
+  --should be only used in normal mode
+  function M.rhs_semicolon()
+    for _ = 1, vim.v.count1 do
+      semicolon()
+    end
+  end
 end
 
 return M

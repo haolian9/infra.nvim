@@ -97,9 +97,12 @@ end
 ---@param bufnr ?number
 ---@return nil|string
 function M.oneline_escaped(bufnr)
+  assert(vim.go.magic)
+
   local raw = M.oneline_text(bufnr)
   if raw == nil then return end
-  return vim.fn.escape(raw, [[.*~$/()]])
+
+  return vim.fn.escape(raw, [[.$*~\/]])
 end
 
 ---@param bufnr ?number

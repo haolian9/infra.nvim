@@ -90,8 +90,8 @@ function M.monkeypatch()
   })
 
   vim.o = setmetatable({}, {
-    __index = function() error("use vim.{g,b,w}o instead") end,
-    __newindex = function() error("use vim.{g,b,w}o instead") end,
+    __index = function(_, key) error(string.format("trying to access %s, use vim.{g,b,w}o instead", key)) end,
+    __newindex = function(_, key, val) error(string.format("trying to set %s=%s, use vim.{g,b,w}o instead", key, val)) end,
   })
 end
 
