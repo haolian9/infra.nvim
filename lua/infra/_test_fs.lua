@@ -91,17 +91,17 @@ local function test_4()
   assert(M.basename("a") == "a")
   assert(M.basename("/a/b") == "b")
   assert(M.basename("a/b") == "b")
+  assert(M.basename("/") == "/")
 
-  assert(not pcall(M.basename, "/"))
   assert(not pcall(M.basename, ""))
 
   assert(M.parent("/a") == "/")
   assert(M.parent("/a/b") == "/a")
   assert(M.parent("a/b") == "a")
+  assert(M.parent("/") == "/")
 
   assert(not pcall(M.parent, "a"))
   assert(not pcall(M.parent, ""))
-  assert(not pcall(M.parent, "/"))
 end
 
 local function test_5()

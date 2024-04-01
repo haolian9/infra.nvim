@@ -32,7 +32,9 @@ local function is_type(mode, mask) return bit.band(mode, mask) == mask end
 do
   local max_link_level = 8
 
-  ---@return 'directory'|'file'|'fifo'|'char'|'block'|'socket'
+  ---@alias SolidFileType 'directory'|'file'|'fifo'|'char'|'block'|'socket'
+
+  ---@return SolidFileType
   local function resolve_symlink_type(fpath)
     local next = fpath
     local remain = max_link_level
@@ -68,32 +70,26 @@ do
   end
 
   ---@param root string @absolute path
-  ---@param resolve_symlink nil|boolean @nil=true
-  ---@return fun():string?,string? @iterator -> {basename, file-type}
-  function M.iterdir(root, resolve_symlink)
-    local ok, scanner = pcall(uv.fs_scandir, root)
-    if not ok then
-      jelly.warn("failed to scan dir=%s, err=%s", root, scanner)
+  ---@return fun(): string?, SolidFileType?
+  function M.iterdir(root)
+    local scanner, err = uv.fs_scandir(root)
+    if err ~= nil then
+      jelly.warn(err)
       return function() end
     end
 
-    if scanner == nil then return function() end end
-
-    -- must be set to true explictly
-    if resolve_symlink == true then return function() return uv.fs_scandir_next(scanner) end end
-
     return function()
       local fname, ftype = uv.fs_scandir_next(scanner)
-      if ftype ~= "link" then return fname, ftype end
-      return fname, resolve_symlink_type(M.joinpath(root, fname))
+      if fname == nil then return end
+      if ftype == "link" then ftype = resolve_symlink_type(M.joinpath(root, fname)) end
+      return fname, ftype
     end
   end
 
   ---@param root string @absolute path
-  ---@param resolve_symlink nil|boolean @nil=true
-  ---@return fun():string? @iterator -> basename
-  function M.iterfiles(root, resolve_symlink)
-    local iter = M.iterdir(root, resolve_symlink)
+  ---@return fun(): string? @iterator -> basename
+  function M.iterfiles(root)
+    local iter = M.iterdir(root)
     return function()
       for fname, ftype in iter do
         if ftype == "file" then return fname end
@@ -105,30 +101,24 @@ end
 ---@param ... string
 ---@return string
 function M.joinpath(...)
-  local args
-  do
-    args = { ... }
-    if #args == 0 then return "" end
-    if #args == 1 then return args[1] end
-    -- no trailing /
-    args[#args] = strlib.rstrip(args[#args], "/")
-  end
+  local args = { ... }
+  if #args == 0 then return "" end
+  if #args == 1 then return args[1] end
+  --deal with trailing /
+  args[#args] = strlib.rstrip(args[#args], "/")
 
-  local parts
-  do
-    parts = args
-    -- new root
-    for i = #args, 2, -1 do
-      if strlib.startswith(args[i], "/") then
-        parts = fn.slice(args, i, #args + 1)
-        break
-      end
+  ---@type string[]|fun(): string?
+  local parts = args
+  --deal with new root
+  for i = #args, 2, -1 do
+    if strlib.startswith(args[i], "/") then
+      parts = fn.slice(args, i, #args + 1)
+      break
     end
   end
 
   local path
-  do
-    -- stole from: https://github.com/neovim/neovim/commit/189fb6203262340e7a59e782be970bcd8ae28e61#diff-fecfd503a1c28e0a28a91da0294b12dbc72f081cb12434459648a44f641b68d9
+  do -- stole from: https://github.com/neovim/neovim/commit/189fb6203262340e7a59e782be970bcd8ae28e61#diff-fecfd503a1c28e0a28a91da0294b12dbc72f081cb12434459648a44f641b68d9
     path = fn.join(parts, "/")
     path = string.gsub(path, [[/+]], "/")
   end
