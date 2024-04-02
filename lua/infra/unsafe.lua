@@ -48,9 +48,6 @@ ffi.cdef([[
   } histentry_T;
   const void *hist_iter(const void *const iter, const uint8_t history_type, const bool zero, histentry_T *const hist);
 
-  // nvim/message.c
-  void wait_return(int redraw);
-
 
 // sys
 
@@ -183,8 +180,5 @@ function M.hist_iter()
     end
   end
 end
-
----@param mode 0|1|-1 @full draw, normal redraw, no redraw
-function M.wait_return(mode) C.wait_return(mode) end
 
 return M
