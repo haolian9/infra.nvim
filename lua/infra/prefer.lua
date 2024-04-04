@@ -1,6 +1,6 @@
 local M = {}
 
-local Augroup = require("infra.Augroup")
+local augroups = require("infra.augroups")
 local dictlib = require("infra.dictlib")
 
 local api = vim.api
@@ -31,7 +31,7 @@ local function new_local_descriptor(scope, checker)
 end
 
 do
-  local aug = Augroup("prefer://")
+  local aug = augroups.Augroup("prefer://")
   aug:once("User", {
     pattern = "bootstrapped",
     callback = function()

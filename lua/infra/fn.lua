@@ -47,6 +47,9 @@ function M.split_iter(str, delimiter, maxsplit, keepend)
 end
 
 -- parts can be empty string
+---@param delimiter string
+---@param maxsplit number? @specified or infinited
+---@param keepend boolean? @specified or false
 ---@return string[]
 function M.split(str, delimiter, maxsplit, keepend) return M.tolist(M.split_iter(str, delimiter, maxsplit, keepend)) end
 

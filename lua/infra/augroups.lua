@@ -1,3 +1,5 @@
+local dictlib = require("infra.dictlib")
+
 local api = vim.api
 
 ---@alias infra.AugroupEvent
@@ -125,7 +127,7 @@ local api = vim.api
 
 --mandatory fields: group, (buffer vs. pattern)
 ---@class infra.AugroupCreateOpts
----@field bufnr? integer
+---@field buffer? integer
 ---@field pattern? string|string[]
 ---@field desc? string
 ---@field callback fun(args: {id: integer, event: string, group?: integer, match: string, buf: integer, file: string, data: any}): nil|true
@@ -134,77 +136,117 @@ local api = vim.api
 ---@field nested? boolean @nil=false
 ---@field group? integer @should only be set by Augroup internally
 
-local Augroup
+---@class infra.Augroup
+---@field group integer
+local Augroup = {}
 do
-  ---@class infra.Augroup
-  ---@field group integer
-  ---@field free_count integer
-  ---@field autounlink? boolean @nil=unset
-  local Prototype = {}
-
-  Prototype.__index = Prototype
+  Augroup.__index = Augroup
 
   ---@private
-  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
+  ---@param event infra.AugroupEvent
   ---@param opts infra.AugroupCreateOpts
   ---@return integer @autocmd id
-  function Prototype:append_aucmd(event, opts)
+  function Augroup:append_aucmd(event, opts)
     opts.group = self.group
     return api.nvim_create_autocmd(event, opts)
   end
 
-  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
+  ---@param event infra.AugroupEvent
   ---@param opts infra.AugroupCreateOpts
-  function Prototype:repeats(event, opts)
+  function Augroup:repeats(event, opts)
     assert(opts.once ~= true)
     return self:append_aucmd(event, opts)
   end
 
-  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
+  ---@param event infra.AugroupEvent
   ---@param opts infra.AugroupCreateOpts
-  function Prototype:once(event, opts)
+  function Augroup:once(event, opts)
     opts.once = true
     return self:append_aucmd(event, opts)
   end
 
-  function Prototype:unlink() api.nvim_del_augroup_by_id(self.group) end
+  function Augroup:unlink() api.nvim_del_augroup_by_id(self.group) end
 
-  ---mandatory clearing augroup
-  ---@param fmt string
-  ---@param ... any
-  ---@return infra.Augroup
-  function Augroup(fmt, ...)
-    local group = api.nvim_create_augroup(string.format(fmt, ...), { clear = true })
+  ---emit group-scoped events
+  ---@param event string
+  ---@param opts {buffer?: integer, pattern: nil|string|string[], modeline: nil|boolean, data: any}
+  function Augroup:emit(event, opts) api.nvim_exec_autocmds(event, dictlib.merged(opts, { group = self.group })) end
+end
 
-    return setmetatable({ group = group, free_count = 0 }, Prototype)
+---@class infra.BufAugroup: infra.Augroup
+---@field private bufnr integer
+---@field private autounlink boolean
+local BufAugroup = setmetatable({}, Augroup)
+do
+  BufAugroup.__index = BufAugroup
+
+  ---@private
+  ---@param event infra.AugroupEvent
+  ---@param opts infra.AugroupCreateOpts
+  ---@return integer @autocmd id
+  function BufAugroup:append_aucmd(event, opts)
+    if self.autounlink and string.lower(event) == "bufwipeout" then error("conflicted with autounlink") end
+
+    opts.buffer = self.bufnr
+    return Augroup.append_aucmd(self, event, opts)
+  end
+
+  ---emit {group,buffer}-scoped events
+  ---@param event string
+  ---@param opts {modeline: nil|boolean, data: any}
+  function BufAugroup:emit(event, opts)
+    ---@diagnostic disable: undefined-field, inject-field
+    assert(opts.pattern ~= nil, "buffer and pattern are exclusive in opts")
+
+    opts.group = self.group
+    opts.buffer = self.bufnr
+    api.nvim_exec_autocmds(event, opts)
+  end
+end
+
+---@class infra.augroups.WinAugroup: infra.Augroup
+---@field private autounlink boolean
+local WinAugroup = setmetatable({}, Augroup)
+do
+  WinAugroup.__index = WinAugroup
+
+  function WinAugroup:append_aucmd(event, opts)
+    if self.autounlink and string.lower(event) == "winclosed" then error("conflicted with autounlink") end
+    return Augroup.append_aucmd(self, event, opts)
   end
 end
 
 local M = {}
 do
+  ---mandatory clearing augroup
+  ---@param fmt string
+  ---@param ... any
+  ---@return infra.Augroup
+  function M.Augroup(fmt, ...)
+    local group = api.nvim_create_augroup(string.format(fmt, ...), { clear = true })
+
+    return setmetatable({ group = group }, Augroup)
+  end
+
   ---@param bufnr integer
   ---@param autounlink? boolean @nil=false
-  ---@return infra.Augroup
-  function M.buf(bufnr, autounlink)
+  ---@return infra.BufAugroup
+  function M.BufAugroup(bufnr, autounlink)
     assert(bufnr ~= nil and bufnr ~= 0)
     if autounlink == nil then autounlink = false end
-    local aug = Augroup("aug://buf/%d", bufnr)
 
-    do
-      aug.autounlink = false -- set it to false explicitly
-      ---@diagnostic disable: invisible
-      local orig = aug.append_aucmd
-      function aug:append_aucmd(event, opts)
-        if self.autounlink and string.lower(event) == "bufwipeout" then error("conflicted with autounlink") end
-        opts.buffer = bufnr
-        return orig(aug, event, opts)
-      end
-    end
+    local group = api.nvim_create_augroup(string.format("aug://buf/%d", bufnr), { clear = true })
+    local aug = setmetatable({ group = group, bufnr = bufnr }, BufAugroup)
+
+    ---@diagnostic disable: invisible
 
     if autounlink then
+      ---since aug:once calls aug:append_aucmd() under the hood
+      aug.autounlink = false
       aug:once("BufWipeout", { callback = function() aug:unlink() end })
-      aug.autounlink = autounlink
     end
+
+    aug.autounlink = autounlink
 
     return aug
   end
@@ -212,22 +254,16 @@ do
   ---@param winid integer
   ---@param autounlink? boolean @nil=false
   ---@return infra.Augroup
-  function M.win(winid, autounlink)
+  function M.WinAugroup(winid, autounlink)
     assert(winid ~= nil and winid ~= 0)
     if autounlink == nil then autounlink = false end
-    local aug = Augroup("aug://win/%d", winid)
 
-    do
-      aug.autounlink = false -- set it to false explicitly
-      ---@diagnostic disable: invisible
-      local orig = aug.append_aucmd
-      function aug:append_aucmd(event, opts)
-        if self.autounlink and string.lower(event) == "winclosed" then error("conflicted with autounlink") end
-        return orig(aug, event, opts)
-      end
-    end
+    local group = api.nvim_create_augroup(string.format("aug://win/%d", winid), { clear = true })
+    local aug = setmetatable({ group = group }, WinAugroup)
 
     if autounlink then
+      ---since aug:once calls aug:append_aucmd() under the hood
+      aug.autounlink = false
       aug:repeats("WinClosed", {
         callback = function(args)
           local this_winid = assert(tonumber(args.match))
@@ -236,14 +272,12 @@ do
           return true
         end,
       })
-      aug.autounlink = autounlink
     end
+
+    aug.autounlink = autounlink
 
     return aug
   end
 end
 
----@overload fun(name: string): infra.Augroup
-local mod = setmetatable({}, { __index = M, __call = function(_, name) return Augroup(name) end })
-
-return mod
+return M

@@ -5,7 +5,7 @@
 local M = {}
 
 local api = vim.api
-local Augroup = require("infra.Augroup")
+local augroups = require("infra.augroups")
 local bufrename = require("infra.bufrename")
 local prefer = require("infra.prefer")
 local winsplit = require("infra.winsplit")
@@ -67,7 +67,7 @@ local function tail(bufnr, winid, fpath)
 
   local job
 
-  local aug = Augroup.buf(bufnr)
+  local aug = augroups.BufAugroup(bufnr, --[[autounlink]] false)
   aug:once("TermOpen", { callback = function() prefer.bo(bufnr, "scrollback", scrollback) end })
   aug:once("BufWipeout", {
     callback = function()
