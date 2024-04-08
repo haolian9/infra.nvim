@@ -1,7 +1,5 @@
 -- inspired by vim-repeat
 
---todo: ex("normal! ,") vs feedkeys
-
 local M = {}
 
 local api = vim.api

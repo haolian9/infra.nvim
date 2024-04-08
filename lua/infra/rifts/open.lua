@@ -110,7 +110,7 @@ do
     return dictlib.merged(basic, geo.fullscreen(resolve_border(basic)))
   end
 
-  ---no covering cmdline
+  ---no covering cmdline and laststatus=3 (opt-in)
   ---todo: may conflict with vim.ui.ext.cmdline
   ---@param bufnr integer
   ---@param enter boolean
