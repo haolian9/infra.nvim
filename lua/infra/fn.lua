@@ -2,7 +2,7 @@ local M = {}
 
 local listlib = require("infra.listlib")
 
----@alias infra.Iterator.Any fun(): any?
+---@alias infra.Iterator.Any fun(): ...
 ---@alias infra.Iterable.Any infra.Iterator.Any|any[]
 --
 ---@alias infra.Iterator.Str fun(): string?
@@ -110,7 +110,7 @@ function M.tolist(it)
   return list
 end
 
----@param fn fun(el: any): any
+---@param fn fun(el: any): ...
 ---@param iterable infra.Iterable.Any
 ---@return infra.Iterator.Any
 function M.map(fn, iterable)
@@ -124,7 +124,7 @@ function M.map(fn, iterable)
 end
 
 ---for iters which return more than one value in each iteration
----@param fn fun(el: any): any
+---@param fn fun(el: any): ...
 ---@param iterable infra.Iterable.Any
 ---@return infra.Iterator.Any
 function M.mapn(fn, iterable)
@@ -137,7 +137,7 @@ function M.mapn(fn, iterable)
   end
 end
 
----@param fn fun(el: any): any
+---@param fn fun(el: any)
 ---@param iterable infra.Iterable.Any
 function M.walk(fn, iterable)
   local it = M.iter(iterable)
@@ -234,28 +234,28 @@ end
 ---@return infra.Iterator.Any
 function M.chained(...) return M.iter_chained(M.map(M.iter, { ... })) end
 
----@param fn fun(el: any): boolean
+---@param predicate fun(el: any): boolean
 ---@return infra.Iterator.Any
-function M.filter(fn, iterable)
+function M.filter(predicate, iterable)
   local it = M.iter(iterable)
   return function()
     while true do
       local el = it()
       if el == nil then return end
-      if fn(el) then return el end
+      if predicate(el) then return el end
     end
   end
 end
 
----@param fn fun(...): boolean
+---@param predicate fun(...): boolean
 ---@param iterable infra.Iterable.Any
-function M.filtern(fn, iterable)
+function M.filtern(predicate, iterable)
   local it = M.iter(iterable)
   return function()
     while true do
       local el = { it() }
       if #el == 0 then return end
-      if fn(unpack(el)) then return unpack(el) end
+      if predicate(unpack(el)) then return unpack(el) end
     end
   end
 end

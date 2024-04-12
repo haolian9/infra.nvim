@@ -3,8 +3,6 @@ local M = {}
 
 local bufpath = require("infra.bufpath")
 local dictlib = require("infra.dictlib")
-local jelly = require("infra.jellyfish")("infra.project")
-local prefer = require("infra.prefer")
 local subprocess = require("infra.subprocess")
 
 local api = vim.api

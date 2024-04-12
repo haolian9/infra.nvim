@@ -6,6 +6,7 @@ local M = {}
 
 local api = vim.api
 local augroups = require("infra.augroups")
+local buflines = require("infra.buflines")
 local bufrename = require("infra.bufrename")
 local prefer = require("infra.prefer")
 local winsplit = require("infra.winsplit")
@@ -80,7 +81,7 @@ local function tail(bufnr, winid, fpath)
     local cmd = { "tail", "-n", height + scrollback, "-f", fpath }
     job = vim.fn.termopen(cmd, { stderr_buffered = false, stdout_buffered = false, stdin = "" })
     --follow
-    api.nvim_win_set_cursor(winid, { api.nvim_buf_line_count(bufnr), 0 })
+    api.nvim_win_set_cursor(winid, { buflines.count(bufnr), 0 })
   end
 
   bufrename(bufnr, string.format("tail://%s", fpath))

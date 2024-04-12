@@ -1,3 +1,4 @@
+local buflines = require("infra.buflines")
 local bufrename = require("infra.bufrename")
 local handyclosekeys = require("infra.handyclosekeys")
 local prefer = require("infra.prefer")
@@ -77,16 +78,15 @@ return function(opts, lines)
       for _, line in ipairs(lines) do
         local lntype = type(line)
         if lntype == "string" then
-          api.nvim_buf_set_lines(bufnr, offset, offset + 1, false, { line })
+          buflines.replace(bufnr, offset, line)
           offset = offset + 1
         elseif lntype == "table" then
-          api.nvim_buf_set_lines(bufnr, offset, offset + #line, false, line)
+          buflines.replaces(bufnr, offset, offset + #lines, line)
           offset = offset + #line
         else
           error("unreachable: unknown line type: " .. lntype)
         end
       end
-      assert(api.nvim_buf_line_count(bufnr) == offset)
     end
 
     bo.undolevels = opts.undolevels
