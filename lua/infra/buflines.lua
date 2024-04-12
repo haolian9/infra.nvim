@@ -97,12 +97,12 @@ do
   ---@param start_lnum integer @0-based, inclusive
   ---@param stop_lnum integer @0-based, exclusive
   ---@param lines string[]
-  local function sets(bufnr, start_lnum, stop_lnum, lines) api.nvim_buf_set_lines(bufnr, start_lnum, stop_lnum, false, lines) end
+  function M.sets(bufnr, start_lnum, stop_lnum, lines) api.nvim_buf_set_lines(bufnr, start_lnum, stop_lnum, false, lines) end
 
   ---@param bufnr integer
   ---@param lnum integer @0-based, inclusive
   ---@param line string
-  function M.replace(bufnr, lnum, line) sets(bufnr, lnum, lnum + 1, { line }) end
+  function M.replace(bufnr, lnum, line) M.sets(bufnr, lnum, lnum + 1, { line }) end
 
   ---@param bufnr integer
   ---@param start_lnum integer @0-based, inclusive, could be negative
@@ -110,32 +110,32 @@ do
   ---@param lines string[]
   function M.replaces(bufnr, start_lnum, stop_lnum, lines)
     assert(stop_lnum > start_lnum, "+1? stop_lnum is exclusive")
-    sets(bufnr, start_lnum, stop_lnum, lines)
+    M.sets(bufnr, start_lnum, stop_lnum, lines)
   end
 
   ---@param bufnr integer
   ---@param lines string[]
-  function M.replaces_all(bufnr, lines) sets(bufnr, 0, -1, lines) end
+  function M.replaces_all(bufnr, lines) M.sets(bufnr, 0, -1, lines) end
 
   ---@param bufnr integer
   ---@param lnum integer @0-based, exclusive
   ---@param line string
-  function M.append(bufnr, lnum, line) sets(bufnr, lnum + 1, lnum + 1, { line }) end
+  function M.append(bufnr, lnum, line) M.sets(bufnr, lnum + 1, lnum + 1, { line }) end
 
   ---@param bufnr integer
   ---@param lnum integer @0-based, exclusive
   ---@param lines string[]
-  function M.appends(bufnr, lnum, lines) sets(bufnr, lnum + 1, lnum + 1, lines) end
+  function M.appends(bufnr, lnum, lines) M.sets(bufnr, lnum + 1, lnum + 1, lines) end
 
   ---@param bufnr integer
   ---@param lnum integer @0-based, exclusive
   ---@param line string
-  function M.prepend(bufnr, lnum, line) sets(bufnr, lnum, lnum, { line }) end
+  function M.prepend(bufnr, lnum, line) M.sets(bufnr, lnum, lnum, { line }) end
 
   ---@param bufnr integer
   ---@param lnum integer @0-based, exclusive
   ---@param lines string[]
-  function M.prepends(bufnr, lnum, lines) sets(bufnr, lnum, lnum, lines) end
+  function M.prepends(bufnr, lnum, lines) M.sets(bufnr, lnum, lnum, lines) end
 end
 
 return M
