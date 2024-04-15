@@ -2,6 +2,8 @@
 
 local M = {}
 
+local feedkeys = require("infra.feedkeys")
+
 local api = vim.api
 
 do
@@ -22,13 +24,13 @@ do
   --should be only used in normal mode
   function M.rhs_dot(bufnr)
     local last_tick = state.tick[bufnr]
-    if last_tick == nil then return api.nvim_feedkeys(".", "n", false) end
+    if last_tick == nil then return feedkeys.codes(".", "n") end
 
     local held_tick = api.nvim_buf_get_changedtick(bufnr)
     if held_tick ~= last_tick then
       state.tick[bufnr] = nil
       state.redo[bufnr] = nil
-      return api.nvim_feedkeys(".", "n", false)
+      return feedkeys.codes(".", "n")
     end
 
     assert(state.redo[bufnr])()
@@ -55,11 +57,11 @@ do
   end
 
   local function comma()
-    if state.prev == nil then return api.nvim_feedkeys(",", "n", false) end
+    if state.prev == nil then return feedkeys.codes(",", "n") end
 
     if vim.fn.getcharsearch().char ~= "" then
       state.prev = nil
-      return api.nvim_feedkeys(",", "n", false)
+      return feedkeys.codes(",", "n")
     end
 
     if state.prev then return state.prev() end
@@ -73,11 +75,11 @@ do
   end
 
   local function semicolon()
-    if state.next == nil then return api.nvim_feedkeys(";", "n", false) end
+    if state.next == nil then return feedkeys.codes(";", "n") end
 
     if vim.fn.getcharsearch().char ~= "" then
       state.next = nil
-      return api.nvim_feedkeys(";", "n", false)
+      return feedkeys.codes(";", "n")
     end
 
     if state.next then return state.next() end

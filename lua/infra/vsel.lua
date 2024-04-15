@@ -10,6 +10,7 @@
 
 local M = {}
 
+local feedkeys = require("infra.feedkeys")
 local strlib = require("infra.strlib")
 local utf8 = require("infra.utf8")
 
@@ -144,7 +145,7 @@ end
 function M.select_region(winid, start_line, start_col, stop_line, stop_col)
   api.nvim_win_set_cursor(winid, { start_line + 1, start_col })
   -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
-  api.nvim_feedkeys("vo", "nx", false)
+  feedkeys.codes("vo", "nx")
   api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, stop_col - 1 })
 end
 
@@ -156,7 +157,7 @@ end
 function M.select_lines(winid, start_line, stop_line)
   api.nvim_win_set_cursor(winid, { start_line + 1, 0 })
   -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
-  api.nvim_feedkeys("Vo", "nx", false)
+  feedkeys.codes("Vo", "nx")
   api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, 0 })
 end
 
