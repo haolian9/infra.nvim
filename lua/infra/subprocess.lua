@@ -80,8 +80,14 @@ local function split_stdout(chunks)
   end
 end
 
+---@class infra.subprocess.SpawnOpts
+---@field args string[]
+---@field env? string[] @NB: not {key: val}
+---@field cwd? string
+---@field detached? boolean
+
 ---@param bin string
----@param opts? {args: string[]?, cwd: string?} @see uv.spawn(opts)
+---@param opts? infra.subprocess.SpawnOpts
 ---@param capture_stdout boolean? @nil=false
 ---@return {pid: number, exit_code: number, stdout: fun():string}
 function M.run(bin, opts, capture_stdout)
@@ -122,7 +128,7 @@ function M.run(bin, opts, capture_stdout)
 end
 
 ---@param bin string
----@param opts {args: string[]?}? see uv.spawn(opts)
+---@param opts infra.subprocess.SpawnOpts
 ---@param stdout_callback fun(stdout: (fun():string?))
 ---@param exit_callback fun(code: number)
 function M.spawn(bin, opts, stdout_callback, exit_callback)

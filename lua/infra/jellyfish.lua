@@ -4,7 +4,7 @@
 ---* err or critical or fatal in here should not raise an error
 ---* each method should return nil
 
-local strfmt = require("infra.strfmt")
+local strfmt = require("infra._strfmt")
 local strlib = require("infra.strlib")
 
 local api = vim.api

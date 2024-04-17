@@ -36,6 +36,13 @@ do
   ---@param bufnr integer
   ---@return integer
   function M.count(bufnr) return api.nvim_buf_line_count(bufnr) end
+
+  ---@param bufnr integer
+  ---@return integer @>=0
+  function M.high(bufnr)
+    local count = M.count(bufnr) - 1
+    return math.max(0, count)
+  end
 end
 
 do
@@ -90,6 +97,19 @@ do
   ---@param pattern string @pattern for vim.regex
   ---@return fun(): string?,integer? @iter(line,lnum)
   function M.iter_unmatched(bufnr, pattern) return main(bufnr, pattern, true) end
+end
+
+do
+  ---@param bufnr integer
+  ---@param lnum integer @0-based
+  ---@param start_col integer @0-based, inclusive
+  ---@param stop_col integer @0-based, exclusive
+  ---@return string?
+  function M.text(bufnr, lnum, start_col, stop_col)
+    local lines = api.nvim_buf_get_text(bufnr, lnum, start_col, lnum, stop_col, {})
+    assert(#lines <= 1)
+    return lines[1]
+  end
 end
 
 do

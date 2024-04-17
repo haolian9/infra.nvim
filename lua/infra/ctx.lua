@@ -59,7 +59,7 @@ do
   ---@param logic fun(): any
   ---@return any @depends on logic()
   function M.landwincall(logic)
-    return api.nvim_win_call(get_nonfloat_winid(), function() logic() end)
+    return M.win(get_nonfloat_winid(), function() logic() end)
   end
 end
 
@@ -68,9 +68,9 @@ end
 ---@param logic fun(): any
 ---@return any @depends on logic()
 function M.winview(winid, logic)
-  local view = api.nvim_win_call(winid, function() return vim.fn.winsaveview() end)
+  local view = M.win(winid, function() return vim.fn.winsaveview() end)
   local ok, result = xpcall(logic, debug.traceback)
-  api.nvim_win_call(winid, function() vim.fn.winrestview(view) end)
+  M.win(winid, function() vim.fn.winrestview(view) end)
 
   if not ok then error(result) end
   return result
@@ -86,14 +86,14 @@ function M.bufviews(bufnr, logic)
   do
     local bufinfo = assert(vim.fn.getbufinfo(bufnr)[1])
     for _, winid in ipairs(bufinfo.windows) do
-      views[winid] = api.nvim_win_call(winid, function() return vim.fn.winsaveview() end)
+      views[winid] = M.win(winid, function() return vim.fn.winsaveview() end)
     end
   end
 
   local ok, result = xpcall(logic, debug.traceback)
 
   for winid, view in pairs(views) do
-    api.nvim_win_call(winid, function() vim.fn.winrestview(view) end)
+    M.win(winid, function() vim.fn.winrestview(view) end)
   end
 
   if not ok then error(result) end
@@ -178,7 +178,7 @@ do
     local defs = {} --need to be restored
     local undefs = {} --need to be unset
 
-    api.nvim_buf_call(bufnr, function()
+    M.buf(bufnr, function()
       for _, pair in ipairs(mode_lhs_pairs) do
         local dump = keymap_dump_locally(unpack(pair))
         if dump then
@@ -192,7 +192,7 @@ do
     return function()
       if #defs > 0 then
         --
-        api.nvim_buf_call(bufnr, function()
+        M.buf(bufnr, function()
           for _, dump in ipairs(defs) do
             keymap_restore_locally(dump)
           end
@@ -204,6 +204,20 @@ do
       end
     end
   end
+end
+
+---@param bufnr integer
+---@param logic fun()
+function M.buf(bufnr, logic)
+  --todo: follow vim._ctx
+  return api.nvim_buf_call(bufnr, logic)
+end
+
+---@param winid integer
+---@param logic fun()
+function M.win(winid, logic)
+  --todo: follow vim._ctx
+  return api.nvim_win_call(winid, logic)
 end
 
 return M

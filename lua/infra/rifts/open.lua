@@ -1,5 +1,6 @@
 local M = {}
 
+local ctx = require("infra.ctx")
 local dictlib = require("infra.dictlib")
 local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
@@ -45,7 +46,7 @@ function M.win(bufnr, enter, opts)
   if enter then
     vim.fn.setreg("#", bufnr)
   else
-    api.nvim_win_call(winid, function() vim.fn.setreg("#", bufnr) end)
+    ctx.win(winid, function() vim.fn.setreg("#", bufnr) end)
   end
 
   return winid

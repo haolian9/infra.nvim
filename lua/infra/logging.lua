@@ -1,5 +1,5 @@
 local coreutils = require("infra.coreutils")
-local strfmt = require("infra.strfmt")
+local strfmt = require("infra._strfmt")
 
 local M = {}
 
