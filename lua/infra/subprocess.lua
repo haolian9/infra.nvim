@@ -1,7 +1,6 @@
 local M = {}
 
 local fn = require("infra.fn")
-local jelly = require("infra.jellyfish")("infra.subprocess")
 local listlib = require("infra.listlib")
 local logging = require("infra.logging")
 local strlib = require("infra.strlib")
@@ -103,7 +102,7 @@ function M.run(bin, opts, capture_stdout)
   local proc_t, pid = uv.spawn(bin, opts, function(code) rc = assert(code) end)
   if proc_t == nil then error(pid) end
 
-  local stdout_lines
+  local stdout_iter
   if capture_stdout then
     local chunks = {}
     uv.read_start(stdout, function(err, data)
@@ -114,17 +113,17 @@ function M.run(bin, opts, capture_stdout)
         stdout:close()
       end
     end)
-    stdout_lines = split_stdout(chunks)
+    stdout_iter = split_stdout(chunks)
   else
     redirect_to_file(stdout)
-    stdout_lines = function() end
+    stdout_iter = function() end
   end
 
   redirect_to_file(stderr)
 
   vim.wait(facts.forever, function() return rc ~= nil end, 100)
 
-  return { pid = pid, exit_code = rc, stdout = stdout_lines }
+  return { pid = pid, exit_code = rc, stdout = stdout_iter }
 end
 
 ---@param bin string

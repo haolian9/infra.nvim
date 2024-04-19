@@ -9,6 +9,7 @@ local M = {}
 ---   * nvim_buf_get/set_lines is not designed for human, with too many param combination
 
 local fn = require("infra.fn")
+local VimVeryRegex = require("infra.VimVeryRegex")
 
 local api = vim.api
 
@@ -64,12 +65,11 @@ end
 
 do
   ---@param bufnr integer
-  ---@param pattern string @pattern for vim.regex
+  ---@param pattern string @vim very magic pattern
   ---@param negative boolean @if match given pattern
   ---@return fun(): string?,integer? @iter(line,lnum)
   local function main(bufnr, pattern, negative)
-    --todo: need to cache this regex object?
-    local regex = vim.regex(pattern)
+    local regex = VimVeryRegex(pattern)
 
     local iter = fn.range(M.count(bufnr))
 
@@ -89,12 +89,12 @@ do
   end
 
   ---@param bufnr integer
-  ---@param pattern string @pattern for vim.regex
+  ---@param pattern string @vim very magic pattern
   ---@return fun(): string?,integer? @iter(line,lnum)
   function M.iter_matched(bufnr, pattern) return main(bufnr, pattern, false) end
 
   ---@param bufnr integer
-  ---@param pattern string @pattern for vim.regex
+  ---@param pattern string @vim very magic pattern
   ---@return fun(): string?,integer? @iter(line,lnum)
   function M.iter_unmatched(bufnr, pattern) return main(bufnr, pattern, true) end
 end
