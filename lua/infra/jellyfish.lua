@@ -27,7 +27,7 @@ local provider
 if true then
   function provider(msg, level, opts)
     assert(opts.source ~= nil)
-    local bold, normal, dim, red = "StatusLineBufStatus", "Normal", "StatusLineAltFile", "StatusLineFilePath"
+    local bold, normal, dim, red = "CursorLine", "Normal", "Comment", "Error"
     if level <= ll.DEBUG then
       api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, dim } }, true, {})
     elseif level < ll.WARN then
@@ -60,10 +60,17 @@ local function shock(source, level, min_level)
 
   return function(format, ...)
     local opts = { source = source }
-    if select("#", ...) ~= 0 then return provider(strfmt(format, ...), level, opts) end
-    assert(format ~= nil, "missing format")
-    if strlib.find(format, "%s") == nil then return provider(format, level, opts) end
-    error("unmatched args for format")
+    if select("#", ...) == 0 then
+      assert(format ~= nil, "missing format")
+      if type(format) == "string" then
+        if strlib.find(format, "%s") == nil then return provider(format, level, opts) end
+        return provider(format, level, opts)
+      else
+        return provider(strfmt("%s", format), level, opts)
+      end
+    else
+      return provider(strfmt(format, ...), level, opts)
+    end
   end
 end
 

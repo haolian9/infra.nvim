@@ -2,7 +2,7 @@ local M = {}
 
 local jelly = require("infra.jellyfish")("infra.dictlib")
 
----@alias Dict {[any]: any}
+---@alias Dict {[string]: any}
 
 ---NB: no order guarantee
 ---@param dict Dict
@@ -103,6 +103,33 @@ function M.CappedDict(cap, weakable_value)
       end
     end,
   })
+end
+
+---NB: no order guarantee
+---@param dict Dict
+---@return fun(): string?
+function M.iter_keys(dict)
+  local iter = pairs(dict)
+  local key
+
+  return function()
+    key = iter(dict, key)
+    return key
+  end
+end
+
+---NB: no order guarantee
+---@param dict Dict
+---@return fun(): any
+function M.iter_values(dict)
+  local iter = pairs(dict)
+  local key
+
+  return function()
+    local val
+    key, val = iter(dict, key)
+    return val
+  end
 end
 
 return M

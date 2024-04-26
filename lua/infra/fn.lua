@@ -143,7 +143,7 @@ function M.walk(fn, iterable)
   local it = M.iter(iterable)
   while true do
     local el = it()
-    if #el == 0 then break end
+    if el == nil then return end
     fn(el)
   end
 end
@@ -362,6 +362,21 @@ function M.items(dict)
     local k, v = next(dict, i)
     i = k
     return k, v
+  end
+end
+
+---NB: the el[key] is not supposed to be nil
+---@param iterable table[]|fun(): table[]?
+---@param key string|integer
+---@return fun(): any[]?
+function M.project(iterable, key)
+  local it = M.iter(iterable)
+
+  return function()
+    local el = it()
+    if el == nil then return end
+    ---todo: what if el.key is nil?
+    return assert(el[key])
   end
 end
 

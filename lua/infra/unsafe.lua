@@ -163,6 +163,7 @@ end
 ---@return boolean
 function M.isatty(fd) return C.isatty(fd) == 1 end
 
+---history of inputs in cmdline
 ---@return fun(): string?
 function M.hist_iter()
   local done = false
