@@ -346,11 +346,34 @@ end
 ---@param iterable infra.Iterator.Int
 ---@return integer?
 function M.max(iterable)
+  local iter = M.iter(iterable)
+
   local val
-  for el in M.iter(iterable) do
-    if val == nil then val = el end
+
+  val = iter()
+  if val == nil then return end
+
+  for el in iter do
     if val < el then val = el end
   end
+
+  return val
+end
+
+---@param iterable infra.Iterator.Int
+---@return integer?
+function M.min(iterable)
+  local iter = M.iter(iterable)
+
+  local val
+
+  val = iter()
+  if val == nil then return end
+
+  for el in iter do
+    if val > el then val = el end
+  end
+
   return val
 end
 

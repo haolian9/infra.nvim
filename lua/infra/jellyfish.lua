@@ -28,12 +28,20 @@ if true then
   function provider(msg, level, opts)
     assert(opts.source ~= nil)
     local bold, normal, dim, red = "CursorLine", "Normal", "Comment", "Error"
+
+    local nvim_echo = api.nvim_echo
+    if vim.in_fast_event() then
+      function nvim_echo(chunks, ephemeral, _opts)
+        vim.schedule(function() api.nvim_echo(chunks, ephemeral, _opts) end)
+      end
+    end
+
     if level <= ll.DEBUG then
-      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, dim } }, true, {})
+      nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, dim } }, true, {})
     elseif level < ll.WARN then
-      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, normal } }, true, {})
+      nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, normal } }, true, {})
     else
-      api.nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, red } }, true, {})
+      nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, red } }, true, {})
     end
   end
 else
