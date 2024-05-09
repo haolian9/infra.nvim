@@ -70,4 +70,13 @@ function M.mkdir(path, mode, exists_ok)
   return suc == 1
 end
 
+function M.cat(path)
+  local file = io.open(path, "r")
+  assert(file, "open failed")
+  local content = file:read("*a")
+  file:close()
+
+  return content
+end
+
 return M

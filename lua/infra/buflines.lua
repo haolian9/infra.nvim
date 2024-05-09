@@ -9,31 +9,47 @@ local M = {}
 ---   * nvim_buf_get/set_lines is not designed for human, with too many param combination
 
 local fn = require("infra.fn")
-local VimVeryRegex = require("infra.VimVeryRegex")
+local jelly = require("infra.jellyfish")("infra.buflines", "debug")
+local unsafe = require("infra.unsafe")
+
+local ropes = require("string.buffer")
 
 local api = vim.api
 
-do
-  ---@param start_lnum integer @0-based, inclusive
-  ---@param stop_lnum integer @0-based, exclusive
-  ---@return string[]
-  function M.lines(bufnr, start_lnum, stop_lnum)
-    ---valid   forms: 1,2; -2,-1; 0,-1; 3,-2
-    ---invalid forms: 2,1; -1,-2; -2,3
-    if not (start_lnum >= 0 and stop_lnum < 0) then assert(stop_lnum > start_lnum, "empty range") end
+---notes:
+---* -1=high
+---* start is inclusive
+---* stop is exclusive
+---@param bufnr integer
+---@param start? integer @0-based, inclusive
+---@param stop? integer @0-based, exclusive
+---@return integer,integer @start,stop
+local function resolve_range(bufnr, start, stop)
+  local high = M.high(bufnr)
 
-    return api.nvim_buf_get_lines(bufnr, start_lnum, stop_lnum, false)
+  --todo: if step=-1, start should not start with 0
+
+  if start == nil and stop == nil then return 0, high + 1 end
+
+  if start ~= nil and stop == nil then
+    if start >= 0 then return 0, start end
+    stop = high + (start + 1)
+    assert(stop >= 0, "invalid stop value")
+    return 0, stop
   end
 
-  ---@param bufnr integer
-  ---@param lnum integer @0-based
-  ---@return string?
-  function M.line(bufnr, lnum) return M.lines(bufnr, lnum, lnum + 1)[1] end
+  do
+    assert(start and stop)
+    if start < 0 then start = high + (start + 1) end
+    assert(start >= 0, "illegal start value")
+    if stop < 0 then stop = high + (stop + 1) end
+    assert(stop >= 0, "illegal stop value")
 
-  ---@param bufnr integer
-  ---@return string[]
-  function M.all(bufnr) return M.lines(bufnr, 0, -1) end
+    return start, stop
+  end
+end
 
+do
   ---@param bufnr integer
   ---@return integer
   function M.count(bufnr) return api.nvim_buf_line_count(bufnr) end
@@ -48,37 +64,91 @@ end
 
 do
   ---@param bufnr integer
-  ---@param range fun(): integer?
-  ---@return fun(): (string?,integer?) @iter(line,lnum)
-  local function main(bufnr, range)
+  ---@param start_lnum? integer @0-based, inclusive
+  ---@param stop_lnum? integer @0-based, exclusive
+  ---@return string[]
+  function M.lines(bufnr, start_lnum, stop_lnum)
+    start_lnum, stop_lnum = resolve_range(bufnr, start_lnum, stop_lnum)
+
+    return api.nvim_buf_get_lines(bufnr, start_lnum, stop_lnum, false)
+  end
+
+  ---@param bufnr integer
+  ---@param lnum integer @0-based, accepts -1
+  ---@return string?
+  function M.line(bufnr, lnum)
+    if lnum == -1 then lnum = M.high(bufnr) end
+    return M.lines(bufnr, lnum, lnum + 1)[1]
+  end
+end
+
+do
+  ---@param bufnr integer
+  ---@param start_lnum? integer @0-based, inclusive
+  ---@param stop_lnum? integer @0-based, exclusive
+  ---@return string
+  function M.joined(bufnr, start_lnum, stop_lnum)
+    local range = fn.range(resolve_range(bufnr, start_lnum, stop_lnum))
+
+    local rope = ropes.new()
+    for ptr, len in unsafe.lineref_iter(bufnr, range) do
+      rope:put("\n")
+      rope:putcdata(ptr, len)
+    end
+    rope:skip(#"\n")
+
+    return rope:tostring()
+  end
+end
+
+do
+  ---@param bufnr integer
+  ---@param lnum integer @0-based
+  ---@param start_col integer @0-based, inclusive
+  ---@param stop_col integer @0-based, exclusive
+  ---@return string?
+  function M.partial_line(bufnr, lnum, start_col, stop_col)
+    local lines = api.nvim_buf_get_text(bufnr, lnum, start_col, lnum, stop_col, {})
+    assert(#lines <= 1)
+    return lines[1]
+  end
+end
+
+do
+  ---@param bufnr integer
+  ---@param start_lnum? integer @0-based, inclusive
+  ---@param stop_lnum? integer @0-based, exclusive
+  ---@return fun():string?,integer? @iter(line,lnum)
+  function M.iter(bufnr, start_lnum, stop_lnum)
+    local range = fn.range(resolve_range(bufnr, start_lnum, stop_lnum))
     return fn.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
   end
 
   ---@param bufnr integer
   ---@return fun(): string?,integer? @iter(line,lnum)
-  function M.iter(bufnr) return main(bufnr, fn.range(M.count(bufnr))) end
-
-  ---@param bufnr integer
-  ---@return fun(): string?,integer? @iter(line,lnum)
-  function M.iter_reversed(bufnr) return main(bufnr, fn.range(M.count(bufnr) - 1, 0 - 1, -1)) end
+  function M.iter_reversed(bufnr)
+    --todo: support start_lnum, stop_lnum
+    local range = fn.range(M.high(bufnr), 0 - 1, -1)
+    return fn.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
+  end
 end
 
 do
   ---@param bufnr integer
-  ---@param pattern string @vim very magic pattern
-  ---@param negative boolean @if match given pattern
+  ---@param regex vim.Regex
+  ---@param negative boolean
+  ---@param start_lnum? integer @0-based, inclusive
+  ---@param stop_lnum? integer @0-based, exclusive
   ---@return fun(): string?,integer? @iter(line,lnum)
-  local function main(bufnr, pattern, negative)
-    local regex = VimVeryRegex(pattern)
+  local function main(bufnr, regex, negative, start_lnum, stop_lnum)
+    local iter
 
-    local iter = fn.range(M.count(bufnr))
-
+    iter = fn.range(resolve_range(bufnr, start_lnum, stop_lnum))
     if negative then
       iter = fn.filter(function(lnum) return regex:match_line(bufnr, lnum) == nil end, iter)
     else
       iter = fn.filter(function(lnum) return regex:match_line(bufnr, lnum) ~= nil end, iter)
     end
-
     iter = fn.map(function(lnum)
       local line = M.lines(bufnr, lnum, lnum + 1)[1]
       ---@diagnostic disable-next-line: redundant-return-value
@@ -89,27 +159,18 @@ do
   end
 
   ---@param bufnr integer
-  ---@param pattern string @vim very magic pattern
+  ---@param regex vim.Regex
+  ---@param start_lnum? integer @0-based, inclusive
+  ---@param stop_lnum? integer @0-based, exclusive
   ---@return fun(): string?,integer? @iter(line,lnum)
-  function M.iter_matched(bufnr, pattern) return main(bufnr, pattern, false) end
+  function M.iter_matched(bufnr, regex, start_lnum, stop_lnum) return main(bufnr, regex, false, start_lnum, stop_lnum) end
 
   ---@param bufnr integer
-  ---@param pattern string @vim very magic pattern
+  ---@param regex vim.Regex
+  ---@param start_lnum? integer @0-based, inclusive
+  ---@param stop_lnum? integer @0-based, exclusive
   ---@return fun(): string?,integer? @iter(line,lnum)
-  function M.iter_unmatched(bufnr, pattern) return main(bufnr, pattern, true) end
-end
-
-do
-  ---@param bufnr integer
-  ---@param lnum integer @0-based
-  ---@param start_col integer @0-based, inclusive
-  ---@param stop_col integer @0-based, exclusive
-  ---@return string?
-  function M.text(bufnr, lnum, start_col, stop_col)
-    local lines = api.nvim_buf_get_text(bufnr, lnum, start_col, lnum, stop_col, {})
-    assert(#lines <= 1)
-    return lines[1]
-  end
+  function M.iter_unmatched(bufnr, regex, start_lnum, stop_lnum) return main(bufnr, regex, true, start_lnum, stop_lnum) end
 end
 
 do

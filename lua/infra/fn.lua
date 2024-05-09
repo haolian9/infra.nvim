@@ -2,6 +2,8 @@ local M = {}
 
 local listlib = require("infra.listlib")
 
+local ropes = require("string.buffer")
+
 ---@alias infra.Iterator.Any fun(): ...
 ---@alias infra.Iterable.Any infra.Iterator.Any|any[]
 --
@@ -58,18 +60,14 @@ function M.split(str, delimiter, maxsplit, keepend) return M.tolist(M.split_iter
 ---@return string
 function M.join(iterable, separator)
   separator = separator or ""
-  local list
-  do
-    local iter_type = type(iterable)
-    if iter_type == "function" then
-      list = M.tolist(iterable)
-    elseif iter_type == "table" then
-      list = iterable
-    else
-      error("unexpected type: " .. iter_type)
-    end
+
+  local rope = ropes.new()
+  for el in M.iter(iterable) do
+    rope:put(separator, el)
   end
-  return table.concat(list, separator)
+  rope:skip(#separator)
+
+  return rope:tostring()
 end
 
 ---@param iterable function|table @iterator or list
@@ -200,16 +198,11 @@ do
   end
 end
 
----equals to `a == nil and a or b`
-function M.nilor(a, b)
-  if a ~= nil then return a end
-  return b
-end
-
----the corrected version of `s == '' and nil or s`
-function M.neqor(eql, a, b)
-  if a ~= eql then return a end
-  return b
+---equals to `a ~= nil and a or b`
+---suppose `a: nil|false|any`
+function M.nilthen(a, b)
+  if a == nil then return b end
+  return a
 end
 
 ---@param iterable fun():infra.Iterable.Any
@@ -401,6 +394,16 @@ function M.project(iterable, key)
     ---todo: what if el.key is nil?
     return assert(el[key])
   end
+end
+
+---@param kv fun():string|number,any
+---@return {[string|number]: any}
+function M.todict(kv)
+  local dict = {}
+  for k, v in kv do
+    dict[k] = v
+  end
+  return dict
 end
 
 return M

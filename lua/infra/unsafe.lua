@@ -93,7 +93,7 @@ function M.waitpid(pid, nohang)
 
   local status = ffi.new("int[1]")
   local waited_pid = C.waitpid(pid, status, nohang and c_enum.WNOHANG or 0)
-  return waited_pid, tonumber(status[0])
+  return waited_pid, assert(tonumber(status[0]))
 end
 
 ---@param short_name string|nil
@@ -114,23 +114,6 @@ function M.setfname(bufnr, full_name, short_name)
   return C.setfname(buf_p, ffname, sfname, true) == nvim_enum.OK
 end
 
----@param bufnr number
----@param range fun():number @iterator of 0-based line numbers
----@return {[number]: number}
-function M.lineslen(bufnr, range)
-  assert(bufnr)
-
-  local buf_p = C.buflist_findnr(bufnr)
-  if buf_p == nil then return {} end
-
-  local lens = {}
-  for lnum in range do
-    local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
-    lens[lnum] = tonumber(C.strlen(line_p))
-  end
-  return lens
-end
-
 ---@param bufnr integer
 ---@param lnum integer
 ---@return integer?
@@ -141,7 +124,58 @@ function M.linelen(bufnr, lnum)
   if buf_p == nil then return end
 
   local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
-  return tonumber(C.strlen(line_p))
+  return assert(tonumber(C.strlen(line_p)))
+end
+
+---@param bufnr number
+---@param range fun():number @iterator of 0-based line numbers
+---@return fun():integer?,integer? @iter(lnum,len)
+function M.linelen_iter(bufnr, range)
+  assert(bufnr)
+
+  local buf_p = C.buflist_findnr(bufnr)
+  if buf_p == nil then return function() end end
+
+  return function()
+    local lnum = range()
+    if lnum == nil then return end
+    local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+    local len = assert(tonumber(C.strlen(line_p)))
+    return lnum, len
+  end
+end
+
+---@param bufnr integer
+---@param lnum integer
+---@return ffi.cdata*?,integer?
+function M.lineref(bufnr, lnum)
+  assert(bufnr and lnum)
+
+  local buf_p = C.buflist_findnr(bufnr)
+  if buf_p == nil then return end
+
+  local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+  local len = tonumber(C.strlen(line_p))
+
+  return line_p, len
+end
+
+---@param bufnr number
+---@param range fun():number @iterator of 0-based line numbers
+---@return fun(): ffi.cdata*?,integer?
+function M.lineref_iter(bufnr, range)
+  assert(bufnr)
+
+  local buf_p = C.buflist_findnr(bufnr)
+  if buf_p == nil then return function() end end
+
+  return function()
+    local lnum = range()
+    if lnum == nil then return end
+    local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+    local len = assert(tonumber(C.strlen(line_p)))
+    return line_p, len
+  end
 end
 
 ---@param bufnr number

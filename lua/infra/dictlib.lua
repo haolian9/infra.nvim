@@ -95,7 +95,7 @@ function M.CappedDict(cap, weakable_value)
         if v == nil then remain = remain + 1 end
       else
         if remain == 0 then
-          jelly.err("keys: %s", table.concat(M.keys(t), " "))
+          jelly.err("keys: %s", M.keys(t))
           error("full", cap)
         end
         rawset(t, k, v)
@@ -130,6 +130,27 @@ function M.iter_values(dict)
     key, val = iter(dict, key)
     return val
   end
+end
+
+---@param dict {[string|number]: any}
+---@param keys string|number[]
+---@param val any
+function M.set(dict, keys, val)
+  local bag = dict
+  for i = 1, #keys - 1 do
+    local key = keys[i]
+    if bag[key] == nil then
+      bag[key] = {}
+    elseif type(bag[key]) == "table" then
+      --pass
+    else
+      jelly.err("value of key=%s is not a table: %s", key, bag[key])
+      error("invalid value")
+    end
+    bag = bag[key]
+  end
+  assert(type(bag) == "table")
+  bag[keys[#keys]] = val
 end
 
 return M

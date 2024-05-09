@@ -2,6 +2,8 @@
 
 local unsafe = require("infra.unsafe")
 
+local ropes = require("string.buffer")
+
 local M = {}
 
 local read_char
@@ -36,16 +38,16 @@ end
 function M.read_chars(n)
   assert(n > 0, "no need to read")
 
-  local chars = {}
+  local rope = ropes.new(n)
 
   -- keep **blocking the process** until get enough chars
   for char, code in read_char do
     if code >= 0x21 and code <= 0x7e then
       -- printable
-      table.insert(chars, char)
+      rope:put(char)
     elseif code == 0x1b then
       -- cancelled by esc
-      chars = {}
+      rope:reset()
       break
     elseif code == 0x20 or code == 0x0d then
       -- finished by space, cr
@@ -53,10 +55,10 @@ function M.read_chars(n)
     else
       --ignore other inputs
     end
-    if #chars >= n then break end
+    if #rope >= n then break end
   end
 
-  return table.concat(chars, "")
+  return rope:tostring()
 end
 
 ---@return string,integer @char,code

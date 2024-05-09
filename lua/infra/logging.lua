@@ -1,5 +1,7 @@
-local coreutils = require("infra.coreutils")
 local strfmt = require("infra._strfmt")
+local coreutils = require("infra.coreutils")
+
+local ropes = require("string.buffer")
 
 local M = {}
 
@@ -66,31 +68,22 @@ end
 
 do
   ---@param file file*
-  local function BufferedWriter(file)
-    ---@type string[]
-    local stash = {}
-    local count = 0
+  ---@param bufsize? integer @nil=4096
+  local function BufferedWriter(file, bufsize)
+    bufsize = bufsize or 4096
+
+    local stash = ropes.new(bufsize)
 
     local function flush()
-      if count == 0 then return end
-      local old_stash = stash
-      stash = {}
-      count = 0
-      file:write(table.concat(old_stash, ""))
+      if #stash == 0 then return end
+      file:write(stash:get())
       file:flush()
-    end
-
-    local function throttled()
-      if count > 4096 then return false end
-      if #stash > 64 then return false end
-      return true
     end
 
     ---@param str string
     local function write(str)
-      table.insert(stash, str)
-      count = count + #str
-      if not throttled() then flush() end
+      stash:put(str)
+      if #stash >= bufsize then flush() end
     end
 
     return {

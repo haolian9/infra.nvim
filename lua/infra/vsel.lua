@@ -13,6 +13,7 @@ local M = {}
 local feedkeys = require("infra.feedkeys")
 local strlib = require("infra.strlib")
 local utf8 = require("infra.utf8")
+local wincursor = require("infra.wincursor")
 
 local api = vim.api
 
@@ -94,18 +95,6 @@ function M.oneline_text(bufnr)
   return text
 end
 
--- according to `:h magic`
----@param bufnr ?number
----@return nil|string
-function M.oneline_escaped(bufnr)
-  assert(vim.go.magic)
-
-  local raw = M.oneline_text(bufnr)
-  if raw == nil then return end
-
-  return vim.fn.escape(raw, [[.$*~\/]])
-end
-
 ---@param bufnr ?number
 ---@return table|nil
 function M.multiline_text(bufnr)
@@ -143,10 +132,10 @@ end
 ---@param stop_line  number @0-indexed, exclusive
 ---@param stop_col   number @0-indexed, exclusive
 function M.select_region(winid, start_line, start_col, stop_line, stop_col)
-  api.nvim_win_set_cursor(winid, { start_line + 1, start_col })
+  wincursor.go(winid, start_line, start_col)
   -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
   feedkeys.codes("vo", "nx")
-  api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, stop_col - 1 })
+  wincursor.go(winid, stop_line - 1, stop_col - 1)
 end
 
 ---select lines between start and stop
@@ -155,10 +144,10 @@ end
 ---@param start_line number @0-indexed, inclusive
 ---@param stop_line  number @0-indexed, exclusive
 function M.select_lines(winid, start_line, stop_line)
-  api.nvim_win_set_cursor(winid, { start_line + 1, 0 })
+  wincursor.go(winid, start_line, 0)
   -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
   feedkeys.codes("Vo", "nx")
-  api.nvim_win_set_cursor(winid, { stop_line + 1 - 1, 0 })
+  wincursor.go(winid, stop_line - 1, 0)
 end
 
 return M
