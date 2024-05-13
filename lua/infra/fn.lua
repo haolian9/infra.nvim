@@ -67,7 +67,7 @@ function M.join(iterable, separator)
   end
   rope:skip(#separator)
 
-  return rope:tostring()
+  return rope:get()
 end
 
 ---@param iterable function|table @iterator or list

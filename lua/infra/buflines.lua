@@ -97,7 +97,7 @@ do
     end
     rope:skip(#"\n")
 
-    return rope:tostring()
+    return rope:get()
   end
 end
 

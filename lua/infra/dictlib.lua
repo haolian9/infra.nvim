@@ -133,7 +133,7 @@ function M.iter_values(dict)
 end
 
 ---@param dict {[string|number]: any}
----@param keys string|number[]
+---@param keys (string|number)[]
 ---@param val any
 function M.set(dict, keys, val)
   local bag = dict

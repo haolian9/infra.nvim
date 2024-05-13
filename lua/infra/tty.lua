@@ -58,7 +58,7 @@ function M.read_chars(n)
     if #rope >= n then break end
   end
 
-  return rope:tostring()
+  return rope:get()
 end
 
 ---@return string,integer @char,code
