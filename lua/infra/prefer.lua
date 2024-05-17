@@ -89,10 +89,11 @@ function M.monkeypatch()
     end,
   })
 
-  vim.o = setmetatable({}, {
-    __index = function(_, key) error(string.format("trying to access %s, use vim.{g,b,w}o instead", key)) end,
-    __newindex = function(_, key, val) error(string.format("trying to set %s=%s, use vim.{g,b,w}o instead", key, val)) end,
-  })
+  ---sadly, it's impossible to avoid vim.o being called in nvim's runtime, see vim.lsp.util
+  -- vim.o = setmetatable({}, {
+  --   __index = function(_, key) error(string.format("trying to access %s, use vim.{g,b,w}o instead", key)) end,
+  --   __newindex = function(_, key, val) error(string.format("trying to set %s=%s, use vim.{g,b,w}o instead", key, val)) end,
+  -- })
 end
 
 return M
