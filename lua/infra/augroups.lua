@@ -230,13 +230,15 @@ do
 
   ---@param bufnr integer
   ---@param autounlink? boolean @nil=false
+  ---@param augname? string
   ---@return infra.BufAugroup
-  function M.BufAugroup(bufnr, autounlink)
+  function M.BufAugroup(bufnr, autounlink, augname)
     assert(bufnr ~= nil and bufnr ~= 0)
     if autounlink == nil then autounlink = false end
+    if augname == nil then augname = string.format("aug://buf/%d", bufnr) end
 
-    local group = api.nvim_create_augroup(string.format("aug://buf/%d", bufnr), { clear = true })
-    local aug = setmetatable({ group = group, bufnr = bufnr }, BufAugroup)
+    local id = api.nvim_create_augroup(augname, { clear = true })
+    local aug = setmetatable({ group = id, bufnr = bufnr }, BufAugroup)
 
     ---@diagnostic disable: invisible
 
@@ -253,13 +255,15 @@ do
 
   ---@param winid integer
   ---@param autounlink? boolean @nil=false
+  ---@param augname? string
   ---@return infra.Augroup
-  function M.WinAugroup(winid, autounlink)
+  function M.WinAugroup(winid, autounlink, augname)
     assert(winid ~= nil and winid ~= 0)
     if autounlink == nil then autounlink = false end
+    if augname == nil then augname = string.format("aug://win/%d", winid) end
 
-    local group = api.nvim_create_augroup(string.format("aug://win/%d", winid), { clear = true })
-    local aug = setmetatable({ group = group }, WinAugroup)
+    local id = api.nvim_create_augroup(augname, { clear = true })
+    local aug = setmetatable({ group = id }, WinAugroup)
 
     if autounlink then
       ---since aug:once calls aug:append_aucmd() under the hood

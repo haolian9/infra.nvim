@@ -190,7 +190,7 @@ do
   ---@param stop_lnum integer @0-based, exclusive, could be negative
   ---@param lines string[]
   function M.replaces(bufnr, start_lnum, stop_lnum, lines)
-    assert(stop_lnum > start_lnum, "+1? stop_lnum is exclusive")
+    start_lnum, stop_lnum = resolve_range(bufnr, start_lnum, stop_lnum)
     M.sets(bufnr, start_lnum, stop_lnum, lines)
   end
 
