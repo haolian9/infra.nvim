@@ -94,6 +94,9 @@ function M.monkeypatch()
   --   __index = function(_, key) error(string.format("trying to access %s, use vim.{g,b,w}o instead", key)) end,
   --   __newindex = function(_, key, val) error(string.format("trying to set %s=%s, use vim.{g,b,w}o instead", key, val)) end,
   -- })
+  ---
+  ---as a compromise, link it to vim.go
+  vim.o = vim.go
 end
 
 return M

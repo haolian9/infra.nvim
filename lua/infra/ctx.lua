@@ -1,8 +1,9 @@
 local M = {}
 
 local dictlib = require("infra.dictlib")
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
 local prefer = require("infra.prefer")
+local strlib = require("infra.strlib")
 
 local api = vim.api
 
@@ -103,7 +104,7 @@ end
 do
   local function resolve_events(raw)
     local t = type(raw)
-    if t == "table" then return fn.toset(raw) end
+    if t == "table" then return itertools.toset(raw) end
     if t == "string" then return { [raw] = true } end
     error("value error")
   end
@@ -114,10 +115,10 @@ do
   local function resolve_new_setopt(old, adds)
     local union = adds
     if old ~= "" then
-      local olds = fn.toset(fn.split_iter(old, ","))
+      local olds = itertools.toset(strlib.iter_splits(old, ","))
       union = dictlib.merged(olds, adds)
     end
-    return fn.join(dictlib.keys(union), ",")
+    return itertools.join(dictlib.keys(union), ",")
   end
 
   ---@param event 'all'|string|string[]

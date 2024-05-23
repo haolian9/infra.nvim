@@ -11,7 +11,7 @@
 --todo: generate completefn for {flag,arg}.type={true,boolean}
 
 local ArgComp = require("infra.cmds.ArgComp")
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("imfra.cmds.cast", "debug")
 local listlib = require("infra.listlib")
 local strlib = require("infra.strlib")
@@ -40,7 +40,7 @@ local compose_complete
 do
   ---@param line string
   local function collect_seen_flags(line)
-    local iter = fn.split_iter(line, " ")
+    local iter = strlib.iter_splits(line, " ")
     local seen = {}
     for chunk in iter do
       if chunk == "--" then break end
@@ -82,7 +82,7 @@ do
       local flags = resolve_unseen_flags(spell, prompt, line)
       if #flags == 0 then return end
       local comp = ArgComp.constant(function()
-        return fn.tolist(fn.map(function(f) return string.format("--%s", f) end, flags))
+        return itertools.tolist(itertools.map(function(f) return string.format("--%s", f) end, flags))
       end)
       return comp(prompt)
     end
@@ -149,11 +149,11 @@ do
     end
     if vtype == "string[]" then
       if raw == "" then return {} end
-      return fn.split(raw, ",")
+      return strlib.splits(raw, ",")
     end
     if vtype == "number[]" then
       if raw == "" then return {} end
-      return fn.tolist(fn.map(tonumber, fn.split_iter(raw, ",")))
+      return itertools.tolist(itertools.map(tonumber, strlib.iter_splits(raw, ",")))
     end
     error("unexpected vtype: " .. vtype)
   end
@@ -173,7 +173,7 @@ do
     local parsed = {}
 
     do
-      local iter = fn.iter(args)
+      local iter = itertools.iter(args)
       local arg_chunks = {}
       -- --verbose, --verbose=true, --porcelain=v1
       for chunk in iter do
@@ -204,7 +204,7 @@ do
       end
       listlib.extend(arg_chunks, iter)
       --todo: honor arg.type
-      if spell.arg and #arg_chunks > 0 then parsed[spell.arg.name] = fn.join(arg_chunks, " ") end
+      if spell.arg and #arg_chunks > 0 then parsed[spell.arg.name] = itertools.join(arg_chunks, " ") end
     end
 
     do -- fill defaults

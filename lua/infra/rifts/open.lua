@@ -2,6 +2,7 @@ local M = {}
 
 local ctx = require("infra.ctx")
 local dictlib = require("infra.dictlib")
+local prefer = require("infra.prefer")
 local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
 
@@ -48,6 +49,8 @@ function M.win(bufnr, enter, opts)
   else
     ctx.win(winid, function() vim.fn.setreg("#", bufnr) end)
   end
+
+  prefer.wo(winid, "winfixbuf", true)
 
   return winid
 end

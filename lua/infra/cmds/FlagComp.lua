@@ -1,13 +1,13 @@
 local M = {}
 
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
 local strlib = require("infra.strlib")
 
 ---@param flag string
 ---@param provider string[]|fun(): string[]
 ---@return string[]
 local function enum_values(flag, provider)
-  return fn.tolist(fn.map(
+  return itertools.tolist(itertools.map(
     function(i) return string.format("--%s=%s", flag, i) end,
     (function()
       local pt = type(provider)
@@ -28,7 +28,7 @@ function M.constant(flag, provider)
     if #enum == 0 then return {} end
 
     if #prompt == 0 then return enum end
-    return fn.tolist(fn.filter(function(i) return strlib.startswith(i, prompt) end, enum))
+    return itertools.tolist(itertools.filter(function(i) return strlib.startswith(i, prompt) end, enum))
   end
 end
 
@@ -40,7 +40,7 @@ function M.variable(flag, provider)
     local enum = enum_values(flag, provider)
     if #enum == 0 then return {} end
     if #prompt == 0 then return enum end
-    return fn.tolist(fn.filter(function(i) return strlib.startswith(i, prompt) end, enum))
+    return itertools.tolist(itertools.filter(function(i) return strlib.startswith(i, prompt) end, enum))
   end
 end
 

@@ -26,6 +26,17 @@ function M.values(dict)
 end
 
 ---@param dict Dict
+---@return any,any
+function M.items(dict)
+  local i
+  return function()
+    local k, v = next(dict, i)
+    i = k
+    return k, v
+  end
+end
+
+---@param dict Dict
 ---@return Dict
 function M.flipped(dict)
   local flipped = {}
@@ -57,18 +68,6 @@ function M.merge(a, ...)
       a[k] = v
     end
   end
-end
-
----@param dreams Dict
----@param ... string|number @trace
-function M.get(dreams, ...)
-  local layer = dreams
-  for _, path in ipairs({ ... }) do
-    assert(type(layer) == "table", path)
-    layer = layer[path]
-    if layer == nil then return end
-  end
-  return layer
 end
 
 ---@param cap integer
@@ -130,6 +129,18 @@ function M.iter_values(dict)
     key, val = iter(dict, key)
     return val
   end
+end
+
+---@param dreams Dict
+---@param ... string|number @trace
+function M.get(dreams, ...)
+  local layer = dreams
+  for _, path in ipairs({ ... }) do
+    assert(type(layer) == "table", path)
+    layer = layer[path]
+    if layer == nil then return end
+  end
+  return layer
 end
 
 ---@param dict {[string|number]: any}

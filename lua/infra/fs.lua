@@ -4,7 +4,7 @@
 
 local M = {}
 
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("infra.fs")
 local strlib = require("infra.strlib")
 
@@ -112,14 +112,14 @@ function M.joinpath(...)
   --deal with new root
   for i = #args, 2, -1 do
     if strlib.startswith(args[i], "/") then
-      parts = fn.slice(args, i, #args + 1)
+      parts = itertools.slice(args, i, #args + 1)
       break
     end
   end
 
   local path
   do -- stole from: https://github.com/neovim/neovim/commit/189fb6203262340e7a59e782be970bcd8ae28e61#diff-fecfd503a1c28e0a28a91da0294b12dbc72f081cb12434459648a44f641b68d9
-    path = fn.join(parts, "/")
+    path = itertools.join(parts, "/")
     path = string.gsub(path, [[/+]], "/")
   end
 
@@ -189,12 +189,12 @@ end
 function M.shorten(path)
   assert(path ~= "" and path ~= nil)
   if path == "/" then return "/" end
-  local parts = fn.split(strlib.rstrip(path, "/"), "/")
+  local parts = strlib.splits(strlib.rstrip(path, "/"), "/")
   ---head
   if #parts > 1 and parts[1] ~= "" then parts[1] = string.sub(parts[1], 1, 1) end
   ---middles if any
   if #parts > 3 then
-    for i in fn.range(2, #parts - 2 + 1) do
+    for i in itertools.range(2, #parts - 2 + 1) do
       parts[i] = string.sub(parts[i], 1, 1)
     end
   end

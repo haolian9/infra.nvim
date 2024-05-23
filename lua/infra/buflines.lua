@@ -8,7 +8,7 @@ local M = {}
 ---* intuitive, simple responsibility api
 ---   * nvim_buf_get/set_lines is not designed for human, with too many param combination
 
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("infra.buflines", "debug")
 local unsafe = require("infra.unsafe")
 
@@ -88,7 +88,7 @@ do
   ---@param stop_lnum? integer @0-based, exclusive
   ---@return string
   function M.joined(bufnr, start_lnum, stop_lnum)
-    local range = fn.range(resolve_range(bufnr, start_lnum, stop_lnum))
+    local range = itertools.range(resolve_range(bufnr, start_lnum, stop_lnum))
 
     local rope = ropes.new()
     for ptr, len in unsafe.lineref_iter(bufnr, range) do
@@ -120,16 +120,16 @@ do
   ---@param stop_lnum? integer @0-based, exclusive
   ---@return fun():string?,integer? @iter(line,lnum)
   function M.iter(bufnr, start_lnum, stop_lnum)
-    local range = fn.range(resolve_range(bufnr, start_lnum, stop_lnum))
-    return fn.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
+    local range = itertools.range(resolve_range(bufnr, start_lnum, stop_lnum))
+    return itertools.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
   end
 
   ---@param bufnr integer
   ---@return fun(): string?,integer? @iter(line,lnum)
   function M.iter_reversed(bufnr)
     --todo: support start_lnum, stop_lnum
-    local range = fn.range(M.high(bufnr), 0 - 1, -1)
-    return fn.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
+    local range = itertools.range(M.high(bufnr), 0 - 1, -1)
+    return itertools.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
   end
 end
 
@@ -143,13 +143,13 @@ do
   local function main(bufnr, regex, negative, start_lnum, stop_lnum)
     local iter
 
-    iter = fn.range(resolve_range(bufnr, start_lnum, stop_lnum))
+    iter = itertools.range(resolve_range(bufnr, start_lnum, stop_lnum))
     if negative then
-      iter = fn.filter(function(lnum) return regex:match_line(bufnr, lnum) == nil end, iter)
+      iter = itertools.filter(function(lnum) return regex:match_line(bufnr, lnum) == nil end, iter)
     else
-      iter = fn.filter(function(lnum) return regex:match_line(bufnr, lnum) ~= nil end, iter)
+      iter = itertools.filter(function(lnum) return regex:match_line(bufnr, lnum) ~= nil end, iter)
     end
-    iter = fn.map(function(lnum)
+    iter = itertools.map(function(lnum)
       local line = M.lines(bufnr, lnum, lnum + 1)[1]
       ---@diagnostic disable-next-line: redundant-return-value
       return line, lnum

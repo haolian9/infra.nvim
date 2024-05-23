@@ -1,8 +1,9 @@
+local itertools = require("infra.itertools")
 local M = {}
 
 -- iterate over list.values
 ---@param list any[]
----@return infra.Iterator.Any
+---@return infra.Iterator.Any iter
 function M.iter(list)
   local cursor = 1
   return function()
@@ -13,9 +14,10 @@ function M.iter(list)
   end
 end
 
+---nargs out from itern
 ---@param list any[][] list of tuple
 ---@return fun():...any
-function M.iter_unpacked(list)
+function M.itern(list)
   local iter = M.iter(list)
   return function() return unpack(iter() or {}) end
 end

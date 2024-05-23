@@ -7,9 +7,9 @@ local uv = vim.loop
 
 local bufpath = require("infra.bufpath")
 local bufrename = require("infra.bufrename")
-local fn = require("infra.fn")
 local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("infra.coreutils")
+local strlib = require("infra.strlib")
 
 function M.touch(fpath)
   local file, err = uv.fs_open(fpath, "a", tonumber("600", 8))
@@ -84,7 +84,7 @@ end
 function M.cmdline()
   local path = string.format("/proc/%d/cmdline", uv.getpid())
   local content = M.cat(path)
-  return fn.split_iter(content, "\0")
+  return strlib.iter_splits(content, "\0")
 end
 
 return M

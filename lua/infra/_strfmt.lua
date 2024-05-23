@@ -1,8 +1,8 @@
-local fn = require("infra.fn")
+local itertools = require("infra.itertools")
 local strlib = require("infra.strlib")
 
 local inspect_opts = { newline = " ", indent = "" }
-local scalars = fn.toset({ "boolean", "number", "string" })
+local scalars = itertools.toset({ "boolean", "number", "string" })
 
 ---@param format string
 ---@param ... any

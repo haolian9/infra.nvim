@@ -129,4 +129,57 @@ function M.endswith(a, b)
   return string.sub(a, -#b) == b
 end
 
+do
+  -- parts can be empty string
+  ---@param str string
+  ---@param delimiter string
+  ---@param maxsplit number? @specified or infinited
+  ---@param keepend boolean? @specified or false
+  ---@return infra.Iterator.Str
+  function M.iter_splits(str, delimiter, maxsplit, keepend)
+    keepend = keepend or false
+
+    local cursor = 1
+    local remain_splits = (maxsplit or math.huge) + 1
+
+    return function()
+      if remain_splits < 1 then return end
+
+      if remain_splits == 1 then
+        remain_splits = 0
+        return str:sub(cursor)
+      end
+
+      local del_start, del_stop = str:find(delimiter, cursor, true)
+      if del_start == nil or del_stop == nil then
+        remain_splits = 0
+        return str:sub(cursor)
+      end
+
+      remain_splits = remain_splits - 1
+      local start = cursor
+      local stop = del_start - 1
+      if keepend then stop = del_stop end
+      cursor = del_stop + 1
+      return str:sub(start, stop)
+    end
+  end
+
+  ---parts can be empty string
+  ---@param str string
+  ---@param delimiter string
+  ---@param maxsplit number? @specified or infinited
+  ---@param keepend boolean? @specified or false
+  ---@return string[]
+  function M.splits(str, delimiter, maxsplit, keepend)
+    local iter = M.iter_splits(str, delimiter, maxsplit, keepend)
+
+    local list = {}
+    for chunk in iter do
+      table.insert(list, chunk)
+    end
+    return list
+  end
+end
+
 return M
