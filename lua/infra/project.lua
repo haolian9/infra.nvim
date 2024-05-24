@@ -3,6 +3,7 @@ local M = {}
 
 local bufpath = require("infra.bufpath")
 local dictlib = require("infra.dictlib")
+local strlib = require("infra.strlib")
 local subprocess = require("infra.subprocess")
 
 local api = vim.api
@@ -28,13 +29,14 @@ do
     local root
     local held = cache[basedir]
     if held == nil then
-      local result = subprocess.run("git", { args = { "rev-parse", "--show-toplevel" }, cwd = basedir }, true)
+      local result = subprocess.run("git", { args = { "rev-parse", "--show-toplevel" }, cwd = basedir }, "raw")
       if result.exit_code ~= 0 then
         root = nil
         cache[basedir] = false
       else
         root = result.stdout()
         assert(root ~= nil and root ~= "")
+        root = strlib.rstrip(root)
         cache[basedir] = root
       end
     elseif held == false then

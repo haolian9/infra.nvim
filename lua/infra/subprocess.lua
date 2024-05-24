@@ -1,9 +1,16 @@
 local M = {}
 
+--todo: ps
+--todo: kill
+
+local itertools = require("infra.itertools")
+local jelly = require("infra.jellyfish")("infra.subprocess", "info")
 local listlib = require("infra.listlib")
 local logging = require("infra.logging")
 local strlib = require("infra.strlib")
 local tail = require("infra.tail")
+
+local ropes = require("string.buffer")
 
 local uv = vim.loop
 
@@ -32,25 +39,20 @@ do
 end
 
 -- each chunk of read from stdout can contains multiple lines, and may not ends with `\n`
----@param chunks string[][]
-local function split_stdout(chunks)
+---@param chunks string[]
+function M.iter_lines(chunks)
   local del = "\n"
   local chunk_iter = listlib.iter(chunks)
   local line_iter = nil
-  local short = nil
+  local short = ropes.new(4096)
 
   return function()
     while true do
       if line_iter == nil then
         local chunk = chunk_iter()
         if chunk == nil then
-          if short ~= nil then
-            local last_line = short
-            short = nil
-            --due to strlib.iter_splits, "a\nb\n" will end with "", which is worked as expected of course
-            if last_line ~= "" then return last_line end
-          end
-          return
+          if #short == 0 then return end
+          return short:get()
         end
         line_iter = strlib.iter_splits(chunk, del, nil, true)
       end
@@ -58,22 +60,18 @@ local function split_stdout(chunks)
       local line = line_iter()
       if line == nil then
         line_iter = nil
-      else
-        if strlib.endswith(line, del) then
-          if short ~= nil then
-            line = short .. line
-            short = nil
-          end
-          return string.sub(line, 1, #line - #del)
-        else
-          if short ~= nil then
-            --a very long line
-            short = short .. line
-          else
-            short = line
-          end
-        end
+        goto continue
       end
+
+      if strlib.endswith(line, del) then
+        local this_line = string.sub(line, 1, #line - #del)
+        if #short == 0 then return this_line end
+        return short:put(this_line):get()
+      else
+        short:put(line)
+      end
+
+      ::continue::
     end
   end
 end
@@ -84,9 +82,10 @@ end
 ---@field cwd? string
 ---@field detached? boolean
 
+---CAUTION: when capture_stdout=raw, the `\n` ending can cause trouble
 ---@param bin string
 ---@param opts? infra.subprocess.SpawnOpts
----@param capture_stdout boolean? @nil=false
+---@param capture_stdout 'raw'|'lines'|false|nil @nil=false
 ---@return {pid: number, exit_code: number, stdout: fun():string}
 function M.run(bin, opts, capture_stdout)
   opts = opts or {}
@@ -99,10 +98,17 @@ function M.run(bin, opts, capture_stdout)
   opts["stdio"] = { nil, stdout, stderr }
 
   local proc_t, pid = uv.spawn(bin, opts, function(code) rc = assert(code) end)
-  if proc_t == nil then error(pid) end
+  if proc_t == nil then
+    jelly.err("bin=%s, opts=%s", bin, opts)
+    error(pid)
+  end
 
   local stdout_iter
-  if capture_stdout then
+  if not capture_stdout then
+    redirect_to_file(stdout)
+    stdout_iter = function() end
+  else
+    ---@type string[]
     local chunks = {}
     uv.read_start(stdout, function(err, data)
       assert(not err, err)
@@ -112,10 +118,11 @@ function M.run(bin, opts, capture_stdout)
         stdout:close()
       end
     end)
-    stdout_iter = split_stdout(chunks)
-  else
-    redirect_to_file(stdout)
-    stdout_iter = function() end
+    if capture_stdout == "raw" then
+      stdout_iter = itertools.iter(chunks)
+    else
+      stdout_iter = M.iter_lines(chunks)
+    end
   end
 
   redirect_to_file(stderr)
@@ -127,10 +134,10 @@ end
 
 ---@param bin string
 ---@param opts infra.subprocess.SpawnOpts
----@param stdout_callback fun(stdout: (fun():string?))
----@param exit_callback fun(code: number)
-function M.spawn(bin, opts, stdout_callback, exit_callback)
-  assert(stdout_callback ~= nil and exit_callback)
+---@param on_stdout fun(data: string|nil) @nil=closed
+---@param on_exit fun(code: integer)
+function M.spawn(bin, opts, on_stdout, on_exit)
+  assert(on_stdout ~= nil and on_exit)
   opts = opts or {}
 
   local stdout = uv.new_pipe()
@@ -138,17 +145,13 @@ function M.spawn(bin, opts, stdout_callback, exit_callback)
 
   opts["stdio"] = { nil, stdout, stderr }
 
-  uv.spawn(bin, opts, function(code) exit_callback(code) end)
+  jelly.debug("spawning %s %s", bin, opts)
+  uv.spawn(bin, opts, function(code) on_exit(code) end)
 
-  local chunks = {}
   uv.read_start(stdout, function(err, data)
     assert(not err, err)
-    if data then
-      table.insert(chunks, data)
-    else
-      stdout:close()
-      vim.schedule(function() stdout_callback(split_stdout(chunks)) end)
-    end
+    on_stdout(data)
+    if data == nil then stdout:close() end
   end)
 
   redirect_to_file(stderr)
