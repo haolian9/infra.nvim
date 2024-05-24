@@ -93,4 +93,37 @@ do
   end
 end
 
+do
+  --to repeat [c,[l,[b,[a,[w,[e,[k, using `(` and `)`
+  --global, no buffer-local
+
+  local state = {
+    ---@type fun()
+    next = nil,
+    ---@type fun()
+    prev = nil,
+  }
+
+  ---@param next fun()
+  ---@param prev fun()
+  function M.remember_paren(next, prev)
+    state.next = next
+    state.prev = prev
+  end
+
+  --should be only used in normal mode
+  function M.rhs_parenleft()
+    for _ = 1, vim.v.count1 do
+      if state.prev then state.prev() end
+    end
+  end
+
+  --should be only used in normal mode
+  function M.rhs_parenright()
+    for _ = 1, vim.v.count1 do
+      if state.next then state.next() end
+    end
+  end
+end
+
 return M
