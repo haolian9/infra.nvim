@@ -94,7 +94,7 @@ function M.map(fn, iterable)
 end
 
 ---for iters which return more than one value in each iteration
----@param fn fun(el: any): ...
+---@param fn fun(...): ...
 ---@param iterable infra.Iterable.Any
 ---@return infra.Iterator.Any
 function M.mapn(fn, iterable)
@@ -212,8 +212,8 @@ function M.flatten(iterable)
         child = M.iter(child)
       end
       local el = child()
-      if el == nil then child = nil end
-      return el
+      if el ~= nil then return el end
+      child = nil
     end
   end
 end

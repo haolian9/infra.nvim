@@ -1,17 +1,24 @@
 local M = {}
 
 local ex = require("infra.ex")
+local prefer = require("infra.prefer")
 local winsplit = require("infra.winsplit")
 
 local api = vim.api
 
 ---@alias infra.bufopen.Mode 'inplace'|'tab'|infra.winsplit.Side
 
+---NB: when name_or_nr=string, the newly loaded buffer will have &buflisted=true
 ---@param name_or_nr string|integer @bufname or bufnr
 ---@return integer bufnr
 local function resolve_bufnr(name_or_nr)
   if type(name_or_nr) == "string" then
-    return vim.fn.bufnr(name_or_nr, true)
+    local bufnr = vim.fn.bufnr(name_or_nr)
+    if bufnr ~= -1 then return bufnr end
+
+    bufnr = vim.fn.bufadd(name_or_nr)
+    prefer.bo(bufnr, "buflisted", true)
+    return bufnr
   elseif type(name_or_nr) == "number" then
     return name_or_nr
   else

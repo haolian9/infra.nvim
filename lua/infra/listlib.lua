@@ -7,8 +7,8 @@ local M = {}
 function M.iter(list)
   local cursor = 1
   return function()
-    if cursor > #list then return end
     local el = list[cursor]
+    if el == nil then return end
     cursor = cursor + 1
     return el
   end
@@ -20,6 +20,30 @@ end
 function M.itern(list)
   local iter = M.iter(list)
   return function() return unpack(iter() or {}) end
+end
+
+---@param list any[]
+---@return fun(): integer?,any @(index:0-based, value)
+function M.enumerate(list)
+  local cursor = 0
+  return function()
+    cursor = cursor + 1
+    local el = list[cursor]
+    if el == nil then return end
+    return cursor - 1, el
+  end
+end
+
+---@param list any[]
+---@return fun(): integer?,any @(index:1-based, value)
+function M.enumerate1(list)
+  local cursor = 0
+  return function()
+    cursor = cursor + 1
+    local el = list[cursor]
+    if el == nil then return end
+    return cursor, el
+  end
 end
 
 -- inplace extend
