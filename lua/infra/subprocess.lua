@@ -12,7 +12,7 @@ local tail = require("infra.tail")
 
 local ropes = require("string.buffer")
 
-local uv = vim.loop
+local uv = vim.uv
 
 local facts = {
   stdout_fpath = logging.newfile("infra.subprocess"),

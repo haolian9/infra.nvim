@@ -3,7 +3,7 @@
 local M = {}
 
 local api = vim.api
-local uv = vim.loop
+local uv = vim.uv
 
 local bufpath = require("infra.bufpath")
 local bufrename = require("infra.bufrename")

@@ -8,7 +8,7 @@ local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("infra.fs")
 local strlib = require("infra.strlib")
 
-local uv = vim.loop
+local uv = vim.uv
 local api = vim.api
 
 ---see /usr/include/linux/stat.h
