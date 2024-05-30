@@ -3,6 +3,7 @@
 --* the flag pattern: '--{flag-flag}='
 --* no abbrev for flags
 --* no repeating flags
+--* no `---`, use `-- -` instead
 --
 --todo: expand expr: %:p:h, @a
 --todo: honor the flag.required constraint
@@ -177,7 +178,11 @@ do
       local arg_chunks = {}
       -- --verbose, --verbose=true, --porcelain=v1
       for chunk in iter do
+        ---nargs>1; {'--', '---'}
         if chunk == "--" then break end
+        ---nargs=1; '-- ---'
+        if strlib.startswith(chunk, "-- ") then break end
+
         if strlib.startswith(chunk, "--") then
           --flag matching
           local eql_at = strlib.find(chunk, "=")

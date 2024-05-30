@@ -136,7 +136,7 @@ end
 function M.get(dreams, ...)
   local layer = dreams
   for _, path in ipairs({ ... }) do
-    assert(type(layer) == "table", path)
+    if type(layer) ~= "table" then return end
     layer = layer[path]
     if layer == nil then return end
   end

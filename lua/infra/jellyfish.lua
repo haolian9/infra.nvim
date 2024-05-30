@@ -12,41 +12,37 @@ local api = vim.api
 ---log level
 ---@type {[string|integer]: integer}
 local ll = {}
-do
-  for _, name in ipairs({ "DEBUG", "INFO", "WARN", "ERROR" }) do
-    local val = vim.log.levels[name]
-    ll[name] = val
-    ll[string.lower(name)] = val
-    ll[val] = val
-  end
+for _, name in ipairs({ "DEBUG", "INFO", "WARN", "ERROR" }) do
+  local val = vim.log.levels[name]
+  ll[name] = val
+  ll[string.lower(name)] = val
+  ll[val] = val
 end
 
 ---should not raise errors manually in any level
 ---@type fun(msg: string, level: integer, opts: {source: string}): nil
 local provider
 if true then
+  local function nvim_schedule_echo(chunks, history, opts)
+    vim.schedule(function() api.nvim_echo(chunks, history, opts) end)
+  end
+
   function provider(msg, level, opts)
     assert(opts.source ~= nil)
-    local bold, normal, dim, red = "CursorLine", "Normal", "Comment", "Error"
 
-    local nvim_echo = api.nvim_echo
-    if vim.in_fast_event() then
-      function nvim_echo(chunks, ephemeral, _opts)
-        vim.schedule(function() api.nvim_echo(chunks, ephemeral, _opts) end)
-      end
-    end
-
+    local nvim_echo = vim.in_fast_event() and nvim_schedule_echo or api.nvim_echo
     if level <= ll.DEBUG then
-      nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, dim } }, true, {})
+      nvim_echo({ { opts.source, "JellySource" }, { " " }, { msg, "JellyDebug" } }, true, {})
     elseif level < ll.WARN then
-      nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, normal } }, true, {})
+      nvim_echo({ { opts.source, "JellySource" }, { " " }, { msg, "JellyInfo" } }, true, {})
     else
-      nvim_echo({ { opts.source, bold }, { " ", normal }, { msg, red } }, true, {})
+      nvim_echo({ { opts.source, "JellySource" }, { " " }, { msg, "JellyError" } }, true, {})
     end
   end
 else
   function provider(msg, level, opts)
     assert(opts.source ~= nil)
+
     local meth
     if level <= ll.DEBUG then
       meth = "low"

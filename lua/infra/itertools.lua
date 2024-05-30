@@ -193,15 +193,15 @@ function M.chained(...)
         it = M.iter(maybe_it)
       end
       local el = it()
-      if el == nil then it = nil end
-      return el
+      if el ~= nil then return el end
+      it = nil
     end
   end
 end
 
 ---flatten fun(): nil|(fun(): nil|any)|any[]
 ---@param iterable infra.Iterable.Any
-function M.flatten(iterable)
+function M.flat(iterable)
   local child
 
   return function()
