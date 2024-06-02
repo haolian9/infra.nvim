@@ -1,7 +1,8 @@
 local M = {}
 
 local itertools = require("infra.itertools")
-local strlib = require("infra.strlib")
+
+local fuzzymatch = require("beckon.fuzzymatch")
 
 ---@param flag string
 ---@param provider string[]|fun(): string[]
@@ -28,7 +29,7 @@ function M.constant(flag, provider)
     if #enum == 0 then return {} end
 
     if #prompt == 0 then return enum end
-    return itertools.tolist(itertools.filter(function(i) return strlib.startswith(i, prompt) end, enum))
+    return fuzzymatch(enum, prompt, { sort = false })
   end
 end
 
@@ -40,7 +41,7 @@ function M.variable(flag, provider)
     local enum = enum_values(flag, provider)
     if #enum == 0 then return {} end
     if #prompt == 0 then return enum end
-    return itertools.tolist(itertools.filter(function(i) return strlib.startswith(i, prompt) end, enum))
+    return fuzzymatch(enum, prompt, { sort = false })
   end
 end
 

@@ -5,7 +5,6 @@ local M = {}
 
 local itertools = require("infra.itertools")
 local jelly = require("infra.jellyfish")("infra.subprocess", "info")
-local listlib = require("infra.listlib")
 local logging = require("infra.logging")
 local strlib = require("infra.strlib")
 local tail = require("infra.tail")
@@ -42,7 +41,7 @@ end
 ---@param chunks string[]
 function M.iter_lines(chunks)
   local del = "\n"
-  local chunk_iter = listlib.iter(chunks)
+  local chunk_iter = itertools.iter(chunks)
   local line_iter = nil
   local short = ropes.new(4096)
 

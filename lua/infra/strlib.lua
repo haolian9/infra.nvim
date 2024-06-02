@@ -135,7 +135,7 @@ do
   ---@param delimiter string
   ---@param maxsplit number? @specified or infinited
   ---@param keepend boolean? @specified or false
-  ---@return infra.Iterator.Str
+  ---@return fun():string?
   function M.iter_splits(str, delimiter, maxsplit, keepend)
     keepend = keepend or false
 

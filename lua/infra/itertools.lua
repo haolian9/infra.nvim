@@ -2,15 +2,6 @@ local M = {}
 
 local ropes = require("string.buffer")
 
----@alias infra.Iterator.Any fun(): ...
----@alias infra.Iterable.Any infra.Iterator.Any|any[]
---
----@alias infra.Iterator.Str fun(): string?
----@alias infra.Iterable.Str infra.Iterator.Str|string[]
---
----@alias infra.Iterator.Int fun(): integer?
----@alias infra.Iterable.Str infra.Iterator.Int|integer[]
-
 ---forms:
 ---* (3)
 ---* (0, 3)
@@ -19,6 +10,7 @@ local ropes = require("string.buffer")
 ---@param from integer @inclusive
 ---@param to? integer @exclusive, nil=0
 ---@param step? integer @nil=1
+---@return fun():integer?
 function M.range(from, to, step)
   assert(step ~= 0)
 
@@ -46,13 +38,15 @@ function M.range(from, to, step)
   end
 end
 
----@param iterable function|table @iterator or list
----@return infra.Iterator.Any
+---@generic T
+---@param iterable fun():T?|T[] @iterator or list
+---@return fun(): T?
 function M.iter(iterable)
   local iter_type = type(iterable)
-  if iter_type == "function" then
-    return iterable
-  elseif iter_type == "table" then
+
+  if iter_type == "function" then return iterable end
+
+  if iter_type == "table" then
     local cursor = 1
     return function()
       if cursor > #iterable then return end
@@ -60,14 +54,23 @@ function M.iter(iterable)
       cursor = cursor + 1
       return el
     end
-  else
-    error("unknown type of iter: " .. iter_type)
   end
+
+  error("unknown type of iter: " .. iter_type)
 end
 
----@param iterable infra.Iterable.Any
+---nargs out from itern
+---@param iterable any[][]|fun():(any[]|nil) @list of tuple
+---@return fun():...
+function M.itern(iterable)
+  local iter = M.iter(iterable)
+  return function() return unpack(iter() or {}) end
+end
+
+---@generic T
+---@param iterable fun():T?|T[]
 ---@param size number
----@return fun(): any[]?
+---@return fun(): T[]|?
 function M.batched(iterable, size)
   local it = M.iter(iterable)
   return function()
@@ -80,9 +83,10 @@ function M.batched(iterable, size)
   end
 end
 
----@param fn fun(el: any): ...
----@param iterable infra.Iterable.Any
----@return infra.Iterator.Any
+---@generic T
+---@param fn fun(el: T): ...
+---@param iterable T[]|fun():T?
+---@return fun():...
 function M.map(fn, iterable)
   local it = M.iter(iterable)
 
@@ -94,9 +98,9 @@ function M.map(fn, iterable)
 end
 
 ---for iters which return more than one value in each iteration
----@param fn fun(...): ...
----@param iterable infra.Iterable.Any
----@return infra.Iterator.Any
+---@param fn fun(...):...
+---@param iterable fun():...
+---@return fun():...
 function M.mapn(fn, iterable)
   local it = M.iter(iterable)
 
@@ -107,8 +111,8 @@ function M.mapn(fn, iterable)
   end
 end
 
----NB: the el[key] is not supposed to be nil
----@param iterable table[]|fun(): table[]?
+---NB: the el[key] is supposed to be not nil
+---@param iterable table[]|fun():table[]?
 ---@param key string|integer
 ---@return fun(): any[]?
 function M.project(iterable, key)
@@ -122,8 +126,10 @@ function M.project(iterable, key)
   end
 end
 
----@param predicate fun(el: any): boolean
----@return infra.Iterator.Any
+---@generic T
+---@param predicate fun(el):boolean
+---@param iterable T[]|fun():T?
+---@return fun():T?
 function M.filter(predicate, iterable)
   local it = M.iter(iterable)
   return function()
@@ -136,8 +142,9 @@ function M.filter(predicate, iterable)
 end
 
 ---nargs, pass in predicate, out from filtern
----@param predicate fun(...): boolean
----@param iterable infra.Iterable.Any
+---@param predicate fun(...):boolean
+---@param iterable fun(...):...
+---@return fun():...
 function M.filtern(predicate, iterable)
   local it = M.iter(iterable)
   return function()
@@ -149,11 +156,13 @@ function M.filtern(predicate, iterable)
   end
 end
 
--- zip.length == longest.length
+---zip.length == longest.length
 -- due to lua's for treats first nil as terminate of one iterable
----@param a infra.Iterable.Any
----@param b infra.Iterable.Any
----@return fun(): any[]?
+---@generic T
+---@generic T2
+---@param a T[]|fun():T?
+---@param b T2[]|fun():T2?
+---@return fun():[T,T2]?
 function M.zip_longest(a, b)
   local ai = M.iter(a)
   local bi = M.iter(b)
@@ -165,10 +174,12 @@ function M.zip_longest(a, b)
   end
 end
 
--- zip.length == shortest.length
----@param a infra.Iterable.Any
----@param b infra.Iterable.Any
----@return fun(): any[]?
+---zip.length == shortest.length
+---@generic T
+---@generic T2
+---@param a T[]|fun():T?
+---@param b T2[]|fun():T2?
+---@return fun(): [T,T2]?
 function M.zip(a, b)
   local it = M.zip_longest(a, b)
   return function()
@@ -179,8 +190,9 @@ function M.zip(a, b)
   end
 end
 
----@param ... infra.Iterable.Any
----@return infra.Iterator.Any
+---@generic T
+---@param ... T[]|fun():T?
+---@return fun():T?
 function M.chained(...)
   local it = nil
   local arg_it = M.iter({ ... })
@@ -199,30 +211,32 @@ function M.chained(...)
   end
 end
 
----flatten fun(): nil|(fun(): nil|any)|any[]
----@param iterable infra.Iterable.Any
-function M.flat(iterable)
-  local child
+---@generic T
+---@param iters fun():(T[]|fun():T?|nil)
+---@return fun():T?
+function M.flat(iters)
+  local iter
 
   return function()
     while true do
-      if child == nil then
-        child = iterable()
-        if child == nil then return end
-        child = M.iter(child)
+      if iter == nil then
+        iter = iters()
+        if iter == nil then return end
+        iter = M.iter(iter)
       end
-      local el = child()
+      local el = iter()
       if el ~= nil then return el end
-      child = nil
+      iter = nil
     end
   end
 end
 
 -- when iterable's each step takes time, fastforward would block for a certain time
----@param iterable infra.Iterable.Any
+---@generic T
+---@param iterable T[]|fun():T?
 ---@param start integer @1-based, inclusive
 ---@param stop integer @1-based, exclusive
----@return infra.Iterator.Any
+---@return fun():T?
 function M.slice(iterable, start, stop)
   assert(start > 0 and stop > start)
 
@@ -246,8 +260,9 @@ function M.slice(iterable, start, stop)
 end
 
 do --reduce/consume/drain
-  ---@param iterable infra.Iterable.Any
-  ---@param needle any
+  ---@generic T
+  ---@param iterable T[]|fun():T?
+  ---@param needle T
   ---@return boolean
   function M.contains(iterable, needle)
     for el in M.iter(iterable) do
@@ -256,8 +271,9 @@ do --reduce/consume/drain
     return false
   end
 
-  ---@param a infra.Iterable.Any
-  ---@param b infra.Iterable.Any
+  ---@generic T
+  ---@param a T[]|fun():T?
+  ---@param b T[]|fun():T?
   ---@return boolean
   function M.equals(a, b)
     for ziped in M.zip_longest(a, b) do
@@ -266,42 +282,48 @@ do --reduce/consume/drain
     return true
   end
 
-  ---@param iterable infra.Iterator.Int
-  ---@return integer?
-  function M.max(iterable)
+  ---@generic T
+  ---@param iterable T[]|fun():T?
+  ---@param gt? fun(a:T,b:T):boolean @if a>b
+  ---@return T?
+  function M.max(iterable, gt)
     local iter = M.iter(iterable)
+    if gt == nil then gt = function(a, b) return a > b end end
 
-    local val
+    local max
 
-    val = iter()
-    if val == nil then return end
+    max = iter()
+    if max == nil then return end
 
     for el in iter do
-      if val < el then val = el end
+      if gt(el, max) then max = el end
     end
 
-    return val
+    return max
   end
 
-  ---@param iterable infra.Iterator.Int
-  ---@return integer?
-  function M.min(iterable)
+  ---@generic T
+  ---@param iterable T[]|fun():T?
+  ---@param lt? fun(a:T,b:T):boolean @if a<b
+  ---@return T?
+  function M.min(iterable, lt)
     local iter = M.iter(iterable)
+    if lt == nil then lt = function(a, b) return a < b end end
 
-    local val
+    local min
 
-    val = iter()
-    if val == nil then return end
+    min = iter()
+    if min == nil then return end
 
     for el in iter do
-      if val > el then val = el end
+      if lt(el, min) then min = el end
     end
 
-    return val
+    return min
   end
 
-  ---@param iterable infra.Iterable.Str
-  ---@param separator ?string @specified or ""
+  ---@param iterable string[]|fun():string?
+  ---@param separator ?string @nil=""
   ---@return string
   function M.join(iterable, separator)
     separator = separator or ""
@@ -315,8 +337,9 @@ do --reduce/consume/drain
     return rope:get()
   end
 
-  ---@param fn fun(el)
-  ---@param iterable infra.Iterator.Any
+  ---@generic T
+  ---@param fn fun(el: T)
+  ---@param iterable T[]|fun():T?
   function M.foreach(fn, iterable)
     for el in M.iter(iterable) do
       fn(el)
@@ -324,7 +347,7 @@ do --reduce/consume/drain
   end
 
   ---@param fn fun(...)
-  ---@param iterable infra.Iterator.Any
+  ---@param iterable fun():...
   function M.foreachn(fn, iterable)
     local it = M.iter(iterable)
 
@@ -337,8 +360,9 @@ do --reduce/consume/drain
 end
 
 do
-  ---@param iterable infra.Iterable.Any
-  ---@return any[]
+  ---@generic T
+  ---@param iterable T[]|fun():T?
+  ---@return T[]
   function M.tolist(iterable)
     if type(iterable) == "table" then return iterable end
 
@@ -350,8 +374,9 @@ do
   end
 
   ---NB: no order guarantee
-  ---@param iterable infra.Iterable.Any
-  ---@return {[any]: true}
+  ---@generic T
+  ---@param iterable T[]|fun():T?
+  ---@return {[T]: true}
   function M.toset(iterable)
     local set = {}
     for k in M.iter(iterable) do
@@ -360,8 +385,10 @@ do
     return set
   end
 
-  ---@param kv fun(): string|number,any
-  ---@return {[string|number]: any}
+  ---@generic K
+  ---@generic V
+  ---@param kv fun():K?,V?
+  ---@return {[K]: V}
   function M.todict(kv)
     local dict = {}
     for k, v in kv do
