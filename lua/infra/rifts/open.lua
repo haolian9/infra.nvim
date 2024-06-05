@@ -20,7 +20,7 @@ local api = vim.api
 ---@field zindex?    integer @nil=50; ins pum=100, cmdline pum=250
 ---@field style?     'minimal' @nil=minimal
 ---@field border?    'none'|'single'|'double'|'rounded'|'solid'|'shadow'|string[][]
----@field title?     string|{[1]: string, [2]: string}[] @(text, higroup)
+---@field title?     string|[string,string][] @(text, higroup)
 ---@field title_pos? 'left'|'center'|'right'
 ---@field noautocmd? boolean @nil=false
 

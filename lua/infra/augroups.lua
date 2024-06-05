@@ -124,6 +124,12 @@ local api = vim.api
 ---| '"WinNew"'               # When a new window was created.  Not done for
 ---| '"WinScrolled"'          # After any window in the current tab page
 ---| '"WinResized"'           # After a window in the current tab page changed
+---| '"LspAttach"'
+---| '"LspDetach"'
+---| '"LspNotify"'            # after each successful notification sent to an LSP server.
+---| '"LspProgress"'
+---| '"LspRequest"'
+---| '"LspTokenUpdate"'
 
 --mandatory fields: group, (buffer vs. pattern)
 ---@class infra.AugroupCreateOpts

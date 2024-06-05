@@ -1,3 +1,5 @@
+local buflines = require("infra.buflines")
+local unsafe = require("infra.unsafe")
 local M = {}
 
 local api = vim.api
@@ -68,6 +70,19 @@ end
 function M.g1(winid, row, col)
   winid = winid or api.nvim_get_current_win()
   api.nvim_win_set_cursor(winid, { row, col })
+end
+
+---like 'tail -f': move the cursor to the last line
+---@param winid integer
+function M.follow(winid)
+  local bufnr = api.nvim_win_get_buf(winid)
+
+  local high = buflines.high(bufnr)
+  M.go(winid, high, 0)
+
+  local height = api.nvim_win_get_height(winid)
+  local toplnum = math.max(high - height + 1, 0)
+  unsafe.win_set_toplnum(winid, toplnum)
 end
 
 return M

@@ -173,7 +173,7 @@ do
   end
 
   ---@param bufnr integer
-  ---@param mode_lhs_pairs {[1]: string, [2]: string}[] @[(mode, lhs)]
+  ---@param mode_lhs_pairs [string,string][] @[(mode, lhs)]
   ---@return fun() @deinit
   function M.bufsubmode(bufnr, mode_lhs_pairs)
     local defs = {} --need to be restored

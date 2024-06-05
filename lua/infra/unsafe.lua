@@ -48,6 +48,13 @@ ffi.cdef([[
   } histentry_T;
   const void *hist_iter(const void *const iter, const uint8_t history_type, const bool zero, histentry_T *const hist);
 
+  // nvim/eval/window.c
+  typedef void *win_T;
+  win_T *win_id2wp(int id);
+  void set_topline(win_T *win, int32_t lnum);
+  // nvim/move.c
+  void changed_window_setting(win_T *win);
+
 
 // sys
 
@@ -98,7 +105,7 @@ end
 
 ---@param short_name string|nil
 ---@return boolean
-function M.setfname(bufnr, full_name, short_name)
+function M.buf_setfname(bufnr, full_name, short_name)
   assert(bufnr ~= nil and full_name ~= nil)
 
   local buf_p = C.buflist_findnr(bufnr)
@@ -181,7 +188,7 @@ end
 ---@param bufnr number
 ---@param reset_fileformat boolean
 ---@param always_inc_changedtick boolean
-function M.unchanged(bufnr, reset_fileformat, always_inc_changedtick)
+function M.buf_unchanged(bufnr, reset_fileformat, always_inc_changedtick)
   local buf_p = C.buflist_findnr(bufnr)
   if buf_p == nil then return end
   C.unchanged(buf_p, reset_fileformat, always_inc_changedtick)
@@ -215,6 +222,16 @@ function M.hist_iter()
       return ffi.string(entry.hisstr)
     end
   end
+end
+
+---@param winid integer
+---@param toplnum integer @0-based, equals winsaveview().topline - 1
+function M.win_set_toplnum(winid, toplnum)
+  ---topline is a row, which is 1-based
+
+  local win_p = assert(C.win_id2wp(winid))
+  C.set_topline(win_p, toplnum + 1)
+  C.changed_window_setting(win_p)
 end
 
 return M

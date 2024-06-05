@@ -14,10 +14,10 @@ return function(bufnr, full_name, short_name)
 
   local bo = prefer.buf(bufnr)
   local modified = bo.modified
-  local ok = unsafe.setfname(bufnr, full_name, short_name)
+  local ok = unsafe.buf_setfname(bufnr, full_name, short_name)
   if ok then
     -- increase the &changedtick
-    unsafe.unchanged(bufnr, false, true)
+    unsafe.buf_unchanged(bufnr, false, true)
     -- and restore the &modified
     if modified then bo.modified = modified end
   else

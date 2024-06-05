@@ -59,4 +59,27 @@ end
 ---@param queue any[]
 function M.push(queue, el) table.insert(queue, 1, el) end
 
+---@generic T
+---@param n integer
+---@param zero? T|fun(index:integer):T @nil=0
+---@return T[]
+function M.zeros(n, zero)
+  local list = {}
+
+  local eval
+  if zero == nil then
+    eval = function() return 0 end
+  elseif type(zero) == "function" then
+    eval = zero
+  else
+    eval = function() return zero end
+  end
+
+  for i = 1, n do
+    list[i] = eval(i)
+  end
+
+  return list
+end
+
 return M
