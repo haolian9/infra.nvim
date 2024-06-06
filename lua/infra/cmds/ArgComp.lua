@@ -1,6 +1,6 @@
 local M = {}
 
-local fuzzymatch = require("beckon.fuzzymatch")
+local builtin_fuzzymatch = require("infra.builtin_fuzzymatch")
 
 local function enum_values(provider)
   local pt = type(provider)
@@ -17,9 +17,8 @@ function M.constant(provider)
   return function(prompt)
     if enum == nil then enum = assert(enum_values(provider)) end
     if #enum == 0 then return {} end
-
     if #prompt == 0 then return enum end
-    return fuzzymatch(enum, prompt, { sort = false })
+    return builtin_fuzzymatch(enum, prompt, { sort = false })
   end
 end
 
@@ -29,9 +28,8 @@ function M.variable(provider)
   return function(prompt)
     local enum = enum_values(provider)
     if #enum == 0 then return {} end
-
     if #prompt == 0 then return enum end
-    return fuzzymatch(enum, prompt, { sort = false })
+    return builtin_fuzzymatch(enum, prompt, { sort = false })
   end
 end
 

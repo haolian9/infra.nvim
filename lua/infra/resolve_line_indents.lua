@@ -3,7 +3,9 @@ local prefer = require("infra.prefer")
 
 ---@param bufnr number
 ---@param lnum number 0-based line number
----@return string,string,number @indents,ichar,iunit
+---@return string @indents
+---@return string @indent char
+---@return integer @indent times
 return function(bufnr, lnum)
   local nsp = ctx.buf(bufnr, function() return vim.fn.indent(lnum + 1) end)
 

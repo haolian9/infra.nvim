@@ -112,16 +112,15 @@ function M.mapn(fn, iterable)
 end
 
 ---NB: the el[key] is supposed to be not nil
+---@param key string|integer @key or index
 ---@param iterable table[]|fun():table[]?
----@param key string|integer
 ---@return fun(): any[]?
-function M.project(iterable, key)
+function M.project(key, iterable)
   local it = M.iter(iterable)
 
   return function()
     local el = it()
     if el == nil then return end
-    ---todo: what if el.key is nil?
     return assert(el[key])
   end
 end
@@ -395,6 +394,17 @@ do
       dict[k] = v
     end
     return dict
+  end
+
+  ---@param iter fun():...
+  function M.totuplelist(iter)
+    local list = {}
+    while true do
+      local el = { iter() }
+      if #el == 0 then break end
+      table.insert(list, el)
+    end
+    return list
   end
 end
 

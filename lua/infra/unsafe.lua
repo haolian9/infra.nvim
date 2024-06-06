@@ -55,6 +55,9 @@ ffi.cdef([[
   // nvim/move.c
   void changed_window_setting(win_T *win);
 
+  // nvim/search.c
+  int fuzzy_match_str(const char * const str, const char * const pat);
+
 
 // sys
 
@@ -232,6 +235,17 @@ function M.win_set_toplnum(winid, toplnum)
   local win_p = assert(C.win_id2wp(winid))
   C.set_topline(win_p, toplnum + 1)
   C.changed_window_setting(win_p)
+end
+
+---fuzzy match "pat" in "str"
+---@return integer? score @nil when no match
+function M.fuzzymatchstr(str, pat)
+  local ret
+  ret = C.fuzzy_match_str(str, pat)
+  ret = assert(tonumber(ret))
+
+  if ret == 0 then return end
+  return ret
 end
 
 return M

@@ -1,6 +1,9 @@
-local buflines = require("infra.buflines")
-local unsafe = require("infra.unsafe")
 local M = {}
+
+local buflines = require("infra.buflines")
+local jelly = require("infra.jellyfish")("infra.wincursor", "debug")
+local prefer = require("infra.prefer")
+local unsafe = require("infra.unsafe")
 
 local api = vim.api
 
@@ -73,8 +76,11 @@ function M.g1(winid, row, col)
 end
 
 ---like 'tail -f': move the cursor to the last line
+---NB: incompatible with &wrap
 ---@param winid integer
 function M.follow(winid)
+  if prefer.wo(winid, "wrap") then jelly.warn("wincursor.follow wont work correctly with &wrap on") end
+
   local bufnr = api.nvim_win_get_buf(winid)
 
   local high = buflines.high(bufnr)
