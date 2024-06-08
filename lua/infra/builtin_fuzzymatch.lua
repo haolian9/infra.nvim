@@ -29,10 +29,10 @@ return function(candidates, token, opts)
   if opts.sort == false then
     local matches = {}
     for _, cand in ipairs(candidates) do
-      local score = unsafe.fuzzymatchstr(opts.tostr(cand))
+      local score = unsafe.fuzzymatchstr(opts.tostr(cand), token)
       if score ~= 0 then table.insert(matches, cand) end
-      return matches
     end
+    return matches
   end
 
   local scores = {} ---@type [any, integer][]

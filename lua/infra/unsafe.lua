@@ -238,14 +238,11 @@ function M.win_set_toplnum(winid, toplnum)
 end
 
 ---fuzzy match "pat" in "str"
----@return integer? score @nil when no match
+---@return integer score @0 when no match
 function M.fuzzymatchstr(str, pat)
   local ret
   ret = C.fuzzy_match_str(str, pat)
-  ret = assert(tonumber(ret))
-
-  if ret == 0 then return end
-  return ret
+  return assert(tonumber(ret))
 end
 
 return M
