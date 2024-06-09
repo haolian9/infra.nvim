@@ -4,6 +4,7 @@ local M = {}
 --todo: kill
 
 local itertools = require("infra.itertools")
+local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("infra.subprocess", "info")
 local logging = require("infra.logging")
 local strlib = require("infra.strlib")
@@ -21,14 +22,14 @@ local facts = {
 local redirect_to_file
 do
   -- NB: meant to be dangling; writes can be interleaving between subprocesses
-  local fd = uv.fs_open(facts.stdout_fpath, "a", tonumber("600", 8))
+  local fd = iuv.fs_open(facts.stdout_fpath, "a", tonumber("600", 8))
 
   ---@param done function|nil
   function redirect_to_file(read_pipe, done)
-    uv.read_start(read_pipe, function(err, data)
+    iuv.read_start(read_pipe, function(err, data)
       assert(not err, err)
       if data then
-        uv.fs_write(fd, data)
+        iuv.fs_write(fd, data)
       else
         read_pipe:close()
         if done ~= nil then done() end
@@ -90,8 +91,8 @@ function M.run(bin, opts, capture_stdout)
   opts = opts or {}
   if capture_stdout == nil then capture_stdout = false end
 
-  local stdout = uv.new_pipe()
-  local stderr = uv.new_pipe()
+  local stdout = iuv.new_pipe()
+  local stderr = iuv.new_pipe()
   local rc
 
   opts["stdio"] = { nil, stdout, stderr }
@@ -109,7 +110,7 @@ function M.run(bin, opts, capture_stdout)
   else
     ---@type string[]
     local chunks = {}
-    uv.read_start(stdout, function(err, data)
+    iuv.read_start(stdout, function(err, data)
       assert(not err, err)
       if data then
         table.insert(chunks, data)
@@ -139,15 +140,15 @@ function M.spawn(bin, opts, on_stdout, on_exit)
   assert(on_stdout ~= nil and on_exit)
   opts = opts or {}
 
-  local stdout = uv.new_pipe()
-  local stderr = uv.new_pipe()
+  local stdout = iuv.new_pipe()
+  local stderr = iuv.new_pipe()
 
   opts["stdio"] = { nil, stdout, stderr }
 
   jelly.debug("spawning %s %s", bin, opts)
   uv.spawn(bin, opts, function(code) on_exit(code) end)
 
-  uv.read_start(stdout, function(err, data)
+  iuv.read_start(stdout, function(err, data)
     assert(not err, err)
     on_stdout(data)
     if data == nil then stdout:close() end

@@ -1,4 +1,4 @@
--- prefer uv.fs_* than vim.fn.*
+-- prefer iuv.fs_* than vim.fn.*
 
 local M = {}
 
@@ -8,13 +8,14 @@ local uv = vim.uv
 local bufpath = require("infra.bufpath")
 local bufrename = require("infra.bufrename")
 local fs = require("infra.fs")
+local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("infra.coreutils")
 local strlib = require("infra.strlib")
 
 function M.touch(fpath)
-  local file, err = uv.fs_open(fpath, "a", tonumber("600", 8))
+  local file, err = iuv.fs_open(fpath, "a", tonumber("600", 8))
   if err ~= nil then error(err) end
-  uv.fs_close(file)
+  iuv.fs_close(file)
 end
 
 function M.rm_filebuf(bufnr)
@@ -22,7 +23,7 @@ function M.rm_filebuf(bufnr)
 
   local path = bufpath.file(bufnr, true)
   if path ~= nil then
-    local _, errmsg = uv.fs_unlink(path)
+    local _, errmsg = iuv.fs_unlink(path)
     if errmsg then return jelly.err(errmsg) end
   end
 
@@ -47,7 +48,7 @@ function M.rename_filebuf(bufnr, fname)
   end
 
   if path ~= nil then -- the buf being renamed is a real file
-    local _, errmsg = uv.fs_rename(path, newpath)
+    local _, errmsg = iuv.fs_rename(path, newpath)
     if errmsg then return jelly.err(errmsg) end
   end
 
@@ -66,7 +67,7 @@ function M.mkdir(path, mode, exists_ok)
   mode = mode or tonumber("700", 8)
   local _ = exists_ok
 
-  -- uv.fs_mkdir did not support `p` flag
+  -- iuv.fs_mkdir did not support `p` flag
   local suc = vim.fn.mkdir(path, "p", mode)
   return suc == 1
 end
@@ -82,7 +83,7 @@ end
 
 ---@return fun(): string?
 function M.cmdline()
-  local path = string.format("/proc/%d/cmdline", uv.getpid())
+  local path = string.format("/proc/%d/cmdline", uv.os_getpid())
   local content = M.cat(path)
   return strlib.iter_splits(content, "\0")
 end

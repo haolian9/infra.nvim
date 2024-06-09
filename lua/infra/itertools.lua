@@ -397,7 +397,7 @@ do
   end
 
   ---@param iter fun():...
-  function M.totuplelist(iter)
+  function M.tolistoftuple(iter)
     local list = {}
     while true do
       local el = { iter() }

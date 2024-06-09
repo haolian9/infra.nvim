@@ -88,7 +88,7 @@ do --the end
   function It:tolist() return itertools.tolist(self.source) end
   function It:toset() return itertools.toset(self.source) end
   function It:todict() return itertools.todict(self.source) end
-  function It:totuplelist() return itertools.totuplelist(self.source) end
+  function It:tolistoftuple() return itertools.tolistoftuple(self.source) end
 end
 
 function It:unwrap() return self.source end

@@ -30,43 +30,37 @@ local IFSOCK = 0xc000
 local function is_type(mode, mask) return bit.band(mode, mask) == mask end
 
 do
-  local max_link_level = 8
-
   ---@alias SolidFileType 'directory'|'file'|'fifo'|'char'|'block'|'socket'
 
-  ---@return SolidFileType
+  ---@return SolidFileType?
   local function resolve_symlink_type(fpath)
-    local next = fpath
-    local remain = max_link_level
-    while remain > 0 do
-      remain = remain - 1
+    local realpath, realpath_err = uv.fs_realpath(fpath)
+    if realpath == nil then return jelly.warn("realpath(%s): %s", fpath, realpath_err) end
 
-      next = uv.fs_realpath(next)
-      local stat = uv.fs_stat(next)
+    local stat, stat_err = uv.fs_stat(realpath)
+    if stat == nil then return jelly.warn("stat(%s): %s", realpath, stat_err) end
 
-      local type
-      if is_type(stat.mode, IFLNK) then
-        type = "link"
-      elseif is_type(stat.mode, IFDIR) then
-        type = "directory"
-      elseif is_type(stat.mode, IFREG) then
-        type = "file"
-      elseif is_type(stat.mode, IFIFO) then
-        type = "fifo"
-      elseif is_type(stat.mode, IFCHR) then
-        type = "char"
-      elseif is_type(stat.mode, IFBLK) then
-        type = "block"
-      elseif is_type(stat.mode, IFSOCK) then
-        type = "socket"
-      else
-        error(string.format("unexpected file type, mode=%s file=%s", stat.mode, fpath))
-      end
-      ---@diagnostic disable-next-line: return-type-mismatch
-      if type ~= "link" then return type end
+    local type
+    if is_type(stat.mode, IFLNK) then
+      error("unreachable: realpath is still a symlink")
+    elseif is_type(stat.mode, IFDIR) then
+      type = "directory"
+    elseif is_type(stat.mode, IFREG) then
+      type = "file"
+    elseif is_type(stat.mode, IFIFO) then
+      type = "fifo"
+    elseif is_type(stat.mode, IFCHR) then
+      type = "char"
+    elseif is_type(stat.mode, IFBLK) then
+      type = "block"
+    elseif is_type(stat.mode, IFSOCK) then
+      type = "socket"
+    else
+      jelly.err("file: %s, stat.mode: %s", fpath, stat.mode)
+      error("unexpected file type")
     end
 
-    error(string.format("too many levels symlink; file=%s, max=%d", fpath, max_link_level))
+    return type
   end
 
   ---@param root string @absolute path
@@ -79,10 +73,14 @@ do
     end
 
     return function()
-      local fname, ftype = uv.fs_scandir_next(scanner)
-      if fname == nil then return end
-      if ftype == "link" then ftype = resolve_symlink_type(M.joinpath(root, fname)) end
-      return fname, ftype
+      while true do
+        local fname, ftype = uv.fs_scandir_next(scanner)
+        if fname == nil then return end
+        if ftype ~= "link" then return fname, ftype end
+
+        ftype = resolve_symlink_type(M.joinpath(root, fname))
+        if ftype ~= nil then return fname, ftype end
+      end
     end
   end
 
