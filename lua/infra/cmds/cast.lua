@@ -13,6 +13,7 @@
 
 local ArgComp = require("infra.cmds.ArgComp")
 local itertools = require("infra.itertools")
+local its = require("infra.its")
 local jelly = require("infra.jellyfish")("imfra.cmds.cast", "debug")
 local listlib = require("infra.listlib")
 local strlib = require("infra.strlib")
@@ -83,7 +84,7 @@ do
       local flags = resolve_unseen_flags(spell, prompt, line)
       if #flags == 0 then return end
       local comp = ArgComp.constant(function()
-        return itertools.tolist(itertools.map(function(f) return string.format("--%s", f) end, flags))
+        return its(flags):map(function(f) return string.format("--%s", f) end):tolist()
       end)
       return comp(prompt)
     end
@@ -154,7 +155,7 @@ do
     end
     if vtype == "number[]" then
       if raw == "" then return {} end
-      return itertools.tolist(itertools.map(tonumber, strlib.iter_splits(raw, ",")))
+      return its(strlib.iter_splits(raw, ",")):map(tonumber):tolist()
     end
     error("unexpected vtype: " .. vtype)
   end

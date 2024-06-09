@@ -9,6 +9,7 @@ local M = {}
 ---   * nvim_buf_get/set_lines is not designed for human, with too many param combination
 
 local itertools = require("infra.itertools")
+local its = require("infra.its")
 local jelly = require("infra.jellyfish")("infra.buflines", "debug")
 local unsafe = require("infra.unsafe")
 
@@ -59,6 +60,22 @@ do
   function M.high(bufnr)
     local count = M.count(bufnr) - 1
     return math.max(0, count)
+  end
+
+  ---including blank lines
+  ---@param bufnr integer
+  ---@param wrap_width integer
+  ---@return integer
+  function M.wrapped_count(bufnr, wrap_width)
+    local count = 0
+    for _, len in unsafe.linelen_iter(bufnr, itertools.range(M.count(bufnr))) do
+      if len == 0 then
+        count = count + 1
+      else
+        count = count + math.ceil(len / wrap_width)
+      end
+    end
+    return count
   end
 end
 
@@ -141,21 +158,21 @@ do
   ---@param stop_lnum? integer @0-based, exclusive
   ---@return fun(): string?,integer? @iter(line,lnum)
   local function main(bufnr, regex, negative, start_lnum, stop_lnum)
-    local iter
+    local iter = its(itertools.range(resolve_range(bufnr, start_lnum, stop_lnum)))
 
-    iter = itertools.range(resolve_range(bufnr, start_lnum, stop_lnum))
     if negative then
-      iter = itertools.filter(function(lnum) return regex:match_line(bufnr, lnum) == nil end, iter)
+      iter:filter(function(lnum) return regex:match_line(bufnr, lnum) == nil end)
     else
-      iter = itertools.filter(function(lnum) return regex:match_line(bufnr, lnum) ~= nil end, iter)
+      iter:filter(function(lnum) return regex:match_line(bufnr, lnum) ~= nil end)
     end
-    iter = itertools.map(function(lnum)
+
+    iter:map(function(lnum)
       local line = M.lines(bufnr, lnum, lnum + 1)[1]
       ---@diagnostic disable-next-line: redundant-return-value
       return line, lnum
-    end, iter)
+    end)
 
-    return iter
+    return iter:unwrap()
   end
 
   ---@param bufnr integer

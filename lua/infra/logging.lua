@@ -98,15 +98,16 @@ do
     ---@diagnostic disable-next-line: cast-local-type
     min_level = ll[min_level or "info"]
 
-    local writer
-    do
+    local function open_writer()
       local path, file = M.newfile(category, true)
       if file == nil then
         file = assert(io.open(path, "a"))
         facts.files[category].file = file
       end
-      writer = BufferedWriter(file)
+      return BufferedWriter(file)
     end
+
+    local writer
 
     ---@param level integer
     ---@param flush_after_log boolean
@@ -116,6 +117,8 @@ do
       if level < min_level then return function(format, ...) end end
 
       return function(format, ...)
+        if writer == nil then writer = open_writer() end
+
         writer.write(strfmt(format, ...))
         writer.write("\n")
         if flush_after_log then writer.flush() end

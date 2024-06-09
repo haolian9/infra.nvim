@@ -118,7 +118,7 @@ do
       local olds = itertools.toset(strlib.iter_splits(old, ","))
       union = dictlib.merged(olds, adds)
     end
-    return itertools.join(dictlib.keys(union), ",")
+    return itertools.join(dictlib.iter_keys(union), ",")
   end
 
   ---@param event 'all'|string|string[]

@@ -69,7 +69,7 @@ end
 
 ---@generic T
 ---@param iterable fun():T?|T[]
----@param size number
+---@param size integer
 ---@return fun(): T[]|?
 function M.batched(iterable, size)
   local it = M.iter(iterable)
@@ -84,7 +84,7 @@ function M.batched(iterable, size)
 end
 
 ---@generic T
----@param fn fun(el: T): ...
+---@param fn fun(el: T):...
 ---@param iterable T[]|fun():T?
 ---@return fun():...
 function M.map(fn, iterable)

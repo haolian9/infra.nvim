@@ -1,21 +1,15 @@
 local M = {}
 
 local builtin_fuzzymatch = require("infra.builtin_fuzzymatch")
-local itertools = require("infra.itertools")
+local its = require("infra.its")
 
 ---@param flag string
 ---@param provider string[]|fun(): string[]
 ---@return string[]
 local function enum_values(flag, provider)
-  return itertools.tolist(itertools.map(
-    function(i) return string.format("--%s=%s", flag, i) end,
-    (function()
-      local pt = type(provider)
-      if pt == "function" then return provider() end
-      if pt == "table" then return provider end
-      error("unreachable: " .. pt)
-    end)()
-  ))
+  return its(type(provider) == "function" and provider() or provider) --
+    :map(function(i) return string.format("--%s=%s", flag, i) end)
+    :tolist()
 end
 
 ---@param provider string[]|fun(): string[]

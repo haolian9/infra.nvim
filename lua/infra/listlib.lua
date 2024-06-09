@@ -82,4 +82,18 @@ function M.zeros(n, zero)
   return list
 end
 
+---to replace `itertools.tolist(.slice(list, start, stop))`
+---@generic T
+---@param list T[]
+---@param start integer @1-based
+---@param stop integer @1-based, exclusive
+---@return T[]
+function M.slice(list, start, stop)
+  local result = {}
+  for i = start, stop - 1 do
+    table.insert(result, list[i])
+  end
+  return result
+end
+
 return M
