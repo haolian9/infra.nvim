@@ -46,24 +46,6 @@ function M.modifiable(bufnr, logic)
   return result
 end
 
-do
-  ---@return integer
-  local function get_nonfloat_winid()
-    local tabid = api.nvim_get_current_tabpage()
-    for _, winid in ipairs(api.nvim_tabpage_list_wins(tabid)) do
-      if api.nvim_win_get_config(winid).relative == "" then return winid end
-    end
-    error("unreachable")
-  end
-  ---wincall in a land/nonfloatwin in the current tabpage
-  ---created for win_set_config(relative=editor) originally
-  ---@param logic fun(): any
-  ---@return any @depends on logic()
-  function M.landwincall(logic)
-    return M.win(get_nonfloat_winid(), function() logic() end)
-  end
-end
-
 ---for buf_set_lines/text as them always disorder the cursor
 ---@param winid integer
 ---@param logic fun(): any

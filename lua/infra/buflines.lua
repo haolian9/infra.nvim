@@ -17,37 +17,42 @@ local ropes = require("string.buffer")
 
 local api = vim.api
 
+---@param start? integer @0-based, inclusive
+---@param stop? integer @0-based, exclusive
+---@return integer @start, 0-based, inclusive
+---@return integer @stop, 0-based, exclusive
+local function resolve_relative_range(start, stop)
+  if start == nil and stop == nil then return 0, -1 end
+  if start ~= nil and stop == nil then return 0, start end
+  assert(start and stop)
+  return start, stop
+end
+
 ---notes:
----* -1=high
----* start is inclusive
----* stop is exclusive
+---* start -1=high
+---* stop  -1=high+1
 ---@param bufnr integer
 ---@param start? integer @0-based, inclusive
 ---@param stop? integer @0-based, exclusive
----@return integer,integer @start,stop
-local function resolve_range(bufnr, start, stop)
+---@return integer @start, 0-based, inclusive
+---@return integer @stop, 0-based, exclusive
+local function resolve_absolute_range(bufnr, start, stop)
   local high = M.high(bufnr)
-
-  --todo: if step=-1, start should not start with 0
+  --todo: high=1, start=-2, stop=-2
 
   if start == nil and stop == nil then return 0, high + 1 end
 
   if start ~= nil and stop == nil then
-    if start >= 0 then return 0, start end
-    stop = high + (start + 1)
-    assert(stop >= 0, "invalid stop value")
-    return 0, stop
+    start, stop = 0, start
   end
 
-  do
-    assert(start and stop)
-    if start < 0 then start = high + (start + 1) end
-    assert(start >= 0, "illegal start value")
-    if stop < 0 then stop = high + (stop + 1) end
-    assert(stop >= 0, "illegal stop value")
+  assert(start and stop)
+  if start < 0 then start = high + (start + 1) end
+  assert(start >= 0, "illegal start value")
+  if stop < 0 then stop = high + (stop + 1) + 1 end
+  assert(stop >= 0, "illegal stop value")
 
-    return start, stop
-  end
+  return start, stop
 end
 
 do
@@ -85,7 +90,7 @@ do
   ---@param stop_lnum? integer @0-based, exclusive
   ---@return string[]
   function M.lines(bufnr, start_lnum, stop_lnum)
-    start_lnum, stop_lnum = resolve_range(bufnr, start_lnum, stop_lnum)
+    start_lnum, stop_lnum = resolve_relative_range(start_lnum, stop_lnum)
 
     return api.nvim_buf_get_lines(bufnr, start_lnum, stop_lnum, false)
   end
@@ -105,7 +110,7 @@ do
   ---@param stop_lnum? integer @0-based, exclusive
   ---@return string
   function M.joined(bufnr, start_lnum, stop_lnum)
-    local range = itertools.range(resolve_range(bufnr, start_lnum, stop_lnum))
+    local range = itertools.range(resolve_absolute_range(bufnr, start_lnum, stop_lnum))
 
     local rope = ropes.new()
     for ptr, len in unsafe.lineref_iter(bufnr, range) do
@@ -137,7 +142,7 @@ do
   ---@param stop_lnum? integer @0-based, exclusive
   ---@return fun():string?,integer? @iter(line,lnum)
   function M.iter(bufnr, start_lnum, stop_lnum)
-    local range = itertools.range(resolve_range(bufnr, start_lnum, stop_lnum))
+    local range = itertools.range(resolve_absolute_range(bufnr, start_lnum, stop_lnum))
     return itertools.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
   end
 
@@ -158,7 +163,7 @@ do
   ---@param stop_lnum? integer @0-based, exclusive
   ---@return fun(): string?,integer? @iter(line,lnum)
   local function main(bufnr, regex, negative, start_lnum, stop_lnum)
-    local iter = its(itertools.range(resolve_range(bufnr, start_lnum, stop_lnum)))
+    local iter = its(itertools.range(resolve_absolute_range(bufnr, start_lnum, stop_lnum)))
 
     if negative then
       iter:filter(function(lnum) return regex:match_line(bufnr, lnum) == nil end)
@@ -207,7 +212,7 @@ do
   ---@param stop_lnum integer @0-based, exclusive, could be negative
   ---@param lines string[]
   function M.replaces(bufnr, start_lnum, stop_lnum, lines)
-    start_lnum, stop_lnum = resolve_range(bufnr, start_lnum, stop_lnum)
+    start_lnum, stop_lnum = resolve_relative_range(start_lnum, stop_lnum)
     M.sets(bufnr, start_lnum, stop_lnum, lines)
   end
 
