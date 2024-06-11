@@ -5,8 +5,8 @@ local bufmap = require("infra.keymap.buffer")
 local api = vim.api
 
 local function close_current_win_if_float()
-  local isfloat = api.nvim_win_get_config(0).relative == ""
-  if isfloat then return jelly.info("refuse to close a landed window, try :q") end
+  local is_landwin = api.nvim_win_get_config(0).relative == ""
+  if is_landwin then return jelly.info("refuse to close a landed window, try :q") end
   return ex("quit")
 end
 
