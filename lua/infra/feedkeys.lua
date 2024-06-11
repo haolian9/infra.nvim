@@ -29,7 +29,7 @@ do
   end
 end
 
----@alias Mode 'n'|'x'|'nx'|'ni'
+---@alias Mode 'n'|'x'|'nx'|'ni'|'m'
 
 ---@param keys string
 ---@param mode Mode

@@ -1,4 +1,5 @@
 local dictlib = require("infra.dictlib")
+local its = require("infra.its")
 
 local api = vim.api
 
@@ -142,6 +143,17 @@ local api = vim.api
 ---@field nested? boolean @nil=false
 ---@field group? integer @should only be set by Augroup internally
 
+---@param events string|string[]
+---@param target string @should be lower
+---@return boolean
+local function contains(events, target)
+  if type(events) == "table" then
+    return its(events):map(string.lower):contains(target)
+  else
+    return string.lower(events) == target
+  end
+end
+
 ---@class infra.Augroup
 ---@field group integer
 local Augroup = {}
@@ -149,7 +161,7 @@ do
   Augroup.__index = Augroup
 
   ---@private
-  ---@param event infra.AugroupEvent
+  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts infra.AugroupCreateOpts
   ---@return integer @autocmd id
   function Augroup:append_aucmd(event, opts)
@@ -157,14 +169,14 @@ do
     return api.nvim_create_autocmd(event, opts)
   end
 
-  ---@param event infra.AugroupEvent
+  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts infra.AugroupCreateOpts
   function Augroup:repeats(event, opts)
     assert(opts.once ~= true)
     return self:append_aucmd(event, opts)
   end
 
-  ---@param event infra.AugroupEvent
+  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts infra.AugroupCreateOpts
   function Augroup:once(event, opts)
     opts.once = true
@@ -174,7 +186,7 @@ do
   function Augroup:unlink() api.nvim_del_augroup_by_id(self.group) end
 
   ---emit group-scoped events
-  ---@param event string
+  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts {buffer?: integer, pattern: nil|string|string[], modeline: nil|boolean, data: any}
   function Augroup:emit(event, opts) api.nvim_exec_autocmds(event, dictlib.merged(opts, { group = self.group })) end
 end
@@ -187,18 +199,18 @@ do
   BufAugroup.__index = BufAugroup
 
   ---@private
-  ---@param event infra.AugroupEvent
+  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts infra.AugroupCreateOpts
   ---@return integer @autocmd id
   function BufAugroup:append_aucmd(event, opts)
-    if self.autounlink and string.lower(event) == "bufwipeout" then error("conflicted with autounlink") end
+    if self.autounlink and contains(event, "bufwipeout") then error("conflicted with autounlink") end
 
     opts.buffer = self.bufnr
     return Augroup.append_aucmd(self, event, opts)
   end
 
   ---emit {group,buffer}-scoped events
-  ---@param event string
+  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts {modeline: nil|boolean, data: any}
   function BufAugroup:emit(event, opts)
     ---@diagnostic disable: undefined-field, inject-field
@@ -216,8 +228,13 @@ local WinAugroup = setmetatable({}, Augroup)
 do
   WinAugroup.__index = WinAugroup
 
+  ---@private
+  ---@param event infra.AugroupEvent|infra.AugroupEvent[]
+  ---@param opts infra.AugroupCreateOpts
+  ---@return integer @autocmd id
   function WinAugroup:append_aucmd(event, opts)
-    if self.autounlink and string.lower(event) == "winclosed" then error("conflicted with autounlink") end
+    if self.autounlink and contains(event, "winclosed") then error("conflicted with autounlink") end
+
     return Augroup.append_aucmd(self, event, opts)
   end
 end

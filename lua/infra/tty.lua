@@ -61,7 +61,8 @@ function M.read_chars(n)
   return rope:get()
 end
 
----@return string,integer @char,code
+---@return string @char
+---@return integer @code
 function M.read_raw() return read_char() end
 
 return M

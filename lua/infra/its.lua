@@ -14,27 +14,31 @@ It.__index = It
 ---@private
 function It:__call() return self.source() end
 
----@param fn fun(el): ...
+---@param fn? fun(el): ...
 function It:map(fn)
+  if fn == nil then return self end
   self.source = itertools.map(fn, self.source)
   return self
 end
 
----@param fn fun(...): ...
+---@param fn? fun(...): ...
 function It:mapn(fn)
+  if fn == nil then return self end
   self.source = itertools.mapn(fn, self.source)
   return self
 end
 
 ---NB: the el[key] is supposed to be not nil
----@param key string|integer @key or index
+---@param key? string|integer @key or index
 function It:project(key)
+  if key == nil then return self end
   self.source = itertools.project(key, self.source)
   return self
 end
 
----@param predicate fun(el):boolean
+---@param predicate? fun(el):boolean
 function It:filter(predicate)
+  if predicate == nil then return self end
   self.source = itertools.filter(predicate, self.source)
   return self
 end
@@ -42,6 +46,7 @@ end
 ---nargs, pass in predicate, out from filtern
 ---@param predicate fun(...):boolean
 function It:filtern(predicate)
+  if predicate == nil then return self end
   self.source = itertools.filtern(predicate, self.source)
   return self
 end
