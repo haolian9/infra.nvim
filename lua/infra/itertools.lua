@@ -67,6 +67,28 @@ function M.itern(iterable)
   return function() return unpack(iter() or {}) end
 end
 
+function M.enumerate(iterable)
+  local iter = M.iter(iterable)
+  local index = -1
+  return function()
+    local el = iter()
+    if el == nil then return end
+    index = index + 1
+    return index, el
+  end
+end
+
+function M.enumerate1(iterable)
+  local iter = M.iter(iterable)
+  local index = 0
+  return function()
+    local el = iter()
+    if el == nil then return end
+    index = index + 1
+    return index, el
+  end
+end
+
 ---@generic T
 ---@param iterable fun():T?|T[]
 ---@param size integer
@@ -230,19 +252,47 @@ function M.flat(iters)
   end
 end
 
--- when iterable's each step takes time, fastforward would block for a certain time
+---CAUTION: fastforward can be expensive
+---@generic T
+---@param iterable T[]|fun():T?
+---@param start integer @0-based, inclusive
+---@param stop integer @0-based, exclusive
+---@return fun():T?
+function M.slice(iterable, start, stop)
+  assert(start >= 0 and stop > start)
+
+  local it = M.iter(iterable)
+
+  for _ = 0, start - 1 do
+    if it() == nil then return function() end end
+  end
+
+  local remain = stop - start
+  return function()
+    if remain < 1 then return end
+    local el = it()
+    if el == nil then
+      remain = 0
+    else
+      remain = remain - 1
+    end
+    return el
+  end
+end
+
+---CAUTION: fastforward can be expensive
 ---@generic T
 ---@param iterable T[]|fun():T?
 ---@param start integer @1-based, inclusive
 ---@param stop integer @1-based, exclusive
 ---@return fun():T?
-function M.slice(iterable, start, stop)
-  assert(start > 0 and stop > start)
+function M.slicen(iterable, start, stop)
+  assert(start >= 0 and stop > start)
 
   local it = M.iter(iterable)
 
-  for _ = 1, start - 1 do
-    assert(it())
+  for _ = 0, start - 1 do
+    if it() == nil then return function() end end
   end
 
   local remain = stop - start
@@ -257,6 +307,16 @@ function M.slice(iterable, start, stop)
     return unpack(el)
   end
 end
+
+---@generic T
+---@param iterable T[]|fun():T?
+---@param n integer
+function M.head(iterable, n) return M.slice(iterable, 0, n) end
+
+---@generic T
+---@param iterable T[]|fun():T?
+---@param n integer
+function M.headn(iterable, n) return M.slicen(iterable, 0, n) end
 
 do --reduce/consume/drain
   ---@generic T

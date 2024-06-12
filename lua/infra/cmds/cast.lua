@@ -135,18 +135,15 @@ do
     if vtype == "boolean" then
       if raw == "true" or raw == true then return true end
       if raw == "false" or raw == false then return false end
-      jelly.err("vtype=%s, raw=%s", vtype, raw)
-      error("value error")
+      return jelly.fatal("ValueError", "vtype=%s, raw=%s", vtype, raw)
     end
     if vtype == "true" then
       if raw == "true" or raw == true then return true end
-      jelly.err("vtype=%s, raw=%s", vtype, raw)
-      error("value error")
+      return jelly.fatal("ValueError", "vtype=%s, raw=%s", vtype, raw)
     end
     if vtype == "number" then
       local num = tonumber(raw)
-      jelly.err("vtype=%s, raw=%s", vtype, raw)
-      if num == nil then error("value error") end
+      if num == nil then return jelly.fatal("ValueError", "vtype=%s, raw=%s", vtype, raw) end
       return num
     end
     if vtype == "string[]" then

@@ -56,8 +56,7 @@ do
     elseif is_type(stat.mode, IFSOCK) then
       type = "socket"
     else
-      jelly.err("file: %s, stat.mode: %s", fpath, stat.mode)
-      error("unexpected file type")
+      return jelly.fatal("ValueError", "file: %s, stat.mode: %s", fpath, stat.mode)
     end
 
     return type
@@ -108,18 +107,16 @@ function M.joinpath(...)
   ---@type string[]|fun(): string?
   local parts = args
   --deal with new root
-  for i = #args, 2, -1 do
-    if strlib.startswith(args[i], "/") then
+  for i in itertools.range(#args - 1, 0, -1) do
+    if strlib.startswith(args[i + 1], "/") then
       parts = itertools.slice(args, i, #args + 1)
       break
     end
   end
 
   local path
-  do -- stole from: https://github.com/neovim/neovim/commit/189fb6203262340e7a59e782be970bcd8ae28e61#diff-fecfd503a1c28e0a28a91da0294b12dbc72f081cb12434459648a44f641b68d9
-    path = itertools.join(parts, "/")
-    path = string.gsub(path, [[/+]], "/")
-  end
+  path = itertools.join(parts, "/")
+  path = string.gsub(path, [[/+]], "/")
 
   return path
 end

@@ -14,6 +14,11 @@ It.__index = It
 ---@private
 function It:__call() return self.source() end
 
+function It:enumerate()
+  self.source = itertools.enumerate(self.source)
+  return self
+end
+
 ---@param fn? fun(el): ...
 function It:map(fn)
   if fn == nil then return self end
@@ -51,10 +56,29 @@ function It:filtern(predicate)
   return self
 end
 
----@param start integer @1-based, inclusive
----@param stop integer @1-based, exclusive
+---@param start integer @0-based, inclusive
+---@param stop integer @0-based, exclusive
 function It:slice(start, stop)
   self.source = itertools.slice(self.source, start, stop)
+  return self
+end
+
+---@param start integer @0-based, inclusive
+---@param stop integer @0-based, exclusive
+function It:slicen(start, stop)
+  self.source = itertools.slicen(self.source, start, stop)
+  return self
+end
+
+---@param n integer
+function It:head(n)
+  self.source = itertools.head(self.source, n)
+  return self
+end
+
+---@param n integer
+function It:headn(n)
+  self.source = itertools.head(self.source, n)
   return self
 end
 

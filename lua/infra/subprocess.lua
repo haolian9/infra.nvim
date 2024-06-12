@@ -98,10 +98,7 @@ function M.run(bin, opts, capture_stdout)
   opts["stdio"] = { nil, stdout, stderr }
 
   local proc_t, pid = uv.spawn(bin, opts, function(code) rc = assert(code) end)
-  if proc_t == nil then
-    jelly.err("bin=%s, opts=%s", bin, opts)
-    error(pid)
-  end
+  if proc_t == nil then return jelly.fatal("SpawnError", "bin=%s, opts=%s", bin, opts) end
 
   local stdout_iter
   if not capture_stdout then

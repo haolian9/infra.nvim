@@ -1,6 +1,7 @@
 -- direct access to neovim's tty
 
 local unsafe = require("infra.unsafe")
+local ascii = require("infra.ascii")
 
 local ropes = require("string.buffer")
 
@@ -42,14 +43,14 @@ function M.read_chars(n)
 
   -- keep **blocking the process** until get enough chars
   for char, code in read_char do
-    if code >= 0x21 and code <= 0x7e then
+    if code >= ascii.exclam and code <= ascii.tilde then
       -- printable
       rope:put(char)
-    elseif code == 0x1b then
+    elseif code == ascii.esc then
       -- cancelled by esc
       rope:reset()
       break
-    elseif code == 0x20 or code == 0x0d then
+    elseif code == ascii.space or code == ascii.cr then
       -- finished by space, cr
       break
     else

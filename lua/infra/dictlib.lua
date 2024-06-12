@@ -93,10 +93,7 @@ function M.CappedDict(cap, weakable_value)
         rawset(t, k, v)
         if v == nil then remain = remain + 1 end
       else
-        if remain == 0 then
-          jelly.err("keys: %s", M.keys(t))
-          error("full", cap)
-        end
+        if remain == 0 then return jelly.fatal("OverflowError", "cap=%d keys=%s", cap, M.keys(t)) end
         rawset(t, k, v)
         if v ~= nil then remain = remain - 1 end
       end
@@ -155,8 +152,7 @@ function M.set(dict, keys, val)
     elseif type(bag[key]) == "table" then
       --pass
     else
-      jelly.err("value of key=%s is not a table: %s", key, bag[key])
-      error("invalid value")
+      return jelly.fatal("ValueError", "value of key=%s is not a table: %s", key, bag[key])
     end
     bag = bag[key]
   end
