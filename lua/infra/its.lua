@@ -19,6 +19,11 @@ function It:enumerate()
   return self
 end
 
+function It:enumerate1()
+  self.source = itertools.enumerate1(self.source)
+  return self
+end
+
 ---@param fn? fun(el): ...
 function It:map(fn)
   if fn == nil then return self end
