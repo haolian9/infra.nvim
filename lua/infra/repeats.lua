@@ -3,8 +3,7 @@
 local M = {}
 
 local feedkeys = require("infra.feedkeys")
-
-local api = vim.api
+local ni = require("infra.ni")
 
 do
   local state = {
@@ -17,7 +16,7 @@ do
   ---@param bufnr integer
   ---@param redo fun()
   function M.remember_redo(bufnr, redo)
-    state.tick[bufnr] = api.nvim_buf_get_changedtick(bufnr)
+    state.tick[bufnr] = ni.buf_get_changedtick(bufnr)
     state.redo[bufnr] = redo
   end
 
@@ -26,7 +25,7 @@ do
     local last_tick = state.tick[bufnr]
     if last_tick == nil then return feedkeys.codes(".", "n") end
 
-    local held_tick = api.nvim_buf_get_changedtick(bufnr)
+    local held_tick = ni.buf_get_changedtick(bufnr)
     if held_tick ~= last_tick then
       state.tick[bufnr] = nil
       state.redo[bufnr] = nil

@@ -2,11 +2,10 @@
 local M = {}
 
 local bufpath = require("infra.bufpath")
-local dictlib = require("infra.dictlib")
+local LRU = require("infra.LRU")
+local ni = require("infra.ni")
 local strlib = require("infra.strlib")
 local subprocess = require("infra.subprocess")
-
-local api = vim.api
 
 ---@return string
 function M.working_root()
@@ -16,12 +15,12 @@ end
 
 do
   ---@type {[string]: string|false} {path: git-root}
-  local cache = dictlib.CappedDict(64)
+  local cache = LRU(64)
 
   ---@param bufnr? number
   ---@return string?
   function M.git_root(bufnr)
-    bufnr = bufnr or api.nvim_get_current_buf()
+    bufnr = bufnr or ni.get_current_buf()
 
     local basedir = bufpath.dir(bufnr, true)
     if basedir == nil then return end

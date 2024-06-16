@@ -16,9 +16,8 @@ local itertools = require("infra.itertools")
 local its = require("infra.its")
 local jelly = require("infra.jellyfish")("imfra.cmds.cast", "debug")
 local listlib = require("infra.listlib")
+local ni = require("infra.ni")
 local strlib = require("infra.strlib")
-
-local api = vim.api
 
 ---@param spell infra.cmds.Spell
 local function resolve_nargs(spell)
@@ -233,7 +232,7 @@ end
 
 ---@param spell infra.cmds.Spell
 return function(spell)
-  api.nvim_create_user_command(spell.name, compose_action(spell), {
+  ni.create_user_command(spell.name, compose_action(spell), {
     nargs = resolve_nargs(spell),
     range = resolve_range(spell),
     complete = compose_complete(spell),

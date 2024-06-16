@@ -2,7 +2,7 @@
 
 local M = {}
 
-local api = vim.api
+local ni = require("infra.ni")
 local uv = vim.uv
 
 local bufpath = require("infra.bufpath")
@@ -19,7 +19,7 @@ function M.touch(fpath)
 end
 
 function M.rm_filebuf(bufnr)
-  if bufnr == nil or bufnr == 0 then bufnr = api.nvim_get_current_buf() end
+  if bufnr == nil or bufnr == 0 then bufnr = ni.get_current_buf() end
 
   local path = bufpath.file(bufnr, true)
   if path ~= nil then
@@ -27,13 +27,13 @@ function M.rm_filebuf(bufnr)
     if errmsg then return jelly.err(errmsg) end
   end
 
-  api.nvim_buf_delete(bufnr, { force = true })
+  ni.buf_delete(bufnr, { force = true })
   jelly.info("removed file: %s, buf: %s", path, bufnr)
 end
 
 function M.rename_filebuf(bufnr, fname)
   assert(fname ~= nil and fname ~= "")
-  if bufnr == nil or bufnr == 0 then bufnr = api.nvim_get_current_buf() end
+  if bufnr == nil or bufnr == 0 then bufnr = ni.get_current_buf() end
 
   local path = bufpath.file(bufnr, true)
 

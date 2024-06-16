@@ -11,11 +11,10 @@ local M = {}
 local itertools = require("infra.itertools")
 local its = require("infra.its")
 local jelly = require("infra.jellyfish")("infra.buflines", "debug")
+local ni = require("infra.ni")
 local unsafe = require("infra.unsafe")
 
 local ropes = require("string.buffer")
-
-local api = vim.api
 
 ---@param start? integer @0-based, inclusive
 ---@param stop? integer @0-based, exclusive
@@ -58,7 +57,7 @@ end
 do
   ---@param bufnr integer
   ---@return integer
-  function M.count(bufnr) return api.nvim_buf_line_count(bufnr) end
+  function M.count(bufnr) return ni.buf_line_count(bufnr) end
 
   ---@param bufnr integer
   ---@return integer @>=0
@@ -92,7 +91,7 @@ do
   function M.lines(bufnr, start_lnum, stop_lnum)
     start_lnum, stop_lnum = resolve_relative_range(start_lnum, stop_lnum)
 
-    return api.nvim_buf_get_lines(bufnr, start_lnum, stop_lnum, false)
+    return ni.buf_get_lines(bufnr, start_lnum, stop_lnum, false)
   end
 
   ---@param bufnr integer
@@ -130,7 +129,7 @@ do
   ---@param stop_col integer @0-based, exclusive
   ---@return string?
   function M.partial_line(bufnr, lnum, start_col, stop_col)
-    local lines = api.nvim_buf_get_text(bufnr, lnum, start_col, lnum, stop_col, {})
+    local lines = ni.buf_get_text(bufnr, lnum, start_col, lnum, stop_col, {})
     assert(#lines <= 1)
     return lines[1]
   end
@@ -200,7 +199,7 @@ do
   ---@param start_lnum integer @0-based, inclusive
   ---@param stop_lnum integer @0-based, exclusive
   ---@param lines string[]
-  function M.sets(bufnr, start_lnum, stop_lnum, lines) api.nvim_buf_set_lines(bufnr, start_lnum, stop_lnum, false, lines) end
+  function M.sets(bufnr, start_lnum, stop_lnum, lines) ni.buf_set_lines(bufnr, start_lnum, stop_lnum, false, lines) end
 
   ---@param bufnr integer
   ---@param lnum integer @0-based, inclusive

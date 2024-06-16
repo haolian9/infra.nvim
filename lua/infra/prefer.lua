@@ -2,14 +2,13 @@ local M = {}
 
 local augroups = require("infra.augroups")
 local dictlib = require("infra.dictlib")
-
-local api = vim.api
+local ni = require("infra.ni")
 
 ---@class infra.prefer.Descriptor
----@field private opts {buf: number?, win: number?} @ used for api.nvim_{g,s}et_option_value
+---@field private opts {buf: number?, win: number?} @ used for ni.{g,s}et_option_value
 local Descriptor = {
-  __index = function(t, k) return api.nvim_get_option_value(k, t.opts) end,
-  __newindex = function(t, k, v) return api.nvim_set_option_value(k, v, t.opts) end,
+  __index = function(t, k) return ni.get_option_value(k, t.opts) end,
+  __newindex = function(t, k, v) return ni.set_option_value(k, v, t.opts) end,
 }
 
 local cache = {
@@ -43,8 +42,8 @@ do
   })
 end
 
-M.buf = new_local_descriptor("buf", api.nvim_buf_is_valid)
-M.win = new_local_descriptor("win", api.nvim_win_is_valid)
+M.buf = new_local_descriptor("buf", ni.buf_is_valid)
+M.win = new_local_descriptor("win", ni.win_is_valid)
 
 --getter or setter
 ---@param bufnr number
@@ -71,21 +70,21 @@ function M.monkeypatch()
   vim.bo = setmetatable({}, {
     __index = function(_, k)
       if type(k) == "number" then return M.buf(k) end
-      return M.bo(api.nvim_get_current_buf(), k)
+      return M.bo(ni.get_current_buf(), k)
     end,
     __newindex = function(_, k, v)
       assert(type(k) == "string")
-      M.bo(api.nvim_get_current_buf(), k, v)
+      M.bo(ni.get_current_buf(), k, v)
     end,
   })
   vim.wo = setmetatable({}, {
     __index = function(_, k)
       if type(k) == "number" then return M.win(k) end
-      return M.wo(api.nvim_get_current_win(), k)
+      return M.wo(ni.get_current_win(), k)
     end,
     __newindex = function(_, k, v)
       assert(type(k) == "string")
-      M.wo(api.nvim_get_current_win(), k, v)
+      M.wo(ni.get_current_win(), k, v)
     end,
   })
 

@@ -1,6 +1,6 @@
 local M = {}
 
-local api = vim.api
+local ni = require("infra.ni")
 
 do --M.create
   local default_attrs = { nargs = 0 }
@@ -10,7 +10,7 @@ do --M.create
   ---@param attrs? infra.cmds.Attrs
   function M.create(name, handler, attrs)
     attrs = attrs or default_attrs
-    api.nvim_create_user_command(name, handler, attrs)
+    ni.create_user_command(name, handler, attrs)
   end
 end
 

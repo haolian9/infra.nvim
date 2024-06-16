@@ -1,7 +1,6 @@
 local dictlib = require("infra.dictlib")
 local its = require("infra.its")
-
-local api = vim.api
+local ni = require("infra.ni")
 
 ---@alias infra.AugroupEvent
 ---| '"BufAdd"'               # Just after creating a new buffer which is
@@ -166,7 +165,7 @@ do
   ---@return integer @autocmd id
   function Augroup:append_aucmd(event, opts)
     opts.group = self.group
-    return api.nvim_create_autocmd(event, opts)
+    return ni.create_autocmd(event, opts)
   end
 
   ---@param event infra.AugroupEvent|infra.AugroupEvent[]
@@ -183,12 +182,12 @@ do
     return self:append_aucmd(event, opts)
   end
 
-  function Augroup:unlink() api.nvim_del_augroup_by_id(self.group) end
+  function Augroup:unlink() ni.del_augroup_by_id(self.group) end
 
   ---emit group-scoped events
   ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts {buffer?: integer, pattern: nil|string|string[], modeline: nil|boolean, data: any}
-  function Augroup:emit(event, opts) api.nvim_exec_autocmds(event, dictlib.merged(opts, { group = self.group })) end
+  function Augroup:emit(event, opts) ni.exec_autocmds(event, dictlib.merged(opts, { group = self.group })) end
 end
 
 ---@class infra.BufAugroup: infra.Augroup
@@ -218,7 +217,7 @@ do
 
     opts.group = self.group
     opts.buffer = self.bufnr
-    api.nvim_exec_autocmds(event, opts)
+    ni.exec_autocmds(event, opts)
   end
 end
 
@@ -246,7 +245,7 @@ do
   ---@param ... any
   ---@return infra.Augroup
   function M.Augroup(fmt, ...)
-    local group = api.nvim_create_augroup(string.format(fmt, ...), { clear = true })
+    local group = ni.create_augroup(string.format(fmt, ...), { clear = true })
 
     return setmetatable({ group = group }, Augroup)
   end
@@ -260,7 +259,7 @@ do
     if autounlink == nil then autounlink = false end
     if augname == nil then augname = string.format("aug://buf/%d", bufnr) end
 
-    local id = api.nvim_create_augroup(augname, { clear = true })
+    local id = ni.create_augroup(augname, { clear = true })
     local aug = setmetatable({ group = id, bufnr = bufnr }, BufAugroup)
 
     ---@diagnostic disable: invisible
@@ -285,7 +284,7 @@ do
     if autounlink == nil then autounlink = false end
     if augname == nil then augname = string.format("aug://win/%d", winid) end
 
-    local id = api.nvim_create_augroup(augname, { clear = true })
+    local id = ni.create_augroup(augname, { clear = true })
     local aug = setmetatable({ group = id }, WinAugroup)
 
     if autounlink then

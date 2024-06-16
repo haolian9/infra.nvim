@@ -2,10 +2,9 @@ local M = {}
 
 local dictlib = require("infra.dictlib")
 local itertools = require("infra.itertools")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local strlib = require("infra.strlib")
-
-local api = vim.api
 
 ---@param bufnr integer
 ---@param logic fun()
@@ -183,7 +182,7 @@ do
       end
 
       for _, pair in ipairs(undefs) do
-        api.nvim_buf_del_keymap(bufnr, unpack(pair))
+        ni.buf_del_keymap(bufnr, unpack(pair))
       end
     end
   end
@@ -193,14 +192,14 @@ end
 ---@param logic fun()
 function M.buf(bufnr, logic)
   --todo: follow vim._ctx
-  return api.nvim_buf_call(bufnr, logic)
+  return ni.buf_call(bufnr, logic)
 end
 
 ---@param winid integer
 ---@param logic fun()
 function M.win(winid, logic)
   --todo: follow vim._ctx
-  return api.nvim_win_call(winid, logic)
+  return ni.win_call(winid, logic)
 end
 
 return M

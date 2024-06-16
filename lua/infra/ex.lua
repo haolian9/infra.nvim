@@ -1,6 +1,6 @@
 local M = {}
 
-local api = vim.api
+local ni = require("infra.ni")
 
 ---known unsupported cases:
 ---* (quit)
@@ -8,9 +8,9 @@ local api = vim.api
 ---@param ... string|integer
 function M.eval(fmt, ...)
   local str = select("#", ...) > 0 and string.format(fmt, ...) or fmt
-  local parsed = api.nvim_parse_cmd(str, {})
+  local parsed = ni.parse_cmd(str, {})
   ---no cache anymore, for a reason i've forgotten
-  api.nvim_cmd(parsed, { output = false })
+  ni.cmd(parsed, { output = false })
 end
 
 ---known unsupported cases:
@@ -21,7 +21,7 @@ end
 ---@param ... string|integer
 function M.cmd(cmd, ...)
   local args = select("#", ...) > 0 and { ... } or nil
-  api.nvim_cmd({ cmd = cmd, args = args }, { output = false })
+  ni.cmd({ cmd = cmd, args = args }, { output = false })
 end
 
 return setmetatable(M, { __call = function(_, cmd, ...) M.cmd(cmd, ...) end })

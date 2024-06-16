@@ -1,9 +1,8 @@
 local M = {}
 
 local fs = require("infra.fs")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
-
-local api = vim.api
 
 ---based on buftype and bufname
 ---@param bufnr integer
@@ -14,7 +13,7 @@ function M.file(bufnr, should_exist)
 
   if prefer.bo(bufnr, "buftype") ~= "" then return end
 
-  local bufname = api.nvim_buf_get_name(bufnr)
+  local bufname = ni.buf_get_name(bufnr)
   if bufname == "" then return end
 
   local fpath
@@ -41,7 +40,7 @@ function M.dir(bufnr, should_exists)
 
   if prefer.bo(bufnr, "buftype") ~= "" then return getcwd() end
 
-  local bufname = api.nvim_buf_get_name(bufnr)
+  local bufname = ni.buf_get_name(bufnr)
   if bufname == "" then return getcwd() end
 
   local dir

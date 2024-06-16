@@ -10,7 +10,8 @@
 local M = {}
 
 local ffi = require("ffi")
-local api = vim.api
+
+local ni = require("infra.ni")
 
 ffi.cdef([[
 // nvim specific
@@ -200,7 +201,7 @@ end
 ---@param bufnr number
 function M.prepare_help_buffer(bufnr)
   --no ctx.buf here, as infra.unsafe is much low-level
-  api.nvim_buf_call(bufnr, function() C.prepare_help_buffer() end)
+  ni.buf_call(bufnr, function() C.prepare_help_buffer() end)
 end
 
 ---@param fd number

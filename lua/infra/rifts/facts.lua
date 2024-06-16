@@ -1,11 +1,10 @@
 local M = {}
 
 local highlighter = require("infra.highlighter")
-
-local api = vim.api
+local ni = require("infra.ni")
 
 do
-  local ns = api.nvim_create_namespace("infra.rifts")
+  local ns = ni.create_namespace("infra.rifts")
   local hi = highlighter(ns)
   if vim.go.background == "light" then
     hi("NormalFloat", { fg = 8 })

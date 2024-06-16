@@ -2,11 +2,10 @@ local M = {}
 
 local ctx = require("infra.ctx")
 local dictlib = require("infra.dictlib")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
-
-local api = vim.api
 
 ---@class infra.rifts.BasicOpenOpts
 ---@field relative   'editor'|'win'|'cursor'|'mouse'
@@ -41,7 +40,7 @@ end
 ---@param opts table
 ---@return integer
 function M.win(bufnr, enter, opts)
-  local winid = api.nvim_open_win(bufnr, enter, opts)
+  local winid = ni.open_win(bufnr, enter, opts)
 
   --to clear alternate-file, thanks to ii14
   if enter then
@@ -72,7 +71,7 @@ do
     return dictlib.merged(basic, geo.editor(extra.width, extra.height, extra.horizontal, extra.vertical, resolve_border(basic)))
   end
 
-  ---opinionated api.nvim_open_win
+  ---opinionated ni.open_win
   ---* relative     to editor
   ---* width/height float|integer
   ---* horizontal   for col
@@ -89,17 +88,17 @@ do
 
     if extra_opts == nil then
       local winid = M.win(bufnr, enter, basic_opts)
-      api.nvim_win_set_hl_ns(winid, facts.ns)
+      ni.win_set_hl_ns(winid, facts.ns)
       return winid
     end
 
     local winid = M.win(bufnr, enter, resolve_winopts(basic_opts, extra_opts))
     if extra_opts.ns == nil then
-      api.nvim_win_set_hl_ns(winid, facts.ns)
+      ni.win_set_hl_ns(winid, facts.ns)
     elseif extra_opts.ns == false then
       --pass, no setting ns
     else
-      api.nvim_win_set_hl_ns(winid, extra_opts.ns)
+      ni.win_set_hl_ns(winid, extra_opts.ns)
     end
 
     return winid
@@ -129,7 +128,7 @@ do
     if extra_opts.laststatus3 and vim.go.laststatus == 3 then winopts.height = winopts.height - 1 end
 
     local winid = M.win(bufnr, enter, winopts)
-    if extra_opts.ns ~= false then api.nvim_win_set_hl_ns(winid, extra_opts.ns or facts.ns) end
+    if extra_opts.ns ~= false then ni.win_set_hl_ns(winid, extra_opts.ns or facts.ns) end
     return winid
   end
 end

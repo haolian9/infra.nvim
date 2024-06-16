@@ -142,16 +142,6 @@ function M.is_absolute(path)
   return true
 end
 
----assumes it's a lua plugin and with filesystem layout &rtp/lua/{plugin_name}/*.lua
----@param plugin_name string
----@param fname string? @nil=init.lua
-function M.resolve_plugin_root(plugin_name, fname)
-  fname = fname or "init.lua"
-  local files = api.nvim_get_runtime_file(M.joinpath("lua", plugin_name, fname), false)
-  assert(files and #files == 1)
-  return string.sub(files[1], 1, -(#fname + 2))
-end
-
 ---@param path string @absolute path, no `/` in the tail
 ---@return string
 function M.parent(path)

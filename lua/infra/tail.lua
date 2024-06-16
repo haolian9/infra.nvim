@@ -4,10 +4,9 @@
 
 local M = {}
 
-local api = vim.api
 local augroups = require("infra.augroups")
-local buflines = require("infra.buflines")
 local bufrename = require("infra.bufrename")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local wincursor = require("infra.wincursor")
 local winsplit = require("infra.winsplit")
@@ -25,13 +24,13 @@ local canvas = {
     local held = self.store[fpath]
     if held == nil then return end
 
-    if not api.nvim_buf_is_valid(held.bufnr) then
+    if not ni.buf_is_valid(held.bufnr) then
       self.store[fpath] = nil
       return
     end
 
     local held_win = held.tab_win[tabpage]
-    if held_win == nil or not api.nvim_win_is_valid(held_win) then
+    if held_win == nil or not ni.win_is_valid(held_win) then
       held.tab_win[tabpage] = nil
       return held.bufnr, nil
     end
@@ -57,7 +56,7 @@ local canvas = {
 
     if held_win == winid then return end
 
-    assert(not api.nvim_win_is_valid(held_win))
+    assert(not ni.win_is_valid(held_win))
     held.tab_win[tabpage] = winid
   end,
 }
@@ -90,7 +89,7 @@ end
 function M.split_below(fpath)
   assert(fpath ~= nil)
 
-  local tabpage = api.nvim_get_current_tabpage()
+  local tabpage = ni.get_current_tabpage()
 
   local bufnr, winid
   do
@@ -99,20 +98,20 @@ function M.split_below(fpath)
     if held_bufnr ~= nil then
       bufnr = held_bufnr
     else
-      bufnr = api.nvim_create_buf(false, true)
+      bufnr = ni.create_buf(false, true)
       prefer.bo(bufnr, "bufhidden", "wipe")
     end
     if held_winid ~= nil then
       winid = held_winid
     else
       winsplit("below")
-      winid = api.nvim_get_current_win()
-      api.nvim_win_set_height(winid, 10)
+      winid = ni.get_current_win()
+      ni.win_set_height(winid, 10)
       prefer.wo(winid, "winfixheight", true)
     end
   end
 
-  api.nvim_win_set_buf(winid, bufnr)
+  ni.win_set_buf(winid, bufnr)
   canvas:set(fpath, bufnr, tabpage, winid)
   tail(bufnr, winid, fpath)
 end

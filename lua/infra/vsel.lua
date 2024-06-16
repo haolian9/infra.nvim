@@ -11,11 +11,10 @@
 local M = {}
 
 local feedkeys = require("infra.feedkeys")
+local ni = require("infra.ni")
 local strlib = require("infra.strlib")
 local utf8 = require("infra.utf8")
 local wincursor = require("infra.wincursor")
-
-local api = vim.api
 
 -- MAX_COL
 M.max_col = 0x7fffffff
@@ -35,13 +34,13 @@ M.max_col = 0x7fffffff
 ---@param bufnr number
 ---@return infra.vsel.Range?
 function M.range(bufnr)
-  assert(strlib.startswith(api.nvim_get_mode().mode, "n"))
+  assert(strlib.startswith(ni.get_mode().mode, "n"))
 
-  bufnr = bufnr or api.nvim_get_current_buf()
+  bufnr = bufnr or ni.get_current_buf()
 
-  local start_row, start_col = unpack(api.nvim_buf_get_mark(bufnr, "<"))
+  local start_row, start_col = unpack(ni.buf_get_mark(bufnr, "<"))
   --NB: `>` mark returns the position of first byte of multi-bytes rune
-  local stop_row, stop_col = unpack(api.nvim_buf_get_mark(bufnr, ">"))
+  local stop_row, stop_col = unpack(ni.buf_get_mark(bufnr, ">"))
 
   --fresh start, no select
   if start_row == 0 and start_col == 0 and stop_row == 0 and stop_col == 0 then return end
@@ -64,7 +63,7 @@ end
 ---@param bufnr ?number
 ---@return nil|string
 function M.oneline_text(bufnr)
-  bufnr = bufnr or api.nvim_get_current_buf()
+  bufnr = bufnr or ni.get_current_buf()
 
   local range = M.range(bufnr)
   if range == nil then return end
@@ -73,12 +72,12 @@ function M.oneline_text(bufnr)
   if range.start_line + 1 ~= range.stop_line then return end
 
   -- shortcut
-  if range.stop_col - 1 == M.max_col then return api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, -1, {})[1] end
+  if range.stop_col - 1 == M.max_col then return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, -1, {})[1] end
 
   local chars
   do
     local stop_col = range.stop_col + utf8.maxbytes
-    local lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, stop_col, {})
+    local lines = ni.buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, stop_col, {})
     assert(#lines == 1)
     chars = lines[1]
   end
@@ -98,18 +97,18 @@ end
 ---@param bufnr ?number
 ---@return table|nil
 function M.multiline_text(bufnr)
-  bufnr = bufnr or api.nvim_get_current_buf()
+  bufnr = bufnr or ni.get_current_buf()
 
   local range = M.range(bufnr)
   if range == nil then return end
 
   -- shortcut
-  if range.stop_col - 1 == M.max_col then return api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, -1, {}) end
+  if range.stop_col - 1 == M.max_col then return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, -1, {}) end
 
   local lines
   do
     local stop_col = range.stop_col + utf8.maxbytes - 1
-    lines = api.nvim_buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, stop_col, {})
+    lines = ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, stop_col, {})
   end
 
   -- handles last line

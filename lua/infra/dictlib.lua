@@ -72,7 +72,7 @@ end
 
 ---@param cap integer
 ---@param weakable_value? boolean @nil=false
----@return Dict
+---@return {[any]:any}
 function M.CappedDict(cap, weakable_value)
   if weakable_value == nil then weakable_value = false end
 

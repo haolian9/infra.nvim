@@ -1,10 +1,10 @@
 local M = {}
 
 local ex = require("infra.ex")
+local jelly = require("infra.jellyfish")("infra.bufopen", "debug")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local winsplit = require("infra.winsplit")
-
-local api = vim.api
 
 ---@alias infra.bufopen.Mode 'inplace'|'tab'|infra.winsplit.Side
 
@@ -27,7 +27,7 @@ local function resolve_bufnr(name_or_nr)
 end
 
 ---@param name_or_nr string|integer @bufname or bufnr
-function M.inplace(name_or_nr) api.nvim_win_set_buf(0, resolve_bufnr(name_or_nr)) end
+function M.inplace(name_or_nr) ni.win_set_buf(0, resolve_bufnr(name_or_nr)) end
 
 ---@param name_or_nr string|integer @bufname or bufnr
 function M.tab(name_or_nr) ex.eval("tab sbuffer %d", resolve_bufnr(name_or_nr)) end

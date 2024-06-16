@@ -5,9 +5,8 @@
 ---* each method should return nil
 
 local strfmt = require("infra._strfmt")
+local ni = require("infra.ni")
 local strlib = require("infra.strlib")
-
-local api = vim.api
 
 do
   ---@diagnostic disable: unused-local
@@ -57,13 +56,13 @@ end
 local provider
 if true then
   local function nvim_schedule_echo(chunks, history, opts)
-    vim.schedule(function() api.nvim_echo(chunks, history, opts) end)
+    vim.schedule(function() ni.echo(chunks, history, opts) end)
   end
 
   function provider(msg, level, opts)
     assert(opts.source ~= nil)
 
-    local nvim_echo = vim.in_fast_event() and nvim_schedule_echo or api.nvim_echo
+    local nvim_echo = vim.in_fast_event() and nvim_schedule_echo or ni.echo
     if level <= ll.DEBUG then
       nvim_echo({ { opts.source, "JellySource" }, { " " }, { msg, "JellyDebug" } }, true, {})
     elseif level < ll.WARN then

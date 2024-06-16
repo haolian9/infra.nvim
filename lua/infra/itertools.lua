@@ -347,15 +347,20 @@ do --reduce/consume/drain
   ---@return T?
   function M.max(iterable, gt)
     local iter = M.iter(iterable)
-    if gt == nil then gt = function(a, b) return a > b end end
 
     local max
 
     max = iter()
     if max == nil then return end
 
-    for el in iter do
-      if gt(el, max) then max = el end
+    if gt == nil then
+      for el in iter do
+        if el > max then max = el end
+      end
+    else
+      for el in iter do
+        if gt(el, max) then max = el end
+      end
     end
 
     return max
@@ -367,18 +372,36 @@ do --reduce/consume/drain
   ---@return T?
   function M.min(iterable, lt)
     local iter = M.iter(iterable)
-    if lt == nil then lt = function(a, b) return a < b end end
 
     local min
 
     min = iter()
     if min == nil then return end
 
-    for el in iter do
-      if lt(el, min) then min = el end
+    if lt == nil then
+      for el in iter do
+        if el < min then min = el end
+      end
+    else
+      for el in iter do
+        if lt(el, min) then min = el end
+      end
     end
 
     return min
+  end
+
+  function M.any(iterable, truthy)
+    if truthy == nil then
+      for el in M.iter(iterable) do
+        if not el then return false end
+      end
+    else
+      for el in M.iter(iterable) do
+        if not truthy(el) then return false end
+      end
+    end
+    return true
   end
 
   ---@param iterable string[]|fun():string?

@@ -1,9 +1,8 @@
 local buflines = require("infra.buflines")
 local bufrename = require("infra.bufrename")
 local handyclosekeys = require("infra.handyclosekeys")
+local ni = require("infra.ni")
 local prefer = require("infra.prefer")
-
-local api = vim.api
 
 ---to create ephemeral buffers with mandatory buffer-options
 
@@ -61,7 +60,7 @@ return function(opts, lines)
   --order matters, as we access .modifiabe above
   opts = resolve_opts(opts)
 
-  local bufnr = api.nvim_create_buf(false, true)
+  local bufnr = ni.create_buf(false, true)
   --todo: support passing in bufnr, tabnew
   local bo = prefer.buf(bufnr)
 

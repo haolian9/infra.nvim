@@ -1,11 +1,10 @@
 local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("infra.handyclosekeys", "info")
 local bufmap = require("infra.keymap.buffer")
-
-local api = vim.api
+local ni = require("infra.ni")
 
 local function close_current_win_if_float()
-  local is_landwin = api.nvim_win_get_config(0).relative == ""
+  local is_landwin = ni.win_get_config(0).relative == ""
   if is_landwin then return jelly.info("refuse to close a landed window, try :q") end
   return ex("quit")
 end

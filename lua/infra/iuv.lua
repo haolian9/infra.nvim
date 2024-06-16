@@ -1,5 +1,6 @@
-local itertools = require("infra.itertools")
 ---succeed or scream(哎呦喂)
+
+local itertools = require("infra.itertools")
 
 local uv = vim.uv
 
