@@ -391,6 +391,28 @@ do --reduce/consume/drain
     return min
   end
 
+  ---@generic T
+  ---@param iterable T[]|fun():T?
+  ---@param eval fun(el:T):number
+  ---@return number
+  function M.sum(iterable, eval)
+    local iter = M.iter(iterable)
+
+    local sum = 0
+
+    if eval == nil then
+      for el in iter do
+        sum = sum + el
+      end
+    else
+      for el in iter do
+        sum = sum + eval(el)
+      end
+    end
+
+    return sum
+  end
+
   function M.any(iterable, truthy)
     if truthy == nil then
       for el in M.iter(iterable) do

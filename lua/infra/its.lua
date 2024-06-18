@@ -107,6 +107,9 @@ do --the end
   ---@param lt? fun(a,b):boolean @if a<b
   function It:min(lt) return itertools.min(self.source, lt) end
 
+  ---@param eval? fun(el):number
+  function It:sum(eval) return itertools.sum(self.source, eval) end
+
   ---@param separator ?string @nil=""
   function It:join(separator) return itertools.join(self.source, separator) end
 

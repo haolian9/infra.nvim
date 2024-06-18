@@ -2,11 +2,10 @@ local M = {}
 
 local jelly = require("infra.jellyfish")("infra.dictlib")
 
----@alias Dict {[string]: any}
-
 ---NB: no order guarantee
----@param dict Dict
----@return any[]
+---@generic K
+---@param dict {[K]: any}
+---@return K[]
 function M.keys(dict)
   local keys = {}
   for key, _ in pairs(dict) do
@@ -15,8 +14,9 @@ function M.keys(dict)
   return keys
 end
 
----@param dict Dict
----@return any[]
+---@generic V
+---@param dict {[any]: V}
+---@return V[]
 function M.values(dict)
   local values = {}
   for _, val in pairs(dict) do
@@ -25,8 +25,10 @@ function M.values(dict)
   return values
 end
 
----@param dict Dict
----@return any,any
+---@generic K
+---@generic V
+---@param dict {[K]: V}
+---@return K?,V?
 function M.items(dict)
   local i
   return function()
@@ -36,8 +38,10 @@ function M.items(dict)
   end
 end
 
----@param dict Dict
----@return Dict
+---@generic K
+---@generic V
+---@param dict {[K]: V}
+---@return V?,K?
 function M.flipped(dict)
   local flipped = {}
   for key, val in pairs(dict) do
@@ -47,8 +51,8 @@ function M.flipped(dict)
 end
 
 --the later keys win
----@param ... Dict
----@return Dict
+---@param ... table
+---@return table
 function M.merged(...)
   local merged = {}
   for i = 1, select("#", ...) do
@@ -60,8 +64,8 @@ function M.merged(...)
 end
 
 --inplace merge
----@param a Dict
----@param ... Dict
+---@param a table
+---@param ... table
 function M.merge(a, ...)
   for i = 1, select("#", ...) do
     for k, v in pairs(select(i, ...)) do
@@ -72,7 +76,7 @@ end
 
 ---@param cap integer
 ---@param weakable_value? boolean @nil=false
----@return {[any]:any}
+---@return table
 function M.CappedDict(cap, weakable_value)
   if weakable_value == nil then weakable_value = false end
 
@@ -102,8 +106,9 @@ function M.CappedDict(cap, weakable_value)
 end
 
 ---NB: no order guarantee
----@param dict Dict
----@return fun(): string?
+---@generic K
+---@param dict {[K]: any}
+---@return fun(): K?
 function M.iter_keys(dict)
   local iter = pairs(dict)
   local key
@@ -115,8 +120,9 @@ function M.iter_keys(dict)
 end
 
 ---NB: no order guarantee
----@param dict Dict
----@return fun(): any
+---@generic V
+---@param dict {[any]: V}
+---@return fun(): V?
 function M.iter_values(dict)
   local iter = pairs(dict)
   local key
@@ -128,8 +134,8 @@ function M.iter_values(dict)
   end
 end
 
----@param dreams Dict
----@param ... string|number @trace
+---@param dreams table
+---@param ... any @traces
 function M.get(dreams, ...)
   local layer = dreams
   for _, path in ipairs({ ... }) do
@@ -140,8 +146,8 @@ function M.get(dreams, ...)
   return layer
 end
 
----@param dict {[string|number]: any}
----@param keys (string|number)[]
+---@param dict table
+---@param keys any[]
 ---@param val any
 function M.set(dict, keys, val)
   local bag = dict
