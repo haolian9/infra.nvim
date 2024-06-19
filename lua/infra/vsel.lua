@@ -149,4 +149,13 @@ function M.select_lines(winid, start_line, stop_line)
   wincursor.go(winid, stop_line - 1, 0)
 end
 
+---usually used after buflines.replaces
+---this exists for https://github.com/neovim/neovim/issues/24007
+---@param bufnr integer
+---@param range infra.vsel.Range
+function M.restore_gv(bufnr, range)
+  ni.buf_set_mark(bufnr, "<", range.start_line + 1, range.start_col, {})
+  ni.buf_set_mark(bufnr, ">", range.stop_line + 1 - 1, range.stop_col - 1, {})
+end
+
 return M
