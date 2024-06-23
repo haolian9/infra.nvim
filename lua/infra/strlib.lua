@@ -37,7 +37,7 @@ end
 function M.tolist(str)
   local list = {}
   for i = 1, #str do
-    table.insert(list, string.sub(str, i, i))
+    list[i] = string.sub(str, i, i)
   end
   return list
 end
@@ -180,6 +180,16 @@ do
     end
     return list
   end
+end
+
+---@param ... string
+---@return fun(str:string):matched:boolean
+function M.Glob(...)
+  local pattern = vim.glob.to_lpeg(select(1, ...))
+  for i = 2, select("#", ...) do
+    pattern = pattern + vim.glob.to_lpeg(select(i, ...))
+  end
+  return function(str) return pattern:match(str) ~= nil end
 end
 
 return M

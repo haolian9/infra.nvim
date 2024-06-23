@@ -426,19 +426,22 @@ do --reduce/consume/drain
     return true
   end
 
-  ---@param iterable string[]|fun():string?
-  ---@param separator ?string @nil=""
-  ---@return string
-  function M.join(iterable, separator)
-    separator = separator or ""
-
+  do
     local rope = ropes.new()
-    for el in M.iter(iterable) do
-      rope:put(separator, el)
-    end
-    rope:skip(#separator)
 
-    return rope:get()
+    ---@param iterable string[]|fun():string?
+    ---@param separator ?string @nil=""
+    ---@return string
+    function M.join(iterable, separator)
+      separator = separator or ""
+
+      for el in M.iter(iterable) do
+        rope:put(separator, el)
+      end
+      rope:skip(#separator)
+
+      return rope:get()
+    end
   end
 
   ---@generic T

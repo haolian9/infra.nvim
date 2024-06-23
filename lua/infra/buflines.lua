@@ -104,6 +104,8 @@ do
 end
 
 do
+  local rope = ropes.new()
+
   ---@param bufnr integer
   ---@param start_lnum? integer @0-based, inclusive
   ---@param stop_lnum? integer @0-based, exclusive
@@ -111,7 +113,6 @@ do
   function M.joined(bufnr, start_lnum, stop_lnum)
     local range = itertools.range(resolve_absolute_range(bufnr, start_lnum, stop_lnum))
 
-    local rope = ropes.new()
     for ptr, len in unsafe.lineref_iter(bufnr, range) do
       rope:put("\n")
       rope:putcdata(ptr, len)

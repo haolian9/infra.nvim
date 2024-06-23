@@ -51,8 +51,8 @@ return function(candidates, token, opts)
   end
 
   local matches = {}
-  for _, tuple in ipairs(candidates) do
-    table.insert(matches, tuple[1])
+  for i, tuple in ipairs(candidates) do
+    matches[i] = tuple[1]
   end
 
   return matches

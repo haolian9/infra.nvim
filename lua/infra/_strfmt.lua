@@ -13,7 +13,7 @@ return function(format, ...)
     local arg = select(i, ...)
     local repr = arg
     if not scalars[type(arg)] then repr = vim.inspect(arg, inspect_opts) end
-    table.insert(args, repr)
+    args[i] = repr
   end
 
   if #args ~= 0 then return string.format(format, unpack(args)) end

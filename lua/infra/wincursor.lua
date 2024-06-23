@@ -1,10 +1,38 @@
 local M = {}
 
+local augroups = require("infra.augroups")
 local buflines = require("infra.buflines")
 local jelly = require("infra.jellyfish")("infra.wincursor", "debug")
 local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local unsafe = require("infra.unsafe")
+
+do
+  ---{winid: (row,col)}
+  ---@type {[integer]: [integer,integer]}
+  local lasts = {}
+
+  function M.init()
+    M.init = nil
+
+    local aug = augroups.Augroup("wincursor://lasts")
+    aug:repeats("CursorMoved", {
+      callback = function(args)
+        local winid = ni.get_current_win()
+        assert(ni.win_get_buf(winid) == args.buf)
+        local cursor = ni.win_get_cursor(winid)
+        lasts[winid] = cursor
+      end,
+    })
+  end
+
+  function M.last_position(winid)
+    assert(winid ~= 0)
+    winid = winid or ni.get_current_win()
+    local tuple = assert(lasts[winid])
+    return { lnum = tuple[1] - 1, col = tuple[2], row = tuple[1] }
+  end
+end
 
 ---of current or given winid
 ---@param winid? integer @nil=current win
@@ -35,8 +63,8 @@ end
 ---@return {lnum: integer, col: integer, row: integer}
 function M.position(winid)
   winid = winid or ni.get_current_win()
-  local rc = ni.win_get_cursor(winid)
-  return { lnum = rc[1] - 1, col = rc[2], row = rc[1] }
+  local tuple = ni.win_get_cursor(winid)
+  return { lnum = tuple[1] - 1, col = tuple[2], row = tuple[1] }
 end
 
 ---of current or given winid
@@ -52,8 +80,8 @@ end
 ---@return integer,integer @row,col
 function M.lc(winid)
   winid = winid or ni.get_current_win()
-  local rc = ni.win_get_cursor(winid)
-  return rc[1] - 1, rc[2]
+  local tuple = ni.win_get_cursor(winid)
+  return tuple[1] - 1, tuple[2]
 end
 
 ---move the cursor of current or given winid
