@@ -1,3 +1,6 @@
+---convention:
+---* iterable should be the first param if any
+
 local M = {}
 
 local ropes = require("string.buffer")
@@ -106,10 +109,10 @@ function M.batched(iterable, size)
 end
 
 ---@generic T
----@param fn fun(el: T):...
 ---@param iterable T[]|fun():T?
+---@param fn fun(el: T):...
 ---@return fun():...
-function M.map(fn, iterable)
+function M.map(iterable, fn)
   local it = M.iter(iterable)
 
   return function()
@@ -120,10 +123,10 @@ function M.map(fn, iterable)
 end
 
 ---for iters which return more than one value in each iteration
----@param fn fun(...):...
 ---@param iterable fun():...
+---@param fn fun(...):...
 ---@return fun():...
-function M.mapn(fn, iterable)
+function M.mapn(iterable, fn)
   local it = M.iter(iterable)
 
   return function()
@@ -134,10 +137,10 @@ function M.mapn(fn, iterable)
 end
 
 ---NB: the el[key] is supposed to be not nil
----@param key string|integer @key or index
 ---@param iterable table[]|fun():table[]?
+---@param key string|integer @key or index
 ---@return fun(): any[]?
-function M.project(key, iterable)
+function M.project(iterable, key)
   local it = M.iter(iterable)
 
   return function()
@@ -148,10 +151,10 @@ function M.project(key, iterable)
 end
 
 ---@generic T
----@param predicate fun(el):boolean
 ---@param iterable T[]|fun():T?
+---@param predicate fun(el):boolean
 ---@return fun():T?
-function M.filter(predicate, iterable)
+function M.filter(iterable, predicate)
   local it = M.iter(iterable)
   return function()
     while true do
@@ -163,10 +166,10 @@ function M.filter(predicate, iterable)
 end
 
 ---nargs, pass in predicate, out from filtern
----@param predicate fun(...):boolean
 ---@param iterable fun(...):...
+---@param predicate fun(...):boolean
 ---@return fun():...
-function M.filtern(predicate, iterable)
+function M.filtern(iterable, predicate)
   local it = M.iter(iterable)
   return function()
     while true do
@@ -445,17 +448,17 @@ do --reduce/consume/drain
   end
 
   ---@generic T
-  ---@param fn fun(el: T)
   ---@param iterable T[]|fun():T?
-  function M.foreach(fn, iterable)
+  ---@param fn fun(el: T)
+  function M.foreach(iterable, fn)
     for el in M.iter(iterable) do
       fn(el)
     end
   end
 
-  ---@param fn fun(...)
   ---@param iterable fun():...
-  function M.foreachn(fn, iterable)
+  ---@param fn fun(...)
+  function M.foreachn(iterable, fn)
     local it = M.iter(iterable)
 
     while true do

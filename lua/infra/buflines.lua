@@ -143,7 +143,7 @@ do
   ---@return fun():string?,integer? @iter(line,lnum)
   function M.iter(bufnr, start_lnum, stop_lnum)
     local range = itertools.range(resolve_absolute_range(bufnr, start_lnum, stop_lnum))
-    return itertools.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
+    return itertools.map(range, function(lnum) return M.line(bufnr, lnum), lnum end)
   end
 
   ---@param bufnr integer
@@ -151,7 +151,7 @@ do
   function M.iter_reversed(bufnr)
     --todo: support start_lnum, stop_lnum
     local range = itertools.range(M.high(bufnr), 0 - 1, -1)
-    return itertools.map(function(lnum) return M.line(bufnr, lnum), lnum end, range)
+    return itertools.map(range, function(lnum) return M.line(bufnr, lnum), lnum end)
   end
 end
 

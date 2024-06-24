@@ -85,15 +85,21 @@ end
 ---to replace `itertools.tolist(.slice(list, start, stop))`
 ---@generic T
 ---@param list T[]
----@param start integer @1-based
----@param stop integer @1-based, exclusive
+---@param start integer @0-based
+---@param stop integer @0-based, exclusive
 ---@return T[]
 function M.slice(list, start, stop)
   local result = {}
-  for i = start, stop - 1 do
+  for i = start + 1, stop do
     table.insert(result, list[i])
   end
   return result
 end
+
+---@generic T
+---@param list T[]
+---@param n integer
+---@return T[]
+function M.head(list, n) return M.slice(list, 0, n) end
 
 return M

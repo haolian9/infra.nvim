@@ -27,14 +27,14 @@ end
 ---@param fn? fun(el): ...
 function It:map(fn)
   if fn == nil then return self end
-  self.source = itertools.map(fn, self.source)
+  self.source = itertools.map(self.source, fn)
   return self
 end
 
 ---@param fn? fun(...): ...
 function It:mapn(fn)
   if fn == nil then return self end
-  self.source = itertools.mapn(fn, self.source)
+  self.source = itertools.mapn(self.source, fn)
   return self
 end
 
@@ -42,14 +42,14 @@ end
 ---@param key? string|integer @key or index
 function It:project(key)
   if key == nil then return self end
-  self.source = itertools.project(key, self.source)
+  self.source = itertools.project(self.source, key)
   return self
 end
 
 ---@param predicate? fun(el):boolean
 function It:filter(predicate)
   if predicate == nil then return self end
-  self.source = itertools.filter(predicate, self.source)
+  self.source = itertools.filter(self.source, predicate)
   return self
 end
 
@@ -57,7 +57,7 @@ end
 ---@param predicate fun(...):boolean
 function It:filtern(predicate)
   if predicate == nil then return self end
-  self.source = itertools.filtern(predicate, self.source)
+  self.source = itertools.filtern(self.source, predicate)
   return self
 end
 
@@ -114,10 +114,10 @@ do --the end
   function It:join(separator) return itertools.join(self.source, separator) end
 
   ---@param fn fun(el)
-  function It:foreach(fn) itertools.foreach(fn, self.source) end
+  function It:foreach(fn) itertools.foreach(self.source, fn) end
 
   ---@param fn fun(...)
-  function It:foreach(fn) itertools.foreachn(fn, self.source) end
+  function It:foreach(fn) itertools.foreachn(self.source, fn) end
 
   ---@param size integer
   function It:batched(size) return itertools.batched(self.source, size) end
