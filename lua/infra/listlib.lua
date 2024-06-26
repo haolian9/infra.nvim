@@ -102,4 +102,17 @@ end
 ---@return T[]
 function M.head(list, n) return M.slice(list, 0, n) end
 
+---@generic T
+---@param list T[]
+---@return T[]
+function M.reversed(list)
+  local result = {}
+  for i = #list, 1, -1 do
+    local el = list[i]
+    if el == nil then break end
+    table.insert(result, el)
+  end
+  return result
+end
+
 return M

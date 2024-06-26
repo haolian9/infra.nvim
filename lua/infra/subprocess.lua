@@ -82,11 +82,16 @@ end
 ---@field cwd? string
 ---@field detached? boolean
 
+---@class infra.subprocess.CompletedProc
+---@field pid integer
+---@field exit_code integer
+---@field stdout fun():string?
+
 ---CAUTION: when capture_stdout=raw, the `\n` ending can cause trouble
 ---@param bin string
 ---@param opts? infra.subprocess.SpawnOpts
 ---@param capture_stdout 'raw'|'lines'|false|nil @nil=false
----@return {pid: number, exit_code: number, stdout: fun():string}
+---@return infra.subprocess.CompletedProc
 function M.run(bin, opts, capture_stdout)
   opts = opts or {}
   if capture_stdout == nil then capture_stdout = false end

@@ -132,8 +132,8 @@ do
   ---@param lhs string
   ---@return infra.ctx.bufsubmode.KeymapDump?
   local function keymap_dump_locally(mode, lhs)
-    ---@type infra.ctx.bufsubmode.KeymapDump
     local dump = vim.fn.maparg(lhs, mode, false, true)
+    ---@cast dump infra.ctx.bufsubmode.KeymapDump
 
     --no buffer-local one nor global one
     if dump.buffer == nil then return nil end
@@ -172,8 +172,7 @@ do
     end)
 
     return function()
-      if #defs > 0 then
-        --
+      if #defs > 0 then --
         M.buf(bufnr, function()
           for _, dump in ipairs(defs) do
             keymap_restore_locally(dump)
