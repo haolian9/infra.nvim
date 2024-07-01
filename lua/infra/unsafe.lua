@@ -140,7 +140,7 @@ end
 
 ---@param bufnr number
 ---@param range fun():number @iterator of 0-based line numbers
----@return fun():integer?,integer? @iter(lnum,len)
+---@return fun():(integer?,integer?) @iter(lnum,len)
 function M.linelen_iter(bufnr, range)
   assert(bufnr)
 

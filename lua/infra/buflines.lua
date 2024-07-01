@@ -98,8 +98,13 @@ do
   ---@param lnum integer @0-based, accepts -1
   ---@return string?
   function M.line(bufnr, lnum)
-    if lnum == -1 then lnum = M.high(bufnr) end
-    return M.lines(bufnr, lnum, lnum + 1)[1]
+    local start_lnum, stop_lnum
+    if lnum >= 0 then -- 0 (0, 1)
+      start_lnum, stop_lnum = lnum, lnum + 1
+    else -- -1 (-2,-1)
+      start_lnum, stop_lnum = lnum - 1, lnum
+    end
+    return ni.buf_get_lines(bufnr, start_lnum, stop_lnum, false)[1]
   end
 end
 
@@ -205,7 +210,15 @@ do
   ---@param bufnr integer
   ---@param lnum integer @0-based, inclusive
   ---@param line string
-  function M.replace(bufnr, lnum, line) M.sets(bufnr, lnum, lnum + 1, { line }) end
+  function M.replace(bufnr, lnum, line)
+    local start_lnum, stop_lnum
+    if lnum >= 0 then
+      start_lnum, stop_lnum = lnum, lnum + 1
+    else
+      start_lnum, stop_lnum = lnum - 1, lnum
+    end
+    M.sets(bufnr, start_lnum, stop_lnum, { line })
+  end
 
   ---@param bufnr integer
   ---@param start_lnum integer @0-based, inclusive, could be negative
@@ -220,25 +233,57 @@ do
   ---@param lines string[]
   function M.replaces_all(bufnr, lines) M.sets(bufnr, 0, -1, lines) end
 
-  ---@param bufnr integer
-  ---@param lnum integer @0-based, exclusive
-  ---@param line string
-  function M.append(bufnr, lnum, line) M.sets(bufnr, lnum + 1, lnum + 1, { line }) end
+  do
+    local function resolve_range(lnum)
+      if lnum >= 0 then
+        return lnum + 1, lnum + 1
+      else
+        return lnum, lnum
+      end
+    end
 
-  ---@param bufnr integer
-  ---@param lnum integer @0-based, exclusive
-  ---@param lines string[]
-  function M.appends(bufnr, lnum, lines) M.sets(bufnr, lnum + 1, lnum + 1, lines) end
+    ---@param bufnr integer
+    ---@param lnum integer @0-based, exclusive; accepts negative
+    ---@param line string
+    function M.append(bufnr, lnum, line)
+      local start_lnum, stop_lnum = resolve_range(lnum)
+      M.sets(bufnr, start_lnum, stop_lnum, { line })
+    end
 
-  ---@param bufnr integer
-  ---@param lnum integer @0-based, exclusive
-  ---@param line string
-  function M.prepend(bufnr, lnum, line) M.sets(bufnr, lnum, lnum, { line }) end
+    ---@param bufnr integer
+    ---@param lnum integer @0-based, exclusive
+    ---@param lines string[]
+    function M.appends(bufnr, lnum, lines)
+      local start_lnum, stop_lnum = resolve_range(lnum)
+      M.sets(bufnr, start_lnum, stop_lnum, lines)
+    end
+  end
 
-  ---@param bufnr integer
-  ---@param lnum integer @0-based, exclusive
-  ---@param lines string[]
-  function M.prepends(bufnr, lnum, lines) M.sets(bufnr, lnum, lnum, lines) end
+  do
+    local function resolve_range(lnum)
+      if lnum >= 0 then
+        return lnum, lnum
+      else
+        return lnum - 1, lnum - 1
+      end
+    end
+
+    ---@param bufnr integer
+    ---@param lnum integer @0-based, exclusive
+    ---@param line string
+    function M.prepend(bufnr, lnum, line)
+      local start_lnum, stop_lnum = resolve_range(lnum)
+      M.sets(bufnr, start_lnum, stop_lnum, { line })
+    end
+
+    ---@param bufnr integer
+    ---@param lnum integer @0-based, exclusive
+    ---@param lines string[]
+    function M.prepends(bufnr, lnum, lines)
+      local start_lnum, stop_lnum = resolve_range(lnum)
+      M.sets(bufnr, start_lnum, stop_lnum, lines)
+    end
+  end
 end
 
 return M
