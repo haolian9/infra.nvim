@@ -102,20 +102,29 @@ function M.g1(winid, row, col)
   ni.win_set_cursor(winid, { row, col })
 end
 
----like 'tail -f': move the cursor to the last line
+---move the cursor to the last line of the buffer,
+---and keep it at the bottom of the window
 ---NB: incompatible with &wrap
 ---@param winid integer
-function M.follow(winid)
-  if prefer.wo(winid, "wrap") then jelly.warn("wincursor.follow wont work correctly with &wrap on") end
+---@param eol boolean @nil=false
+function M.follow(winid, eol)
+  if eol == nil then eol = false end
+
+  assert(not prefer.wo(winid, "wrap"))
 
   local bufnr = ni.win_get_buf(winid)
-
   local high = buflines.high(bufnr)
-  M.go(winid, high, 0)
 
-  local height = ni.win_get_height(winid)
-  local toplnum = math.max(high - height + 1, 0)
-  unsafe.win_set_toplnum(winid, toplnum)
+  do --last line of the buffer
+    local col = eol and assert(unsafe.linelen(bufnr, high)) or 0
+    M.go(winid, high, col)
+  end
+
+  do --bottom of the win
+    local height = ni.win_get_height(winid)
+    local toplnum = math.max(high - height + 1, 0)
+    unsafe.win_set_toplnum(winid, toplnum)
+  end
 end
 
 return M
