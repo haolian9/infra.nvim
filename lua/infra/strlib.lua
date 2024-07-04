@@ -6,6 +6,18 @@ local M = {}
 ---@param start? number
 function M.find(haystack, needle, start) return string.find(haystack, needle, start, true) end
 
+---differ to string.sub, (start:0, stop:0]
+---@param str string
+---@param start integer @0-based, inclusive
+---@param stop? integer @0-based, exclusive
+function M.slice(str, start, stop)
+  if stop == nil then
+    start, stop = 0, start
+  end
+
+  return string.sub(str, start + 1, stop)
+end
+
 do
   local function rfind(haystack, needle)
     assert(#needle >= 1)
@@ -111,6 +123,7 @@ do
     return string.sub(str, start_at, stop_at)
   end
 end
+
 ---@param a string
 ---@param b string
 ---@return boolean

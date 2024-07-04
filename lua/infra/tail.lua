@@ -80,7 +80,7 @@ local function tail(bufnr, winid, fpath)
   do
     local cmd = { "tail", "-n", height + scrollback, "-f", fpath }
     job = vim.fn.termopen(cmd, { stderr_buffered = false, stdout_buffered = false, stdin = "" })
-    wincursor.follow(winid)
+    wincursor.follow(winid, "bol")
   end
 
   bufrename(bufnr, string.format("tail://%s", fpath))

@@ -58,9 +58,14 @@ function M.col(winid)
   return ni.win_get_cursor(winid)[2]
 end
 
+---@class infra.wincursor.Position
+---@field lnum integer
+---@field col integer
+---@field row integer
+
 ---of current or given winid
 ---@param winid? integer @nil=current win
----@return {lnum: integer, col: integer, row: integer}
+---@return infra.wincursor.Position
 function M.position(winid)
   winid = winid or ni.get_current_win()
   local tuple = ni.win_get_cursor(winid)
@@ -106,18 +111,24 @@ end
 ---and keep it at the bottom of the window
 ---NB: incompatible with &wrap
 ---@param winid integer
----@param eol boolean @nil=false
-function M.follow(winid, eol)
-  if eol == nil then eol = false end
+---@param cursor 'stay'|'eol'|'bol'
+function M.follow(winid, cursor)
+  if cursor == nil then cursor = "stay" end
 
   assert(not prefer.wo(winid, "wrap"))
 
   local bufnr = ni.win_get_buf(winid)
   local high = buflines.high(bufnr)
 
-  do --last line of the buffer
-    local col = eol and assert(unsafe.linelen(bufnr, high)) or 0
+  --re-place cursor
+  if cursor == "eol" then
+    local col = cursor and assert(unsafe.linelen(bufnr, high)) or 0
     M.go(winid, high, col)
+  elseif cursor == "bol" then
+    local col = cursor and assert(unsafe.linelen(bufnr, high)) or 0
+    M.go(winid, high, col)
+  else
+    assert(cursor == "stay")
   end
 
   do --bottom of the win

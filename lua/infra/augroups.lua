@@ -162,7 +162,7 @@ do
   ---@private
   ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts infra.AugroupCreateOpts
-  ---@return integer @autocmd id
+  ---@return integer autocmd-id
   function Augroup:append_aucmd(event, opts)
     opts.group = self.group
     return ni.create_autocmd(event, opts)
@@ -170,6 +170,7 @@ do
 
   ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts infra.AugroupCreateOpts
+  ---@return integer autocmd-id
   function Augroup:repeats(event, opts)
     assert(opts.once ~= true)
     return self:append_aucmd(event, opts)
@@ -177,6 +178,7 @@ do
 
   ---@param event infra.AugroupEvent|infra.AugroupEvent[]
   ---@param opts infra.AugroupCreateOpts
+  ---@return integer autocmd-id
   function Augroup:once(event, opts)
     opts.once = true
     return self:append_aucmd(event, opts)
