@@ -223,7 +223,7 @@ do
   end
 end
 
----@class infra.augroups.WinAugroup: infra.Augroup
+---@class infra.WinAugroup: infra.Augroup
 ---@field private autounlink boolean
 local WinAugroup = setmetatable({}, Augroup)
 do

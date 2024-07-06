@@ -1,4 +1,4 @@
-return {
+local M = {
   tab = 0x09,
   cr = 0x0d,
   esc = 0x1b,
@@ -19,3 +19,11 @@ return {
   tilde = 0x7e, -- ~
 }
 
+---@param char string
+---@return boolean
+function M.is_letter(char)
+  local code = string.byte(char)
+  return (code >= M.A and code <= M.Z) or (code >= M.a and code <= M.z)
+end
+
+return M
