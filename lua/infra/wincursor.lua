@@ -26,6 +26,8 @@ do
     })
   end
 
+  ---@param winid? integer
+  ---@return infra.wincursor.Position
   function M.last_position(winid)
     assert(winid ~= 0)
     winid = winid or ni.get_current_win()
