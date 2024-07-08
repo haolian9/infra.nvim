@@ -1,5 +1,7 @@
 local M = {}
 
+local new_table = require("table.new")
+
 --forced to plain-match
 ---@param haystack string
 ---@param needle string
@@ -47,7 +49,7 @@ end
 ---@param str string
 ---@return string[]
 function M.tolist(str)
-  local list = {}
+  local list = new_table(#str, 0)
   for i = 1, #str do
     list[i] = string.sub(str, i, i)
   end
@@ -57,7 +59,7 @@ end
 ---@param str string
 ---@return {[string]: true}
 function M.toset(str)
-  local set = {}
+  local set = new_table(0, #str)
   for i = 1, #str do
     set[string.sub(str, i, i)] = true
   end

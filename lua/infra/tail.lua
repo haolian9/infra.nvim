@@ -68,7 +68,7 @@ local function tail(bufnr, winid, fpath)
 
   local job
 
-  local aug = augroups.BufAugroup(bufnr, --[[autounlink]] false)
+  local aug = augroups.BufAugroup(bufnr, "infra.trail", false)
   aug:once("TermOpen", { callback = function() prefer.bo(bufnr, "scrollback", scrollback) end })
   aug:once("BufWipeout", {
     callback = function()

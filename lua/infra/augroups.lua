@@ -253,14 +253,13 @@ do
   end
 
   ---@param bufnr integer
-  ---@param autounlink? boolean @nil=false
-  ---@param augname? string
+  ---@param purpose string
+  ---@param autounlink boolean
   ---@return infra.BufAugroup
-  function M.BufAugroup(bufnr, autounlink, augname)
+  function M.BufAugroup(bufnr, purpose, autounlink)
     assert(bufnr ~= nil and bufnr ~= 0)
-    if autounlink == nil then autounlink = false end
-    if augname == nil then augname = string.format("aug://buf/%d", bufnr) end
 
+    local augname = string.format("aug://%s/buf/%s", purpose, bufnr)
     local id = ni.create_augroup(augname, { clear = true })
     local aug = setmetatable({ group = id, bufnr = bufnr }, BufAugroup)
 
@@ -278,14 +277,13 @@ do
   end
 
   ---@param winid integer
-  ---@param autounlink? boolean @nil=false
-  ---@param augname? string
+  ---@param purpose string
+  ---@param autounlink boolean @nil=false
   ---@return infra.Augroup
-  function M.WinAugroup(winid, autounlink, augname)
+  function M.WinAugroup(winid, purpose, autounlink)
     assert(winid ~= nil and winid ~= 0)
-    if autounlink == nil then autounlink = false end
-    if augname == nil then augname = string.format("aug://win/%d", winid) end
 
+    local augname = string.format("aug://win/%s/%s", winid, purpose)
     local id = ni.create_augroup(augname, { clear = true })
     local aug = setmetatable({ group = id }, WinAugroup)
 

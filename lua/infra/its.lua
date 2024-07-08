@@ -130,10 +130,6 @@ end
 
 function It:unwrap() return self.source end
 
---todo: support operations on multiple iterators
---* zip, zip_longest
---* equals
-
 ---@param iterable any[]|fun(...):...
 ---@return infra.its.Iterator
 return function(iterable) return setmetatable({ source = itertools.iter(iterable) }, It) end

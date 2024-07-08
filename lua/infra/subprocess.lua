@@ -1,8 +1,5 @@
 local M = {}
 
---todo: ps
---todo: kill
-
 local itertools = require("infra.itertools")
 local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("infra.subprocess", "info")

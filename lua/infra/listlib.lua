@@ -1,5 +1,7 @@
 local M = {}
 
+local new_table = require("table.new")
+
 ---@generic T
 ---@param list T[]
 ---@return fun(): integer?,T? @(index:0-based, value)
@@ -64,7 +66,7 @@ function M.push(queue, el) table.insert(queue, 1, el) end
 ---@param zero? T|fun(index:integer):T @nil=0
 ---@return T[]
 function M.zeros(n, zero)
-  local list = {}
+  local list = new_table(n, 0)
 
   local eval
   if zero == nil then
@@ -106,7 +108,7 @@ function M.head(list, n) return M.slice(list, 0, n) end
 ---@param list T[]
 ---@return T[]
 function M.reversed(list)
-  local result = {}
+  local result = new_table(#list, 0)
   for i = #list, 1, -1 do
     local el = list[i]
     if el == nil then break end
