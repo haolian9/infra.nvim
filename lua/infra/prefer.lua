@@ -42,7 +42,9 @@ do
   })
 end
 
+---@type fun(bufnr: integer): vim.bo
 M.buf = new_local_descriptor("buf", ni.buf_is_valid)
+---@type fun(winid: integer): vim.wo
 M.win = new_local_descriptor("win", ni.win_is_valid)
 
 --getter or setter

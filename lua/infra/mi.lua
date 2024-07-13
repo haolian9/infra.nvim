@@ -40,4 +40,12 @@ do
   end
 end
 
+---@param winid integer
+---@return boolean
+function M.win_is_float(winid) return ni.win_get_config(winid).relative ~= "" end
+
+---@param winid integer
+---@return boolean
+function M.win_is_landed(winid) return ni.win_get_config(winid).relative == "" end
+
 return M
