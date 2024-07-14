@@ -8,13 +8,13 @@ local M = {}
 ---* intuitive, simple responsibility api
 ---   * nvim_buf_get/set_lines is not designed for human, with too many param combination
 
+local ropes = require("string.buffer")
+
 local itertools = require("infra.itertools")
 local its = require("infra.its")
 local jelly = require("infra.jellyfish")("infra.buflines", "debug")
 local ni = require("infra.ni")
 local unsafe = require("infra.unsafe")
-
-local ropes = require("string.buffer")
 
 ---@param start? integer @0-based, inclusive
 ---@param stop? integer @0-based, exclusive
@@ -205,7 +205,10 @@ do
   ---@param start_lnum integer @0-based, inclusive
   ---@param stop_lnum integer @0-based, exclusive
   ---@param lines string[]
-  function M.sets(bufnr, start_lnum, stop_lnum, lines) ni.buf_set_lines(bufnr, start_lnum, stop_lnum, false, lines) end
+  function M.sets(bufnr, start_lnum, stop_lnum, lines)
+    local ok, err = xpcall(ni.buf_set_lines, debug.traceback, bufnr, start_lnum, stop_lnum, false, lines)
+    if not ok then jelly.fatal("RuntimeError", "lines: '%s'; err: %s", lines, err) end
+  end
 
   ---@param bufnr integer
   ---@param lnum integer @0-based, inclusive
