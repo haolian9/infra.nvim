@@ -108,14 +108,12 @@ do
     return spell.arg.complete(prompt, line, cursor)
   end
 
-  local function try_nothing() return {} end
-
   ---@param spell infra.cmds.Spell
-  ---@return infra.cmds.CompFn
+  ---@return infra.cmds.CompFn?
   function compose_complete(spell)
     if next(spell.flags) == nil then
-      if spell.arg == nil then return try_nothing end
-      if spell.arg.complete == nil then return try_nothing end
+      if spell.arg == nil then return end
+      if spell.arg.complete == nil then return end
       return spell.arg.complete
     end
 
