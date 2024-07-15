@@ -1,5 +1,7 @@
 -- visual select relevant functions
 --
+-- supports v and V, but not ctrl-v
+--
 -- special position of <>
 -- * nil       (0, 0; 0, 0)
 -- * top-left: (1, 0; 1, 0)
@@ -10,9 +12,9 @@
 
 local M = {}
 
+local buflines = require("infra.buflines")
 local feedkeys = require("infra.feedkeys")
 local ni = require("infra.ni")
-local strlib = require("infra.strlib")
 local utf8 = require("infra.utf8")
 local wincursor = require("infra.wincursor")
 
@@ -23,99 +25,72 @@ M.max_col = 0x7fffffff
 ---@field start_line number @0-indexed, inclusive
 ---@field start_col number @0-indexed, inclusive
 ---@field stop_line number @0-indexed, exclusive
----@field stop_col number @0-indexed, exclusive
+---@field stop_col number @0-indexed, exclusive; -1 indicates EOL
 
 ---@param bufnr number
+---@param calibrate? boolean @utf8
 ---@return infra.vsel.Range?
-function M.range(bufnr)
-  assert(strlib.startswith(ni.get_mode().mode, "n"))
-
+function M.range(bufnr, calibrate)
   bufnr = bufnr or ni.get_current_buf()
+  if calibrate == nil then calibrate = false end
 
+  --row: 1-based, inclusive; col: 0-based, inclusive
   local start_row, start_col = unpack(ni.buf_get_mark(bufnr, "<"))
-  --NB: `>` mark returns the position of first byte of multi-bytes rune
+  --NB: `>` mark always returns the first byte of multi-bytes rune
+  --row: 1-based, inclusive; col: 0-based, inclusive
   local stop_row, stop_col = unpack(ni.buf_get_mark(bufnr, ">"))
 
   --fresh start, no select
   if start_row == 0 and start_col == 0 and stop_row == 0 and stop_col == 0 then return end
 
-  --start_row is always smaller then stop_row
+  --ensure start_row is always smaller then stop_row
   if start_row > stop_row then
     start_row, stop_row = stop_row, start_row
     start_col, stop_col = stop_col, start_col
   end
 
-  return {
-    start_line = start_row - 1,
-    start_col = start_col,
-    stop_line = stop_row,
-    stop_col = stop_col + 1,
-  }
+  if stop_col == M.max_col then
+    stop_col = -1
+  else
+    if calibrate then
+      local lnum = stop_row - 1
+      local col = stop_col
+      local lines = ni.buf_get_text(bufnr, lnum, col, lnum, col + 1, {})
+      assert(#lines == 1 and #lines[1] == 1)
+      local rune_len = utf8.rune_length(utf8.byte0(lines[1]))
+      stop_col = stop_col + rune_len
+      stop_col = stop_col - 1 --the stop_col it self
+      stop_col = stop_col + 1 --the stop_col should be exclusive
+    else
+      stop_col = stop_col + 1
+    end
+  end
+
+  return { start_line = start_row - 1, start_col = start_col, stop_line = stop_row - 1 + 1, stop_col = stop_col }
 end
 
 -- only support one line select
----@param bufnr ?number
----@return nil|string
+---@param bufnr? number
+---@return string?
 function M.oneline_text(bufnr)
   bufnr = bufnr or ni.get_current_buf()
 
-  local range = M.range(bufnr)
+  local range = M.range(bufnr, true)
   if range == nil then return end
 
-  -- not same row
-  if range.start_line + 1 ~= range.stop_line then return end
-
-  -- shortcut
-  if range.stop_col - 1 == M.max_col then return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, -1, {})[1] end
-
-  local chars
-  do
-    local stop_col = range.stop_col + utf8.maxbytes
-    local lines = ni.buf_get_text(bufnr, range.start_line, range.start_col, range.start_line, stop_col, {})
-    assert(#lines == 1)
-    chars = lines[1]
-  end
-
-  local text
-  do
-    local sel_len = range.stop_col - range.start_col
-    -- multi-bytes utf-8 rune
-    local byte0 = utf8.byte0(chars, sel_len)
-    local rune_len = utf8.rune_length(byte0)
-    text = chars:sub(1, sel_len + rune_len - 1)
-  end
-
-  return text
+  assert(range.start_line + 1 == range.stop_line, "more than one line")
+  return buflines.partial_line(bufnr, range.start_line, range.start_col, range.stop_col)
 end
 
----@param bufnr ?number
----@return table|nil
+---@param bufnr? number
+---@return string[]?
 function M.multiline_text(bufnr)
   bufnr = bufnr or ni.get_current_buf()
 
-  local range = M.range(bufnr)
+  local range = M.range(bufnr, true)
   if range == nil then return end
 
-  -- shortcut
-  if range.stop_col - 1 == M.max_col then return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, -1, {}) end
-
-  local lines
-  do
-    local stop_col = range.stop_col + utf8.maxbytes - 1
-    lines = ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, stop_col, {})
-  end
-
-  -- handles last line
-  do
-    local chars = lines[#lines]
-    local sel_len = range.stop_col
-    -- multi-bytes utf-8 rune
-    local byte0 = utf8.byte0(chars, sel_len)
-    local rune_len = utf8.rune_length(byte0)
-    lines[#lines] = chars:sub(1, sel_len + rune_len - 1)
-  end
-
-  return lines
+  return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, range.stop_col, {})
 end
 
 ---select a region
