@@ -242,6 +242,7 @@ end
 
 local M = {}
 do
+  ---name the aug as protocol:// scheme
   ---mandatory clearing augroup
   ---@param fmt string
   ---@param ... any
