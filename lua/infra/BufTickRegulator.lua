@@ -1,9 +1,7 @@
----a regulator for buffers based on changedtick
-
 local dictlib = require("infra.dictlib")
 local ni = require("infra.ni")
 
----@class infra.Regulator
+---@class infra.BufTickRegulator
 ---@field private ticks {[integer]: integer} @{bufnr: changedtick}
 local Regulator = {}
 do

@@ -1,3 +1,5 @@
+local jelly = require("infra.jellyfish")("infra.VimGrep", "info")
+
 ---@class infra.VimGrep
 ---@field private impl vim.Regex
 local VimGrep = {}
@@ -49,7 +51,7 @@ end
 return function(pattern)
   ---as nvim reports no meaningful error on vim.regex(invalid-pattern), make it quiet
   local ok, regex = pcall(vim.regex, pattern)
-  if not ok then return end
+  if not ok then return jelly.err("vim.regex: %s", regex) end
 
   return setmetatable({ impl = regex }, VimGrep)
 end
