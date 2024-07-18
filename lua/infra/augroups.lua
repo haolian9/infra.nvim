@@ -193,7 +193,7 @@ do
 end
 
 ---@class infra.BufAugroup: infra.Augroup
----@field private bufnr integer
+---@field bufnr integer
 ---@field private autounlink boolean
 local BufAugroup = setmetatable({}, Augroup)
 do
@@ -215,7 +215,7 @@ do
   ---@param opts {modeline: nil|boolean, data: any}
   function BufAugroup:emit(event, opts)
     ---@diagnostic disable: undefined-field, inject-field
-    assert(opts.pattern ~= nil, "buffer and pattern are exclusive in opts")
+    assert(opts.pattern == nil, "buffer and pattern are exclusive in opts")
 
     opts.group = self.group
     opts.buffer = self.bufnr
