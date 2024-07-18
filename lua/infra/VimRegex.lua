@@ -1,16 +1,19 @@
-local jelly = require("infra.jellyfish")("infra.VimGrep", "info")
+local M = {}
+M.__index = M
 
----@class infra.VimGrep
+local jelly = require("infra.jellyfish")("infra.VimRegex", "info")
+
+---@class infra.VimRegex
 ---@field private impl vim.Regex
-local VimGrep = {}
-VimGrep.__index = VimGrep
+local VimRegex = {}
+VimRegex.__index = VimRegex
 
 ---0-based; start inclusive, stop exclusive
----@alias infra.VimGrep.Iterator fun():(start_col:integer?,stop_col:integer?)
+---@alias infra.VimRegex.Iterator fun():(start_col:integer?,stop_col:integer?)
 
 ---@param str string
----@return infra.VimGrep.Iterator
-function VimGrep:iter_str(str)
+---@return infra.VimRegex.Iterator
+function VimRegex:iter_str(str)
   local remain = str
   local offset = 0
   return function()
@@ -31,8 +34,8 @@ end
 ---@param bufnr integer
 ---@param lnum integer @0-based
 ---@param start_col? integer @0-based; nil=0
----@return infra.VimGrep.Iterator
-function VimGrep:iter_line(bufnr, lnum, start_col)
+---@return infra.VimRegex.Iterator
+function VimRegex:iter_line(bufnr, lnum, start_col)
   local offset = start_col or 0
   return function()
     ---0-based; start inclusive, stop inclusive
@@ -46,12 +49,24 @@ function VimGrep:iter_line(bufnr, lnum, start_col)
   end
 end
 
----@param pattern string @vim very-magic regex
----@return infra.VimGrep?
-return function(pattern)
+---@param pattern string @vim \m regex
+---@return infra.VimRegex?
+function M:__call(pattern)
   ---as nvim reports no meaningful error on vim.regex(invalid-pattern), make it quiet
   local ok, regex = pcall(vim.regex, pattern)
   if not ok then return jelly.err("vim.regex: %s", regex) end
 
-  return setmetatable({ impl = regex }, VimGrep)
+  return setmetatable({ impl = regex }, VimRegex)
 end
+
+---@param pattern string @vim \v regex
+---@return infra.VimRegex?
+function M.VeryMagic(pattern) return M:__call("\\v" .. pattern) end
+
+---escape given pat as literals in \m mode
+function M.magic_escape(pat) return vim.fn.escape(pat, [[.$*~\]]) end
+
+---escape given pat as literals in \v mode
+function M.verymagic_escape(pat) return vim.fn.escape(pat, [[.$*~()|\{<>]]) end
+
+return setmetatable({}, M)
