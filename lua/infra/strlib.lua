@@ -6,7 +6,9 @@ local new_table = require("table.new")
 ---@param haystack string
 ---@param needle string
 ---@param start? number
-function M.find(haystack, needle, start) return string.find(haystack, needle, start, true) end
+function M.contains(haystack, needle, start) return string.find(haystack, needle, start, true) end
+
+M.find = M.contains
 
 ---differ to string.sub, (start:0, stop:0]
 ---@param str string

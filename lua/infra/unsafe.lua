@@ -125,6 +125,7 @@ function M.buf_setfname(bufnr, full_name, short_name)
   return C.setfname(buf_p, ffname, sfname, true) == nvim_enum.OK
 end
 
+---may raise E315
 ---@param bufnr integer
 ---@param lnum integer
 ---@return integer?
@@ -134,8 +135,10 @@ function M.linelen(bufnr, lnum)
   local buf_p = C.buflist_findnr(bufnr)
   if buf_p == nil then return end
 
-  local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
   --maybe: ml_buf_get_len(buf, lnum)
+
+  local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+  if line_p == nil then return end
   return assert(tonumber(C.strlen(line_p)))
 end
 
@@ -148,10 +151,20 @@ function M.linelen_iter(bufnr, range)
   local buf_p = C.buflist_findnr(bufnr)
   if buf_p == nil then return function() end end
 
+  local done = false
+
   return function()
+    if done then return end
+
     local lnum = range()
     if lnum == nil then return end
+
     local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+    if line_p == nil then
+      done = true
+      return
+    end
+
     local len = assert(tonumber(C.strlen(line_p)))
     return lnum, len
   end
@@ -167,8 +180,9 @@ function M.lineref(bufnr, lnum)
   if buf_p == nil then return end
 
   local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
-  local len = tonumber(C.strlen(line_p))
+  if line_p == nil then return end
 
+  local len = tonumber(C.strlen(line_p))
   return line_p, len
 end
 
@@ -181,10 +195,20 @@ function M.lineref_iter(bufnr, range)
   local buf_p = C.buflist_findnr(bufnr)
   if buf_p == nil then return function() end end
 
+  local done = false
+
   return function()
+    if done then return end
+
     local lnum = range()
     if lnum == nil then return end
+
     local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+    if line_p == nil then
+      done = true
+      return
+    end
+
     local len = assert(tonumber(C.strlen(line_p)))
     return line_p, len
   end
