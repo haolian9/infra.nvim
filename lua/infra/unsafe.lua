@@ -135,6 +135,7 @@ function M.linelen(bufnr, lnum)
   if buf_p == nil then return end
 
   local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
+  --maybe: ml_buf_get_len(buf, lnum)
   return assert(tonumber(C.strlen(line_p)))
 end
 
