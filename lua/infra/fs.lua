@@ -133,10 +133,10 @@ end
 function M.is_absolute(path)
   if not strlib.startswith(path, "/") then return false end
   -- ..
-  if strlib.find(path, "/../") then return false end
+  if strlib.contains(path, "/../") then return false end
   if strlib.endswith(path, "/..") then return false end
   -- .
-  if strlib.find(path, "/./") then return false end
+  if strlib.contains(path, "/./") then return false end
   if strlib.endswith(path, "/.") then return false end
 
   return true

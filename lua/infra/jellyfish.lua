@@ -99,7 +99,7 @@ local function shock(source, level, min_level)
     if select("#", ...) == 0 then
       assert(format ~= nil, "missing format")
       if type(format) == "string" then
-        if strlib.find(format, "%s") == nil then return provider(format, level, opts) end
+        if not strlib.contains(format, "%s") then return provider(format, level, opts) end
         return provider(format, level, opts)
       else
         return provider(strfmt("%s", format), level, opts)
@@ -121,7 +121,7 @@ local function fatal(source, level, min_level)
     if select("#", ...) == 0 then
       assert(format ~= nil, "missing format")
       if type(format) == "string" then
-        if strlib.find(format, "%s") == nil then
+        if not strlib.contains(format, "%s") then
           provider(format, level, opts)
         else
           provider(format, level, opts)

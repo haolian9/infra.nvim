@@ -19,6 +19,6 @@ return function(format, ...)
   if #args ~= 0 then return string.format(format, unpack(args)) end
 
   assert(format ~= nil, "missing format")
-  if strlib.find(format, "%s") == nil then return format end
+  if not strlib.contains(format, "%s") then return format end
   error("unmatched args for format")
 end

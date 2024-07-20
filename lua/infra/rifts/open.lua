@@ -2,8 +2,8 @@ local M = {}
 
 local ctx = require("infra.ctx")
 local dictlib = require("infra.dictlib")
+local jelly = require("infra.jellyfish")("infra.rifts.open", "debug")
 local ni = require("infra.ni")
-local prefer = require("infra.prefer")
 local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
 
@@ -40,16 +40,24 @@ end
 ---@param opts table
 ---@return integer
 function M.win(bufnr, enter, opts)
+  assert(opts.split == nil, "rifts.open is designed for floatwins")
+
   local winid = ni.open_win(bufnr, enter, opts)
 
-  --to clear alternate-file, thanks to ii14
-  if enter then
-    vim.fn.setreg("#", bufnr)
-  else
-    ctx.win(winid, function() vim.fn.setreg("#", bufnr) end)
-  end
+  do --curwin sensitive
+    local function setup()
+      --to clear alternate-file, thanks to ii14
+      vim.fn.setreg("#", bufnr)
 
-  prefer.wo(winid, "winfixbuf", true)
+      --todo: 'mark is meaningless for a new floatwin
+    end
+
+    if enter then
+      setup()
+    else
+      ctx.win(winid, setup)
+    end
+  end
 
   return winid
 end

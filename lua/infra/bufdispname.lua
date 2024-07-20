@@ -21,7 +21,7 @@ M.named = {
   ---@param bufname string
   ---@return string?
   protocol = function(bufnr, bufname)
-    if strlib.find(bufname, "://") ~= nil then return bufname end
+    if strlib.contains(bufname, "://") then return bufname end
   end,
   ---http <- http://a.b
   ---@param bufnr integer

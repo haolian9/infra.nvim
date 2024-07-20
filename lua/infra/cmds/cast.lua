@@ -76,10 +76,10 @@ do
     --shold startswith -
     if not strlib.startswith(prompt, "-") then return end
     --no flags completion after ` -- `
-    if strlib.find(string.sub(line, 1, cursor + 1), " -- ") ~= nil then return end
+    if strlib.contains(string.sub(line, 1, cursor + 1), " -- ") then return end
 
     -- -|, --{flag}|
-    if prompt == "-" or prompt == "--" or strlib.find(prompt, "=") == nil then
+    if prompt == "-" or prompt == "--" or not strlib.contains(prompt, "=") then
       local flags = resolve_unseen_flags(spell, prompt, line)
       if #flags == 0 then return end
       local comp = ArgComp.constant(function()
