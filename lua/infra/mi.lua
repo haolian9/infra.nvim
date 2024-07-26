@@ -22,21 +22,18 @@ do
     return false
   end
 
-  ---@param fmt string
+  ---@param fmt string @no need to prefix with :
   ---@param ... any
   function M.setcmdline(fmt, ...)
     if not in_expected_mode() then error("unreachable") end
 
     local str = string.format(fmt, ...)
 
-    ni.create_autocmd("cmdlineEnter", {
-      once = true,
-      callback = function()
-        --pos in bytes, +1 for the leading :
-        vim.fn.setcmdline(str, #str + 1)
-      end,
-    })
     feedkeys.codes(":", "n")
+    vim.schedule(function() --another vim.schedule magic
+      assert(ni.get_mode().mode == "c")
+      vim.fn.setcmdline(str, #str + #":") --pos in bytes
+    end)
   end
 end
 
