@@ -14,6 +14,7 @@ local M = {}
 
 local buflines = require("infra.buflines")
 local feedkeys = require("infra.feedkeys")
+local jelly = require("infra.jellyfish")("infra.vsel", "info")
 local ni = require("infra.ni")
 local utf8 = require("infra.utf8")
 local wincursor = require("infra.wincursor")
@@ -93,29 +94,54 @@ function M.multiline_text(bufnr)
   return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, range.stop_col, {})
 end
 
----select a region
----@param winid integer
----@param start_line number @0-indexed, inclusive
----@param start_col  number @0-indexed, inclusive
----@param stop_line  number @0-indexed, exclusive
----@param stop_col   number @0-indexed, exclusive
-function M.select_region(winid, start_line, start_col, stop_line, stop_col)
-  wincursor.go(winid, start_line, start_col)
-  -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
-  feedkeys.codes("vo", "nx")
-  wincursor.go(winid, stop_line - 1, stop_col - 1)
+do
+  ---@return string
+  local function keys_to_enter_visual_mode()
+    local mode = ni.get_mode().mode
+    if mode == "n" then return "v" end
+    if mode == "v" then return "<esc>v" end
+    if mode == "i" then return "<esc>v" end
+    ---@diagnostic disable-next-line: return-type-mismatch
+    return jelly.fatal("RuntimeError", "unexpected mode: %s", mode)
+  end
+
+  ---select a region
+  ---@param winid integer
+  ---@param start_lnum number @0-indexed, inclusive
+  ---@param start_col  number @0-indexed, inclusive
+  ---@param stop_lnum  number @0-indexed, exclusive
+  ---@param stop_col   number @0-indexed, exclusive
+  function M.select_region(winid, start_lnum, start_col, stop_lnum, stop_col)
+    wincursor.go(winid, start_lnum, start_col)
+    --no using 'nx' here, cite 'you can not change editor state in a script,'
+    local keys = keys_to_enter_visual_mode()
+    jelly.debug(keys)
+    feedkeys.keys(keys, "n")
+    vim.schedule(function() wincursor.go(winid, stop_lnum - 1, stop_col - 1) end)
+  end
 end
 
----select lines between start and stop
----place cursor on the begin of the last line
----@param winid integer
----@param start_line number @0-indexed, inclusive
----@param stop_line  number @0-indexed, exclusive
-function M.select_lines(winid, start_line, stop_line)
-  wincursor.go(winid, start_line, 0)
-  -- 'o' is necessary for the case when nvim is already in visual mode before calling this function
-  feedkeys.codes("Vo", "nx")
-  wincursor.go(winid, stop_line - 1, 0)
+do
+  ---@return string
+  local function keys_to_enter_visual_mode()
+    local mode = ni.get_mode().mode
+    if mode == "n" then return "V" end
+    if mode == "v" then return "<esc>V" end
+    if mode == "i" then return "<escV" end
+    ---@diagnostic disable-next-line: return-type-mismatch
+    return jelly.fatal("RuntimeError", "unexpected mode: %s", mode)
+  end
+
+  ---select lines between start and stop
+  ---place cursor on the begin of the last line
+  ---@param winid integer
+  ---@param start_lnum number @0-indexed, inclusive
+  ---@param stop_lnum  number @0-indexed, exclusive
+  function M.select_lines(winid, start_lnum, stop_lnum)
+    wincursor.go(winid, start_lnum, 0)
+    feedkeys.keys(keys_to_enter_visual_mode(), "n")
+    vim.schedule(function() wincursor.go(winid, stop_lnum - 1, 0) end)
+  end
 end
 
 ---usually used after buflines.replaces
