@@ -45,4 +45,12 @@ function M.win_is_float(winid) return ni.win_get_config(winid).relative ~= "" en
 ---@return boolean
 function M.win_is_landed(winid) return ni.win_get_config(winid).relative == "" end
 
+---@param what 'cache'|'config'|'data'|'run'|'state'
+---@return string
+function M.stdpath(what)
+  local result = vim.fn.stdpath(what)
+  assert(type(result) == "string")
+  return result
+end
+
 return M
