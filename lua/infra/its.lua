@@ -117,7 +117,7 @@ do --the end
   function It:foreach(fn) itertools.foreach(self.source, fn) end
 
   ---@param fn fun(...)
-  function It:foreach(fn) itertools.foreachn(self.source, fn) end
+  function It:foreachn(fn) itertools.foreachn(self.source, fn) end
 
   ---@param size integer
   function It:batched(size) return itertools.batched(self.source, size) end

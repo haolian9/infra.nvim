@@ -140,4 +140,12 @@ function M.follow(winid, cursor)
   end
 end
 
+---@param winid integer
+function M.zz(winid)
+  local half = math.floor(ni.win_get_height(winid) / 2)
+  local lnum = M.lnum(winid)
+  local toplnum = math.max(lnum - half, 0)
+  unsafe.win_set_toplnum(winid, toplnum)
+end
+
 return M

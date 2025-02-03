@@ -2,6 +2,7 @@
 
 local M = {}
 
+local ex = require("infra.ex")
 local feedkeys = require("infra.feedkeys")
 local ni = require("infra.ni")
 
@@ -51,6 +52,16 @@ function M.stdpath(what)
   local result = vim.fn.stdpath(what)
   assert(type(result) == "string")
   return result
+end
+
+---it places cursor right after the insertion position
+---note: it's an async op
+function M.stopinsert()
+  if ni.get_mode().mode == "i" then
+    feedkeys("<esc>l", "n")
+  else
+    ex("stopinsert")
+  end
 end
 
 return M

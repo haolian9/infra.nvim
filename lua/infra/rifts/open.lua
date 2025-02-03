@@ -8,7 +8,7 @@ local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
 
 ---@class infra.rifts.BasicOpenOpts
----@field relative   'editor'|'win'|'cursor'|'mouse'
+---@field relative?   'editor'|'win'|'cursor'|'mouse'
 ---@field win?       integer @for relative=win
 ---@field anchor?    'NW'|'NE'|'SW'|'SE' @nil=NW
 ---@field width?     integer
@@ -87,12 +87,16 @@ do
   ---
   ---@param bufnr integer
   ---@param enter boolean
-  ---@param basic_opts infra.rifts.BasicOpenOpts
+  ---@param basic_opts? infra.rifts.BasicOpenOpts
   ---@param extra_opts? infra.rifts.ExtraOpenOpts
   ---@return integer
   function M.fragment(bufnr, enter, basic_opts, extra_opts)
-    assert(basic_opts ~= nil)
-    assert(basic_opts.relative == "editor")
+    basic_opts = basic_opts or {}
+    if basic_opts.relative and basic_opts.relative ~= "editor" then
+      return jelly.fatal("InvalidValue", ".relative in rifts.open.* should always be editor")
+    else
+      basic_opts.relative = "editor"
+    end
 
     if extra_opts == nil then
       local winid = M.win(bufnr, enter, basic_opts)
@@ -125,11 +129,17 @@ do
   ---todo: may conflict with vim.ui.ext.cmdline
   ---@param bufnr integer
   ---@param enter boolean
-  ---@param basic_opts infra.rifts.BasicOpenOpts
+  ---@param basic_opts? infra.rifts.BasicOpenOpts
   ---@param extra_opts? {ns: nil|integer|false, laststatus3?: boolean}
+  ---@return integer winid
   function M.fullscreen(bufnr, enter, basic_opts, extra_opts)
-    assert(basic_opts ~= nil)
-    assert(basic_opts.relative == "editor")
+    basic_opts = basic_opts or {}
+    if basic_opts.relative and basic_opts.relative ~= "editor" then
+      return jelly.fatal("InvalidValue", ".relative in rifts.open.* should always be editor")
+    else
+      basic_opts.relative = "editor"
+    end
+
     extra_opts = extra_opts or {}
 
     local winopts = resolve_winopts(basic_opts)

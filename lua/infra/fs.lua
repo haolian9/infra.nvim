@@ -9,7 +9,6 @@ local jelly = require("infra.jellyfish")("infra.fs")
 local strlib = require("infra.strlib")
 
 local uv = vim.uv
-local api = vim.api
 
 ---see /usr/include/linux/stat.h
 ---* IFIFO  = 0o010000 -> 0x1000

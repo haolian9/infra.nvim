@@ -1,5 +1,4 @@
 local ni = require("infra.ni")
-local uv = vim.uv
 
 ---assumes it's a lua plugin and with filesystem layout &rtp/lua/{plugin_name}/*.lua
 ---@param plugin_name string
@@ -8,14 +7,10 @@ local uv = vim.uv
 return function(plugin_name, fname)
   fname = fname or "init.lua"
 
-  local pattern = string.format("lua/%s/%s", plugin_name, fname)
-  local files = ni.get_runtime_file(pattern, false)
-  assert(files and #files == 1)
+  local suffix = string.format("lua/%s/%s", plugin_name, fname)
 
-  local luadir = string.sub(files[1], 1, -(#fname + 2))
+  local path = ni.get_runtime_file(suffix, false)[1]
+  assert(path, "plugin no found")
 
-  local root, err = uv.fs_realpath(luadir .. "/../../")
-  if root == nil then error(err) end
-  assert(string.sub(root, #root, #root) ~= "/")
-  return root
+  return string.sub(path, 1, -(#"/" + #suffix))
 end
