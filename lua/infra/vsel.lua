@@ -115,9 +115,8 @@ do
     wincursor.go(winid, start_lnum, start_col)
     --no using 'nx' here, cite 'you can not change editor state in a script,'
     local keys = keys_to_enter_visual_mode()
-    jelly.debug(keys)
-    feedkeys.keys(keys, "n")
-    vim.schedule(function() wincursor.go(winid, stop_lnum - 1, stop_col - 1) end)
+    feedkeys.keys(keys, "nx")
+    wincursor.go(winid, stop_lnum - 1, stop_col - 1)
   end
 end
 
@@ -139,8 +138,8 @@ do
   ---@param stop_lnum  number @0-indexed, exclusive
   function M.select_lines(winid, start_lnum, stop_lnum)
     wincursor.go(winid, start_lnum, 0)
-    feedkeys.keys(keys_to_enter_visual_mode(), "n")
-    vim.schedule(function() wincursor.go(winid, stop_lnum - 1, 0) end)
+    feedkeys.keys(keys_to_enter_visual_mode(), "nx")
+    wincursor.go(winid, stop_lnum - 1, 0)
   end
 end
 

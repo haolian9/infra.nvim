@@ -169,20 +169,34 @@ end
 ---like pathshorten() except the **last two** will not be shorten
 ---trailing `/` will be erased
 ---@param path string @absolute path
+---@param slashless? boolean @nil=false
 ---@return string
-function M.shorten(path)
+function M.shorten(path, slashless)
   assert(path ~= "" and path ~= nil)
   if path == "/" then return "/" end
-  local parts = strlib.splits(strlib.rstrip(path, "/"), "/")
-  ---head
-  if #parts > 1 and parts[1] ~= "" then parts[1] = string.sub(parts[1], 1, 1) end
-  ---middles if any
-  if #parts > 3 then
-    for i in itertools.range(2, #parts - 2 + 1) do
-      parts[i] = string.sub(parts[i], 1, 1)
+
+  local parts
+
+  do --shorten
+    parts = strlib.splits(strlib.rstrip(path, "/"), "/")
+    --head
+    if #parts > 1 and parts[1] ~= "" then parts[1] = string.sub(parts[1], 1, 1) end
+    --middles if any
+    if #parts > 3 then
+      for i in itertools.range(2, #parts - 2 + 1) do
+        parts[i] = string.sub(parts[i], 1, 1)
+      end
     end
   end
-  return table.concat(parts, "/")
+
+  if slashless then
+    for i = #parts, math.max(#parts - 1, 2), -1 do
+      table.insert(parts, i, "/")
+    end
+    return table.concat(parts, "")
+  else
+    return table.concat(parts, "/")
+  end
 end
 
 function M.file_exists(fpath)

@@ -64,4 +64,17 @@ function M.stopinsert()
   end
 end
 
+---@param bufnr integer
+---@param enter boolean
+---@param opts vim.api.keyset.win_config
+---@return integer winid
+function M.open_win(bufnr, enter, opts)
+  local winid = ni.open_win(bufnr, enter, opts)
+
+  --no sharing loclist
+  vim.fn.setloclist(winid, {}, "f")
+
+  return winid
+end
+
 return M

@@ -88,4 +88,10 @@ function M.cmdline()
   return strlib.iter_splits(content, "\0")
 end
 
+function M.which(name)
+  local found = vim.fn.exepath(name)
+  if found == "" then return end
+  return found
+end
+
 return M

@@ -2,7 +2,9 @@ local M = {}
 
 local ctx = require("infra.ctx")
 local dictlib = require("infra.dictlib")
+local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("infra.rifts.open", "debug")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
@@ -34,21 +36,22 @@ do
   end
 end
 
----a wrapper on api.nvim_open_win without alternate-file
+---a nvim_open_win wrapper for floatwins
 ---@param bufnr integer
 ---@param enter boolean
----@param opts table
+---@param opts vim.api.keyset.win_config
 ---@return integer
 function M.win(bufnr, enter, opts)
   assert(opts.split == nil, "rifts.open is designed for floatwins")
 
-  local winid = ni.open_win(bufnr, enter, opts)
+  local winid = mi.open_win(bufnr, enter, opts)
 
   do --curwin sensitive
     local function setup()
       --to clear alternate-file, thanks to ii14
       vim.fn.setreg("#", bufnr)
-
+      --no sharing jumplist
+      ex("clearjumps")
       --todo: 'mark is meaningless for a new floatwin
     end
 
