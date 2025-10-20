@@ -126,6 +126,7 @@ function M.buf_setfname(bufnr, full_name, short_name)
 end
 
 ---may raise E315
+---alternative: fn.col({lnum+1,'$'})-1
 ---@param bufnr integer
 ---@param lnum integer
 ---@return integer?
@@ -135,7 +136,7 @@ function M.linelen(bufnr, lnum)
   local buf_p = C.buflist_findnr(bufnr)
   if buf_p == nil then return end
 
-  --maybe: ml_buf_get_len(buf, lnum)
+  --canot use ml_buf_get_len(buf,lnum) as it raises e315 inevitably
 
   local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
   if line_p == nil then return end

@@ -1,7 +1,8 @@
 local M = {}
 
 local ex = require("infra.ex")
-local jelly = require("infra.jellyfish")("infra.bufopen", "debug")
+local jelly = require("infra.jellyfish")("infra.bufopen", "info")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local winsplit = require("infra.winsplit")
@@ -13,11 +14,8 @@ local winsplit = require("infra.winsplit")
 ---@return integer bufnr
 local function resolve_bufnr(name_or_nr)
   if type(name_or_nr) == "string" then
-    local bufnr = vim.fn.bufnr(name_or_nr)
-    if bufnr ~= -1 then return bufnr end
-
-    bufnr = vim.fn.bufadd(name_or_nr)
-    prefer.bo(bufnr, "buflisted", true)
+    local bufnr, created = mi.bufnr(name_or_nr, true)
+    if created then prefer.bo(bufnr, "buflisted", true) end
     return bufnr
   elseif type(name_or_nr) == "number" then
     return name_or_nr

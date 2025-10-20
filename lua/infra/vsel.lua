@@ -84,14 +84,20 @@ function M.oneline_text(bufnr)
 end
 
 ---@param bufnr? number
+---@param linewise? boolean
 ---@return string[]?
-function M.multiline_text(bufnr)
+function M.multiline_text(bufnr, linewise)
   bufnr = bufnr or ni.get_current_buf()
+  if linewise == nil then linewise = false end
 
   local range = M.range(bufnr, true)
   if range == nil then return end
 
-  return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, range.stop_col, {})
+  if linewise then --
+    return ni.buf_get_lines(bufnr, range.start_line, range.stop_line, true)
+  else
+    return ni.buf_get_text(bufnr, range.start_line, range.start_col, range.stop_line - 1, range.stop_col, {})
+  end
 end
 
 do

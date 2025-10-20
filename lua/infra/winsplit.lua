@@ -21,8 +21,7 @@ return function(side, name_or_nr)
     bufnr = name_or_nr
   else
     --split with bufname
-    assert(type(name_or_nr) == "string" and name_or_nr ~= "")
-    bufnr = vim.fn.bufnr(name_or_nr, true)
+    bufnr = mi.bufnr(name_or_nr, true)
   end
 
   local enter = true
@@ -34,8 +33,5 @@ return function(side, name_or_nr)
   end
 
   return winid
-
-  -- assert(type(name_or_nr) == "string" and name_or_nr ~= "")
-  -- return mi.open_win(vim.fn.bufnr(name_or_nr, true), true, { split = side, win = winid })
 end
 

@@ -77,4 +77,23 @@ function M.open_win(bufnr, enter, opts)
   return winid
 end
 
+---unlike fn.bufnr(), it accepts exact name rather than a pattern
+---@param exact integer|string @exact name or winnr
+---@param create? boolean @create a buffer on need
+---@return -1|integer @the bufnr
+---@return boolean @created or not
+---@see vim.fn.bufnr
+function M.bufnr(exact, create)
+  assert(type(exact) == "string" and exact ~= "")
+  if create == nil then create = false end
+
+  local bufnr
+
+  bufnr = vim.fn.bufnr(string.format("^%s$", exact), false)
+  if bufnr ~= -1 then return bufnr, false end
+  if not create then return bufnr, false end
+
+  return vim.fn.bufadd(exact), true
+end
+
 return M
