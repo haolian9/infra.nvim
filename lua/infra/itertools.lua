@@ -4,6 +4,7 @@
 local M = {}
 
 local ropes = require("string.buffer")
+local new_table = require("table.new")
 
 ---forms:
 ---* (3)
@@ -99,7 +100,7 @@ end
 function M.batched(iterable, size)
   local it = M.iter(iterable)
   return function()
-    local stash = {}
+    local stash = new_table(size, 0)
     for el in it do
       table.insert(stash, el)
       if #stash >= size then break end

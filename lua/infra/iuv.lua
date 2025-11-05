@@ -1,4 +1,5 @@
 ---succeed or scream(哎呦喂)
+---see `:h luv-error-handling`
 
 local itertools = require("infra.itertools")
 
@@ -11,8 +12,10 @@ local allows = itertools.toset({
   "fs_read",
   "fs_rename",
   "fs_stat",
+  "fs_realpath",
   "fs_unlink",
   "fs_write",
+  "fs_scandir",
   "new_pipe",
   "new_tcp",
   "new_timer",

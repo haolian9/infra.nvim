@@ -5,6 +5,7 @@ local M = {}
 local ex = require("infra.ex")
 local feedkeys = require("infra.feedkeys")
 local ni = require("infra.ni")
+local prefer = require("infra.prefer")
 
 do
   local function in_expected_mode()
@@ -73,6 +74,16 @@ function M.open_win(bufnr, enter, opts)
 
   --no sharing loclist
   vim.fn.setloclist(winid, {}, "f")
+
+  local wo = prefer.win(winid)
+  wo.foldenable = false
+  wo.list = false
+  wo.number = false
+  wo.relativenumber = false
+  wo.signcolumn = "no"
+  wo.spell = false
+  wo.statuscolumn = ""
+  wo.wrap = false
 
   return winid
 end

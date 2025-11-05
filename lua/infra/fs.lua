@@ -5,6 +5,7 @@
 local M = {}
 
 local itertools = require("infra.itertools")
+local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("infra.fs")
 local strlib = require("infra.strlib")
 
@@ -64,11 +65,7 @@ do
   ---@param root string @absolute path
   ---@return fun(): string?, SolidFileType?
   function M.iterdir(root)
-    local scanner, err = uv.fs_scandir(root)
-    if err ~= nil then
-      jelly.warn(err)
-      return function() end
-    end
+    local scanner = iuv.fs_scandir(root)
 
     return function()
       while true do
@@ -233,6 +230,17 @@ function M.suffix(path)
   local at = strlib.rfind(path, ".")
   if at == nil then return end
   return string.sub(path, at)
+end
+
+---it'll throw error when given path does not exist
+---@param path string
+---@return string
+function M.abspath(path)
+  --for ~, ~someone
+  if strlib.startswith(path, "~") then path = vim.fn.expand(path) end
+  if not strlib.startswith(path, "/") then path = string.format("%s/%s", uv.cwd(), path) end
+  --todo: error on not exist?
+  return iuv.fs_realpath(path)
 end
 
 return M

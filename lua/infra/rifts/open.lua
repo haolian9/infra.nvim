@@ -6,6 +6,7 @@ local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("infra.rifts.open", "debug")
 local mi = require("infra.mi")
 local ni = require("infra.ni")
+local prefer = require("infra.prefer")
 local facts = require("infra.rifts.facts")
 local geo = require("infra.rifts.geo")
 
@@ -52,6 +53,8 @@ function M.win(bufnr, enter, opts)
       vim.fn.setreg("#", bufnr)
       --no sharing jumplist
       ex("clearjumps")
+      --make eob:~ invisible. :h EndOfBuffer
+      prefer.wo(winid, "fillchars", "eob: ")
       --todo: 'mark is meaningless for a new floatwin
     end
 
