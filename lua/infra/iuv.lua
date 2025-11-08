@@ -40,7 +40,7 @@ return setmetatable({}, {
       return result
     end
 
-    t[api] = wrapped
+    rawset(t, api, wrapped)
 
     return wrapped
   end,
