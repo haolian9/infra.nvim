@@ -25,7 +25,10 @@ end
 
 --iterate over utf8 runes
 ---@param chars string @chars
-function M.iterate(chars)
+---@param tolerant? boolean @nil=false
+function M.iterate(chars, tolerant)
+  if tolerant == nil then tolerant = false end
+
   local offset = 1
 
   ---@return nil|string
@@ -34,7 +37,11 @@ function M.iterate(chars)
 
     local len = M.rune_length(M.byte0(chars, offset))
     local last = offset + len - 1
-    assert(#chars >= last, "not enough bytes for a utf8 rune")
+
+    if #chars < last then
+      if tolerant then return end
+      error("not enough byts for a utf8 rune")
+    end
 
     local rune = chars:sub(offset, last)
     offset = last + 1
