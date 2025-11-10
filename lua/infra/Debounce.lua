@@ -1,14 +1,15 @@
 local uv = vim.uv
 
 ---@class infra.Debounce
----@field timer uv_timer_t
----@field delay integer @in milliseconds
+---@field private timer uv_timer_t
+---@field private window integer @time window in milliseconds
 local Impl = {}
 Impl.__index = Impl
 
-function Impl:start_soon(logic)
+---@param action fun() @which will run in vim.schedule()
+function Impl:start_soon(action)
   self.timer:stop()
-  self.timer:start(self.delay, 0, vim.schedule_wrap(logic))
+  self.timer:start(self.window, 0, vim.schedule_wrap(action))
 end
 
 function Impl:close()
@@ -16,10 +17,10 @@ function Impl:close()
   self.timer:close()
 end
 
----@param delay integer @in milliseconds
+---@param window integer @time window in milliseconds
 ---@return infra.Debounce
-return function(delay)
+return function(window)
   local timer = uv.new_timer()
-  return setmetatable({ timer = timer, delay = delay }, Impl)
+  return setmetatable({ timer = timer, window = window }, Impl)
 end
 

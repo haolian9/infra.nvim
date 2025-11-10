@@ -1,13 +1,13 @@
 local M = {}
 
+local ropes = require("string.buffer")
+
 local itertools = require("infra.itertools")
 local iuv = require("infra.iuv")
 local jelly = require("infra.jellyfish")("infra.subprocess", "info")
 local logging = require("infra.logging")
 local strlib = require("infra.strlib")
 local tail = require("infra.tail")
-
-local ropes = require("string.buffer")
 
 local uv = vim.uv
 
@@ -156,6 +156,6 @@ function M.spawn(bin, opts, on_stdout, on_exit)
   redirect_to_file(stderr)
 end
 
-function M.tail_logs() tail.split_below(facts.stdout_fpath) end
+function M.tail_logs() tail(facts.stdout_fpath, "below") end
 
 return M
