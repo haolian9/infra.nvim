@@ -1,11 +1,17 @@
 -- direct access to neovim's tty
 
-local unsafe = require("infra.unsafe")
-local ascii = require("infra.ascii")
-
 local ropes = require("string.buffer")
 
+local ascii = require("infra.ascii")
+local unsafe = require("infra.unsafe")
+
 local M = {}
+
+local dummy_input_hinter = {
+  feed = function() end,
+  clear = function() end,
+  done = function() end,
+}
 
 local read_char
 do
@@ -35,9 +41,11 @@ end
 --NB: no ware of multibyte esc-seq
 --
 ---@param n number @n > 0
+---@param input_hinter? infra.tty.InputHinter
 ---@return string @#return >= 0
-function M.read_chars(n)
+function M.read_chars(n, input_hinter)
   assert(n > 0, "no need to read")
+  input_hinter = input_hinter or dummy_input_hinter
 
   local rope = ropes.new(n)
 
@@ -46,9 +54,11 @@ function M.read_chars(n)
     if code >= ascii.exclam and code <= ascii.tilde then
       -- printable
       rope:put(char)
+      input_hinter:feed(char)
     elseif code == ascii.esc then
       -- cancelled by esc
       rope:reset()
+      input_hinter:clear()
       break
     elseif code == ascii.space or code == ascii.cr then
       -- finished by space, cr
@@ -58,6 +68,7 @@ function M.read_chars(n)
     end
     if #rope >= n then break end
   end
+  input_hinter:done()
 
   return rope:get()
 end

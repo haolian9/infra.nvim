@@ -148,4 +148,22 @@ function M.zz(winid)
   unsafe.win_set_toplnum(winid, toplnum)
 end
 
+---@param winid? integer
+---@return infra.wincursor.Position
+function M.screenpos(winid)
+  winid = winid or ni.get_current_win()
+  --todo: it works badly in terminal buffers
+  --todo: not curate with conceal on
+  --todo: tab
+  local orig_row, orig_col = unpack(ni.win_get_position(0))
+  local win_row = vim.fn.winline()
+  local win_col = vim.fn.wincol()
+
+  local row = orig_row + (win_row - 1) + 1
+  local col = orig_col + (win_col - 1)
+  local lnum = row - 1
+
+  return { lnum = lnum, row = row, col = col }
+end
+
 return M
