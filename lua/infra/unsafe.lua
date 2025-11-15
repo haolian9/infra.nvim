@@ -125,93 +125,110 @@ function M.buf_setfname(bufnr, full_name, short_name)
   return C.setfname(buf_p, ffname, sfname, true) == nvim_enum.OK
 end
 
----may raise E315
----alternative: fn.col({lnum+1,'$'})-1
----@param bufnr integer
----@param lnum integer
----@return integer?
-function M.linelen(bufnr, lnum)
-  assert(bufnr and lnum)
+do
+  ---@param buf_p userdata
+  ---@param lnum integer; 0-based
+  ---@return integer? @line length
+  local function buflinelen(buf_p, lnum)
+    --canot use ml_buf_get_len(buf,lnum) as it raises e315 inevitably
+    local ptr = C.ml_get_buf(buf_p, lnum + 1, false)
+    if ptr == nil then return end
 
-  local buf_p = C.buflist_findnr(bufnr)
-  if buf_p == nil then return end
+    return assert(tonumber(C.strlen(ptr)))
+  end
 
-  --canot use ml_buf_get_len(buf,lnum) as it raises e315 inevitably
+  ---may raise E315
+  ---alternative: fn.col({lnum+1,'$'})-1
+  ---@param bufnr integer
+  ---@param lnum integer
+  ---@return integer?
+  function M.linelen(bufnr, lnum)
+    assert(bufnr and lnum)
 
-  local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
-  if line_p == nil then return end
-  return assert(tonumber(C.strlen(line_p)))
-end
+    local bufptr = C.buflist_findnr(bufnr)
+    if bufptr == nil then return end
 
----@param bufnr number
----@param range fun():number @iterator of 0-based line numbers
----@return fun():(integer?,integer?) @iter(lnum,len)
-function M.linelen_iter(bufnr, range)
-  assert(bufnr)
+    return buflinelen(bufptr, lnum)
+  end
 
-  local buf_p = C.buflist_findnr(bufnr)
-  if buf_p == nil then return function() end end
+  ---@param bufnr number
+  ---@param range fun():number @iterator of 0-based line numbers
+  ---@return fun():(integer?,integer?) @iter(lnum,len)
+  function M.linelen_iter(bufnr, range)
+    assert(bufnr)
 
-  local done = false
-
-  return function()
-    if done then return end
-
-    local lnum = range()
-    if lnum == nil then return end
-
-    local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
-    if line_p == nil then
-      done = true
-      return
+    local bufptr = C.buflist_findnr(bufnr)
+    if bufptr == nil then
+      return function() end
     end
 
-    local len = assert(tonumber(C.strlen(line_p)))
-    return lnum, len
+    local done = false
+
+    return function()
+      if done then return end
+
+      local lnum = range()
+      if lnum == nil then return end
+
+      local len = buflinelen(bufptr, lnum)
+      if len ~= nil then return lnum, len end
+
+      done = true
+    end
   end
 end
 
----@param bufnr integer
----@param lnum integer
----@return ffi.cdata*?,integer?
-function M.lineref(bufnr, lnum)
-  assert(bufnr and lnum)
+do
+  ---@param buf_p userdata
+  ---@param lnum integer; 0-based
+  ---@return ffi.cdata*? @line ptr
+  ---@return integer? @line length
+  local function buflinelen(buf_p, lnum)
+    --canot use ml_buf_get_len(buf,lnum) as it raises e315 inevitably
+    local ptr = C.ml_get_buf(buf_p, lnum + 1, false)
+    if ptr == nil then return end
 
-  local buf_p = C.buflist_findnr(bufnr)
-  if buf_p == nil then return end
+    local len = assert(tonumber(C.strlen(ptr)))
+    return ptr, len
+  end
 
-  local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
-  if line_p == nil then return end
+  ---@param bufnr integer
+  ---@param lnum integer
+  ---@return ffi.cdata*? line ptr
+  ---@return integer? line length
+  function M.lineref(bufnr, lnum)
+    assert(bufnr and lnum)
 
-  local len = tonumber(C.strlen(line_p))
-  return line_p, len
-end
+    local bufptr = C.buflist_findnr(bufnr)
+    if bufptr == nil then return end
 
----@param bufnr number
----@param range fun():number @iterator of 0-based line numbers
----@return fun(): ffi.cdata*?,integer?
-function M.lineref_iter(bufnr, range)
-  assert(bufnr)
+    return buflinelen(bufptr, lnum)
+  end
 
-  local buf_p = C.buflist_findnr(bufnr)
-  if buf_p == nil then return function() end end
+  ---@param bufnr number
+  ---@param range fun():number @iterator of 0-based line numbers
+  ---@return fun(): ffi.cdata*?,integer?
+  function M.lineref_iter(bufnr, range)
+    assert(bufnr)
 
-  local done = false
-
-  return function()
-    if done then return end
-
-    local lnum = range()
-    if lnum == nil then return end
-
-    local line_p = C.ml_get_buf(buf_p, lnum + 1, false)
-    if line_p == nil then
-      done = true
-      return
+    local bufptr = C.buflist_findnr(bufnr)
+    if bufptr == nil then
+      return function() end
     end
 
-    local len = assert(tonumber(C.strlen(line_p)))
-    return line_p, len
+    local done = false
+
+    return function()
+      if done then return end
+
+      local lnum = range()
+      if lnum == nil then return end
+
+      local lineptr, len = buflinelen(bufptr, lnum)
+      if lineptr ~= nil then return lineptr, len end
+
+      done = true
+    end
   end
 end
 
