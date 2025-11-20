@@ -11,11 +11,23 @@ local ranges = {
 M.maxbytes = #ranges
 
 ---@param chars string
----@param offset? number @default to 1
+---@param soffset? number
 ---@return number
-function M.byte0(chars, offset) return string.byte(chars, offset or 1) end
+function M.byte0(chars, soffset)
+  soffset = soffset or 1
+  return string.byte(chars, soffset)
+end
 
----@param byte0 number
+---@param byte0 integer
+---@return boolean
+function M.is_valid_byte0(byte0)
+  for _, range in ipairs(ranges) do
+    if byte0 >= range[1] and byte0 <= range[2] then return true end
+  end
+  return false
+end
+
+---@param byte0 integer
 function M.rune_length(byte0)
   for i, range in ipairs(ranges) do
     if byte0 >= range[1] and byte0 <= range[2] then return i end
@@ -24,27 +36,27 @@ function M.rune_length(byte0)
 end
 
 --iterate over utf8 runes
+---@param soffset? integer
 ---@param chars string @chars
 ---@param tolerant? boolean @nil=false
-function M.iterate(chars, tolerant)
+function M.iterate(chars, soffset, tolerant)
   if tolerant == nil then tolerant = false end
-
-  local offset = 1
+  soffset = soffset or 1
 
   ---@return nil|string
   return function()
-    if offset > #chars then return end
+    if soffset > #chars then return end
 
-    local len = M.rune_length(M.byte0(chars, offset))
-    local last = offset + len - 1
+    local len = M.rune_length(M.byte0(chars, soffset))
+    local last = soffset + len - 1
 
     if #chars < last then
       if tolerant then return end
       error("not enough byts for a utf8 rune")
     end
 
-    local rune = chars:sub(offset, last)
-    offset = last + 1
+    local rune = chars:sub(soffset, last)
+    soffset = last + 1
 
     return rune
   end

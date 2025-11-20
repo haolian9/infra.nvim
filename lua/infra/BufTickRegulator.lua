@@ -10,7 +10,7 @@ do
   ---@param bufnr integer
   ---@return boolean
   function Regulator:throttled(bufnr)
-    --todo: take the current undo block into account
+    --concern: regard of current undo block, yet there is no api
     local last = self.ticks[bufnr] or 0
     local now = ni.buf_get_changedtick(bufnr)
     return last == now

@@ -10,9 +10,9 @@ do
   floatwin_ns = ni.create_namespace("hintline.floatwins")
   local hi = highlighter(floatwin_ns)
   if vim.go.background == "light" then
-    hi("NormalFloat", { bg = 15, fg = 0, bold = true })
+    hi("NormalFloat", { fg = 33 })
   else
-    hi("NormalFloat", { bg = 0, fg = 15, bold = true })
+    hi("NormalFloat", { fg = 33 })
   end
 end
 
@@ -35,7 +35,6 @@ InputHinter.__index = InputHinter
 ---@param char string @ascii char
 function InputHinter:feed(char)
   assert(#char == 1)
-  -- assert(self.progress < self.nchar, "feed too much")
   if self.progress >= self.nchar then return end
   self.progress = self.progress + 1
   self.chars[self.progress] = char

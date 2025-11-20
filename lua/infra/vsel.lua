@@ -15,6 +15,7 @@ local M = {}
 local buflines = require("infra.buflines")
 local feedkeys = require("infra.feedkeys")
 local jelly = require("infra.jellyfish")("infra.vsel", "info")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local utf8 = require("infra.utf8")
 local wincursor = require("infra.wincursor")
@@ -28,11 +29,11 @@ M.max_col = 0x7fffffff
 ---@field stop_line number @0-indexed, exclusive
 ---@field stop_col number @0-indexed, exclusive; -1 indicates EOL
 
----@param bufnr number
+---@param bufnr? integer
 ---@param calibrate? boolean @utf8
 ---@return infra.vsel.Range?
 function M.range(bufnr, calibrate)
-  bufnr = bufnr or ni.get_current_buf()
+  bufnr = mi.resolve_bufnr_param(bufnr)
   if calibrate == nil then calibrate = false end
 
   --row: 1-based, inclusive; col: 0-based, inclusive
@@ -71,10 +72,10 @@ function M.range(bufnr, calibrate)
 end
 
 -- only support one line select
----@param bufnr? number
+---@param bufnr? integer
 ---@return string?
 function M.oneline_text(bufnr)
-  bufnr = bufnr or ni.get_current_buf()
+  bufnr = mi.resolve_bufnr_param(bufnr)
 
   local range = M.range(bufnr, true)
   if range == nil then return end
@@ -83,11 +84,11 @@ function M.oneline_text(bufnr)
   return buflines.partial_line(bufnr, range.start_line, range.start_col, range.stop_col)
 end
 
----@param bufnr? number
+---@param bufnr? integer
 ---@param linewise? boolean
 ---@return string[]?
 function M.multiline_text(bufnr, linewise)
-  bufnr = bufnr or ni.get_current_buf()
+  bufnr = mi.resolve_bufnr_param(bufnr)
   if linewise == nil then linewise = false end
 
   local range = M.range(bufnr, true)

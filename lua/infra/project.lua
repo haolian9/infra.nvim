@@ -3,7 +3,7 @@ local M = {}
 
 local bufpath = require("infra.bufpath")
 local LRU = require("infra.LRU")
-local ni = require("infra.ni")
+local mi = require("infra.mi")
 local strlib = require("infra.strlib")
 local subprocess = require("infra.subprocess")
 
@@ -17,10 +17,10 @@ do
   ---@type {[string]: string|false} {path: git-root}
   local cache = LRU(64)
 
-  ---@param bufnr? number
+  ---@param bufnr? integer
   ---@return string?
   function M.git_root(bufnr)
-    bufnr = bufnr or ni.get_current_buf()
+    bufnr = mi.resolve_bufnr_param(bufnr)
 
     local basedir = bufpath.dir(bufnr, true)
     if basedir == nil then return end

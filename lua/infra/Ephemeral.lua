@@ -61,7 +61,6 @@ return function(opts, lines)
   opts = resolve_opts(opts)
 
   local bufnr = ni.create_buf(false, true)
-  --todo: support passing in bufnr, tabnew
   local bo = prefer.buf(bufnr)
 
   ---intented to use no pairs(opts) here, to keep things obvious

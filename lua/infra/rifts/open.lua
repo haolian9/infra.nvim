@@ -132,7 +132,6 @@ do
   end
 
   ---no covering cmdline and laststatus=3 (opt-in)
-  ---todo: may conflict with vim.ui.ext.cmdline
   ---@param bufnr integer
   ---@param enter boolean
   ---@param basic_opts? infra.rifts.BasicOpenOpts
@@ -148,6 +147,7 @@ do
 
     extra_opts = extra_opts or {}
 
+    ---concern: may conflict with vim.ui.ext.cmdline
     local winopts = resolve_winopts(basic_opts)
     if extra_opts.laststatus3 and vim.go.laststatus == 3 then winopts.height = winopts.height - 1 end
 

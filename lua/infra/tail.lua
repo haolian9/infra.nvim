@@ -7,6 +7,7 @@ local bufrename = require("infra.bufrename")
 local Ephemeral = require("infra.Ephemeral")
 local fs = require("infra.fs")
 local jelly = require("infra.jellyfish")("infra.tail", "info")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local wincursor = require("infra.wincursor")
@@ -49,7 +50,7 @@ return function(fpath, side)
 
   do
     local cmd = { "tail", "-n", height, "-f", fpath }
-    job = vim.fn.termopen(cmd, { stderr_buffered = false, stdout_buffered = false, stdin = "" })
+    job = mi.become_term(cmd, { stdin = "null" })
     wincursor.follow(winid, "bol")
   end
 

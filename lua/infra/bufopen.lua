@@ -1,3 +1,4 @@
+---bufopen(mode, name_or_nr)
 local M = {}
 
 local ex = require("infra.ex")

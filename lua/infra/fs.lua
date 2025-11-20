@@ -239,7 +239,6 @@ function M.abspath(path)
   --for ~, ~someone
   if strlib.startswith(path, "~") then path = vim.fn.expand(path) end
   if not strlib.startswith(path, "/") then path = string.format("%s/%s", uv.cwd(), path) end
-  --todo: error on not exist?
   return iuv.fs_realpath(path)
 end
 

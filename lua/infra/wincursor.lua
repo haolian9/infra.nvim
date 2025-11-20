@@ -3,6 +3,7 @@ local M = {}
 local augroups = require("infra.augroups")
 local buflines = require("infra.buflines")
 local jelly = require("infra.jellyfish")("infra.wincursor", "debug")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local prefer = require("infra.prefer")
 local unsafe = require("infra.unsafe")
@@ -29,34 +30,33 @@ do
   ---@param winid? integer
   ---@return infra.wincursor.Position
   function M.last_position(winid)
-    assert(winid ~= 0)
-    winid = winid or ni.get_current_win()
+    winid = mi.resolve_winid_param(winid)
     local tuple = assert(lasts[winid])
     return { lnum = tuple[1] - 1, col = tuple[2], row = tuple[1] }
   end
 end
 
 ---of current or given winid
----@param winid? integer @nil=current win
+---@param winid? integer
 ---@return integer @1-based
 function M.row(winid)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   return ni.win_get_cursor(winid)[1]
 end
 
 ---of current or given winid
----@param winid? integer @nil=current win
+---@param winid? integer
 ---@return integer @0-based
 function M.lnum(winid)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   return M.row(winid) - 1
 end
 
 ---of current or given winid
----@param winid? integer @nil=current win
+---@param winid? integer
 ---@return integer @0-based
 function M.col(winid)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   return ni.win_get_cursor(winid)[2]
 end
 
@@ -66,27 +66,27 @@ end
 ---@field row integer
 
 ---of current or given winid
----@param winid? integer @nil=current win
+---@param winid? integer
 ---@return infra.wincursor.Position
 function M.position(winid)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   local tuple = ni.win_get_cursor(winid)
   return { lnum = tuple[1] - 1, col = tuple[2], row = tuple[1] }
 end
 
 ---of current or given winid
----@param winid? integer @nil=current win
+---@param winid? integer
 ---@return integer,integer @row,col
 function M.rc(winid)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   return unpack(ni.win_get_cursor(winid))
 end
 
 ---of current or given winid
----@param winid? integer @nil=current win
+---@param winid? integer
 ---@return integer,integer @row,col
 function M.lc(winid)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   local tuple = ni.win_get_cursor(winid)
   return tuple[1] - 1, tuple[2]
 end
@@ -96,7 +96,7 @@ end
 ---@param lnum integer @0-based
 ---@param col integer @0-based
 function M.go(winid, lnum, col)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   ni.win_set_cursor(winid, { lnum + 1, col })
 end
 
@@ -105,7 +105,7 @@ end
 ---@param row integer @1-based
 ---@param col integer @0-based
 function M.g1(winid, row, col)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   ni.win_set_cursor(winid, { row, col })
 end
 
@@ -151,10 +151,10 @@ end
 ---@param winid? integer
 ---@return infra.wincursor.Position
 function M.screenpos(winid)
-  winid = winid or ni.get_current_win()
+  winid = mi.resolve_winid_param(winid)
   --todo: it works badly in terminal buffers
   --todo: not curate with conceal on
-  --todo: tab
+  --todo: tabline takes 1 height
   local orig_row, orig_col = unpack(ni.win_get_position(0))
   local win_row = vim.fn.winline()
   local win_col = vim.fn.wincol()

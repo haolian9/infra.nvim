@@ -191,7 +191,7 @@ end
 ---@param logic fun():...
 ---@return ...
 function M.buf(bufnr, logic)
-  --todo: follow vim._ctx
+  --concern: follow vim._ctx
   local rets
   ni.buf_call(bufnr, function() rets = { logic() } end)
   return unpack(rets)
@@ -201,7 +201,7 @@ end
 ---@param logic fun():...
 ---@return ...
 function M.win(winid, logic)
-  --todo: follow vim._ctx
+  --concern: follow vim._ctx
   local rets
   ni.win_call(winid, function() rets = { logic() } end)
   return unpack(rets)

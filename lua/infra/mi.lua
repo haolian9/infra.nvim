@@ -107,4 +107,53 @@ function M.bufnr(exact, create)
   return vim.fn.bufadd(exact), true
 end
 
+---{cwd:string,env:table,stdin:'pipe'|'null',on_exit:fun(jobid:integer,exit_code:integer,event:'exit')}
+---@class infra.mi.TermSpec
+---@field cwd? string
+---@field env? {string:string}
+---@field stdin? 'pipe'|'null'
+---@field on_stdout? fun(jobid:integer, data:any, event:'stdout')
+---@field on_stderr fun(jobid:integer, data:any, event:'stderr')
+---@field on_exit? fun(jobid:integer, exit_code:integer, event:'exit')
+
+---turn current win&buf into a terminal
+---@param cmd string|string[]
+---@param spec infra.mi.TermSpec
+---@return integer @jobid
+function M.become_term(cmd, spec)
+  assert(spec ~= nil)
+  ---@diagnostic disable: inject-field
+  spec.term = true
+  if spec.stdout_buffered == nil then spec.stdout_buffered = false end
+  if spec.stderr_buffered == nil then spec.stderr_buffered = false end
+  if spec.stdin == nil then spec.stdin = "pipe" end
+
+  return vim.fn.jobstart(cmd, spec)
+end
+
+---@param winid? 0|integer
+---@return integer
+function M.resolve_winid_param(winid)
+  if winid == nil or winid == 0 then return ni.get_current_win() end
+  assert(winid >= 1000)
+  return winid
+end
+
+---@param bufnr? 0|integer
+---@return integer
+function M.resolve_bufnr_param(bufnr)
+  if bufnr == nil or bufnr == 0 then return ni.get_current_buf() end
+  return bufnr
+end
+
+---@param bufnr integer
+---@param ns integer @0=global
+---@param lnum integer @0-based
+---@param higroup string
+---@return integer extmark-id
+function M.buf_highlight_line(bufnr, ns, lnum, higroup)
+  bufnr = M.resolve_bufnr_param(bufnr)
+  return ni.buf_set_extmark(bufnr, ns, lnum, 0, { hl_group = higroup, end_row = lnum + 1, end_col = 0 })
+end
+
 return M

@@ -83,7 +83,7 @@ else
     else
       meth = "critical"
     end
-    --todo: respect `:silent[!]`
+    --maybe: respect `:silent[!]`
     require("cthulhu").notify[meth](opts.source, msg)
   end
 end
