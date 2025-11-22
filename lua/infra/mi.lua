@@ -113,7 +113,7 @@ end
 ---@field env? {string:string}
 ---@field stdin? 'pipe'|'null'
 ---@field on_stdout? fun(jobid:integer, data:any, event:'stdout')
----@field on_stderr fun(jobid:integer, data:any, event:'stderr')
+---@field on_stderr? fun(jobid:integer, data:any, event:'stderr')
 ---@field on_exit? fun(jobid:integer, exit_code:integer, event:'exit')
 
 ---turn current win&buf into a terminal
