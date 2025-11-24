@@ -59,6 +59,14 @@ ffi.cdef([[
   // nvim/search.c
   int fuzzy_match_str(const char * const str, const char * const pat);
 
+  typedef struct {
+    int32_t lnum;
+    int col;
+    int coladd;
+  } pos_T;
+  typedef void *oparg_T;
+  pos_T *findmatch(oparg_T *oap, int initc);
+
 
 // sys
 
@@ -287,6 +295,15 @@ function M.fuzzymatchstr(str, pat)
   local ret
   ret = C.fuzzy_match_str(str, pat)
   return assert(tonumber(ret))
+end
+
+---@return integer? lnum 0-based
+---@return integer? col 0-based
+function M.findmatch()
+  local ret = C.findmatch(nil, 0)
+  if ret == nil then return end
+  local pos = ret[0]
+  return pos.lnum - 1, pos.col
 end
 
 return M

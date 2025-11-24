@@ -2,7 +2,7 @@ local M = {}
 
 local augroups = require("infra.augroups")
 local buflines = require("infra.buflines")
-local jelly = require("infra.jellyfish")("infra.wincursor", "debug")
+local jelly = require("infra.jellyfish")("infra.wincursor", "info")
 local mi = require("infra.mi")
 local ni = require("infra.ni")
 local prefer = require("infra.prefer")
