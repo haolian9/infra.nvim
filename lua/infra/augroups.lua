@@ -260,7 +260,7 @@ do
   function M.BufAugroup(bufnr, purpose, autounlink)
     assert(bufnr ~= nil and bufnr ~= 0)
 
-    local augname = string.format("aug://%s/buf/%s", purpose, bufnr)
+    local augname = string.format("%s/buf/%s", purpose, bufnr)
     local id = ni.create_augroup(augname, { clear = true })
     local aug = setmetatable({ group = id, bufnr = bufnr }, BufAugroup)
 
@@ -284,7 +284,7 @@ do
   function M.WinAugroup(winid, purpose, autounlink)
     assert(winid ~= nil and winid ~= 0)
 
-    local augname = string.format("aug://win/%s/%s", winid, purpose)
+    local augname = string.format("%s/win/%s", purpose, winid)
     local id = ni.create_augroup(augname, { clear = true })
     local aug = setmetatable({ group = id }, WinAugroup)
 

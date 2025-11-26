@@ -282,9 +282,8 @@ end
 ---@param winid integer
 ---@param toplnum integer @0-based, equals winsaveview().topline - 1
 function M.win_set_toplnum(winid, toplnum)
-  ---topline is a row, which is 1-based
-
   local win_p = assert(C.win_id2wp(winid))
+  ---topline is a row, which is 1-based
   C.set_topline(win_p, toplnum + 1)
   C.changed_window_setting(win_p)
 end
@@ -292,17 +291,15 @@ end
 ---fuzzy match "pat" in "str"
 ---@return integer score @0 when no match
 function M.fuzzymatchstr(str, pat)
-  local ret
-  ret = C.fuzzy_match_str(str, pat)
+  local ret = C.fuzzy_match_str(str, pat)
   return assert(tonumber(ret))
 end
 
 ---@return integer? lnum 0-based
 ---@return integer? col 0-based
 function M.findmatch()
-  local ret = C.findmatch(nil, 0)
-  if ret == nil then return end
-  local pos = ret[0]
+  local pos = C.findmatch(nil, 0)
+  if pos == nil then return end
   return pos.lnum - 1, pos.col
 end
 

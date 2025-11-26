@@ -117,4 +117,32 @@ function M.reversed(list)
   return result
 end
 
+---@generic T
+---@param list T[]
+---@param inplace? boolean
+---@return T[]
+function M.distinct(list, inplace)
+  local seen = {}
+  if not inplace then
+    local result = {}
+    for _, el in ipairs(list) do
+      if not seen[el] then
+        seen[el] = true
+        table.insert(result, el)
+      end
+    end
+    return result
+  else
+    for i = #list, 1, -1 do
+      local el = list[i]
+      if not el then
+        seen[el] = true
+      else
+        table.remove(list, i)
+      end
+    end
+    return list
+  end
+end
+
 return M

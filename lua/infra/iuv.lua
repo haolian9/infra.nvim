@@ -1,11 +1,11 @@
 ---succeed or scream(哎呦喂)
 ---see `:h luv-error-handling`
 
-local itertools = require("infra.itertools")
+local setlib = require("infra.setlib")
 
 local uv = vim.uv
 
-local allows = itertools.toset({
+local allows = setlib.new(
   "fs_close",
   "fs_fstat",
   "fs_open",
@@ -25,8 +25,8 @@ local allows = itertools.toset({
   "tcp_connect",
   "timer_start",
   "timer_stop",
-  "write",
-})
+  "write"
+)
 
 return setmetatable({}, {
   __index = function(t, api)

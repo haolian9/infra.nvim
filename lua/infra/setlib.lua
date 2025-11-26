@@ -24,4 +24,15 @@ function M.diff(a, b)
   return intersect
 end
 
+---@generic T
+---@param ... T
+---@return table<T,true>
+function M.new(...)
+  local set = {}
+  for i = 1, select("#", ...) do
+    set[select(i, ...)] = true
+  end
+  return set
+end
+
 return M

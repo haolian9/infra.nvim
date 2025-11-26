@@ -159,7 +159,7 @@ function M.screenpos(winid)
   local win_row = vim.fn.winline()
   local win_col = vim.fn.wincol()
 
-  local row = orig_row + (win_row - 1) + 1
+  local row = orig_row + (win_row - 1)
   local col = orig_col + (win_col - 1)
   local lnum = row - 1
 
