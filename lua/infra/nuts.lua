@@ -52,9 +52,11 @@ do --node
   ---@param ft? string
   ---@return TSNode?
   function M.root_node(bufnr, ft)
-    local langtree = ts.get_parser(bufnr, ft)
+    local langtree = assert(ts.get_parser(bufnr, ft), "no available treesit parser")
     local trees = langtree:trees()
-    assert(#trees == 1)
+    ---the tree can be initializing
+    if #trees == 0 then return end
+    assert(#trees == 1, #trees)
     return trees[1]:root()
   end
 
