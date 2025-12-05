@@ -6,6 +6,7 @@
 local M = {}
 
 local buflines = require("infra.buflines")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local unsafe = require("infra.unsafe")
 local wincursor = require("infra.wincursor")
@@ -53,17 +54,18 @@ do --node
   ---@return TSNode?
   function M.root_node(bufnr, ft)
     local langtree = assert(ts.get_parser(bufnr, ft), "no available treesit parser")
-    local trees = langtree:trees()
-    ---the tree can be initializing
+    ---to ensure sync :parse()
+    local trees = langtree:parse()
     if #trees == 0 then return end
     assert(#trees == 1, #trees)
     return trees[1]:root()
   end
 
   ---NB: when the cursor lays at the end of line, it will advance one char
-  ---@param winid number
+  ---@param winid? integer
   ---@return TSNode
   function M.node_at_cursor(winid)
+    winid = mi.resolve_winid_param(winid)
     local bufnr = ni.win_get_buf(winid)
 
     local lnum, col

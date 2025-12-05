@@ -5,7 +5,6 @@ local M = {}
 local ex = require("infra.ex")
 local feedkeys = require("infra.feedkeys")
 local ni = require("infra.ni")
-local prefer = require("infra.prefer")
 
 do
   local function in_expected_mode()
