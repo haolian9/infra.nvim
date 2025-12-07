@@ -138,7 +138,8 @@ end
 ---@param ... any @traces
 function M.get(dreams, ...)
   local layer = dreams
-  for _, path in ipairs({ ... }) do
+  for i = 1, select("#", ...) do
+    local path = select(i, ...)
     if type(layer) ~= "table" then return end
     layer = layer[path]
     if layer == nil then return end

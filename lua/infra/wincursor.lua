@@ -148,20 +148,22 @@ function M.zz(winid)
   unsafe.win_set_toplnum(winid, toplnum)
 end
 
----@param winid? integer
+---for cursor in current window only
 ---@return infra.wincursor.Position
-function M.screenpos(winid)
-  winid = mi.resolve_winid_param(winid)
-  --todo: it works badly in terminal buffers
-  --todo: not curate with conceal on
-  --todo: tabline takes 1 height
+function M.screenpos()
+  --relevant UI
+  --* terminal buffers
+  --* conceal on
+  --* &number, signcolumn
+  --* tabline
+  --* todo: winbar
   local orig_row, orig_col = unpack(ni.win_get_position(0))
   local win_row = vim.fn.winline()
   local win_col = vim.fn.wincol()
 
-  local row = orig_row + (win_row - 1)
+  local lnum = orig_row + (win_row - 1)
   local col = orig_col + (win_col - 1)
-  local lnum = row - 1
+  local row = lnum + 1
 
   return { lnum = lnum, row = row, col = col }
 end

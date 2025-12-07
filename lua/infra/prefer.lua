@@ -6,10 +6,11 @@ local mi = require("infra.mi")
 local ni = require("infra.ni")
 
 ---@class infra.prefer.Descriptor
----@field private opts {buf: number?, win: number?} @ used for ni.{g,s}et_option_value
+---@field private readopts table
+---@field private writeopts table
 local Descriptor = {
-  __index = function(t, k) return ni.get_option_value(k, t.opts) end,
-  __newindex = function(t, k, v) return ni.set_option_value(k, v, t.opts) end,
+  __index = function(t, k) return ni.get_option_value(k, t.readopts) end,
+  __newindex = function(t, k, v) return ni.set_option_value(k, v, t.writeopts) end,
 }
 
 do --.buf, .bo
@@ -24,8 +25,11 @@ do --.buf, .bo
       error(string.format("buf#%d does not exist", bufnr))
     end
 
-    if cache[bufnr] == nil then --
-      cache[bufnr] = setmetatable({ opts = { buf = bufnr } }, Descriptor)
+    if cache[bufnr] == nil then
+      cache[bufnr] = setmetatable({ --
+        readopts = { buf = bufnr },
+        writeopts = { buf = bufnr },
+      }, Descriptor)
     end
 
     return cache[bufnr]
@@ -53,8 +57,11 @@ do --.win, .wo
       error(string.format("win#%d does not exist", winid))
     end
 
-    if cache[winid] == nil then --
-      cache[winid] = setmetatable({ opts = { scope = "local", win = winid } }, Descriptor)
+    if cache[winid] == nil then
+      cache[winid] = setmetatable({ --
+        readopts = { scope = "local", win = winid },
+        writeopts = { scope = "local", win = winid },
+      }, Descriptor)
     end
 
     return cache[winid]
