@@ -3,6 +3,7 @@
 local M = {}
 
 local feedkeys = require("infra.feedkeys")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 
 do
@@ -13,15 +14,19 @@ do
     tick = {},
   }
 
+  ---NB: call this after your changes are done due to &changedtick
   ---@param bufnr integer
   ---@param redo fun()
   function M.remember_redo(bufnr, redo)
+    bufnr = mi.resolve_bufnr_param(bufnr)
     state.tick[bufnr] = ni.buf_get_changedtick(bufnr)
     state.redo[bufnr] = redo
   end
 
   --should be only used in normal mode
+  ---@param bufnr integer
   function M.rhs_dot(bufnr)
+    bufnr = mi.resolve_bufnr_param(bufnr)
     local last_tick = state.tick[bufnr]
     if last_tick == nil then return feedkeys.codes(".", "n") end
 
