@@ -2,6 +2,7 @@ local buflines = require("infra.buflines")
 local Ephemeral = require("infra.Ephemeral")
 local highlighter = require("infra.highlighter")
 local listlib = require("infra.listlib")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local rifts = require("infra.rifts")
 
@@ -17,10 +18,6 @@ do
 end
 
 local xmark_ns = ni.create_namespace("hintline.xmarks")
-
-local function redraw(winid) --
-  ni.x.redraw({ win = winid, valid = true, flush = true })
-end
 
 ---@class infra.tty.InputHinter
 ---@field private nchar integer
@@ -40,7 +37,7 @@ function InputHinter:feed(char)
   self.chars[self.progress] = char
 
   buflines.replace(self.bufnr, 0, table.concat(self.chars))
-  redraw(self.winid)
+  mi.redraw_win(self.winid)
 end
 
 function InputHinter:clear()
@@ -48,7 +45,7 @@ function InputHinter:clear()
   self.chars = listlib.zeros(self.nchar, "_")
 
   buflines.replace(self.bufnr, 0, table.concat(self.chars))
-  redraw(self.winid)
+  mi.redraw_win(self.winid)
 end
 
 function InputHinter:done()
@@ -87,7 +84,7 @@ return function(icon, nchar, linger_time)
     ns = floatwin_ns,
   })
 
-  redraw(winid)
+  mi.redraw_win(winid)
 
   return setmetatable({
     nchar = nchar,

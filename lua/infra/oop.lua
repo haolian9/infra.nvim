@@ -1,5 +1,8 @@
 local M = {}
 
+---@generic T
+---@param impl T
+---@return T
 function M.dotize(impl)
   return setmetatable({}, {
     __index = function(t, key)

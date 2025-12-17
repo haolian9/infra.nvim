@@ -145,4 +145,10 @@ function M.buf_highlight_line(bufnr, ns, lnum, higroup)
   return ni.buf_set_extmark(bufnr, ns, lnum, 0, { hl_group = higroup, end_row = lnum + 1, end_col = 0 })
 end
 
+---@param winid? integer
+function M.redraw_win(winid)
+  winid = M.resolve_winid_param(winid)
+  ni.x.redraw({ win = winid, valid = true, flush = true })
+end
+
 return M
