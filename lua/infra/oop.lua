@@ -13,4 +13,18 @@ function M.dotize(impl)
   })
 end
 
+---@generic T
+---@param base T
+---@param attrfn fun(attr:string):any
+---@return T
+function M.lazyattrs(base, attrfn)
+  return setmetatable(base, {
+    __index = function(t, k)
+      local v = attrfn(k)
+      rawset(t, k, v)
+      return v
+    end,
+  })
+end
+
 return M
