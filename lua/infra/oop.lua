@@ -27,4 +27,22 @@ function M.lazyattrs(base, attrfn)
   })
 end
 
+---require() on access/call
+---`luals.runtime.special.[oop.proxy] = 'require'`
+---@param modname string
+function M.proxy(modname)
+  local mod
+  return setmetatable({}, {
+    __index = function(_, key)
+      if not mod then mod = require(modname) end
+      return mod[key]
+    end,
+    __call = function(_, ...)
+      if not mod then mod = require(modname) end
+      return mod(...)
+    end,
+    __newindex = function() error(string.format("immutable %s", modname)) end,
+  })
+end
+
 return M

@@ -1,8 +1,9 @@
 local M = {}
 
 local ni = require("infra.ni")
+local oop = require("infra.oop")
 
-do --M.create
+do
   local default_attrs = { nargs = 0 }
 
   ---@param name string
@@ -14,9 +15,9 @@ do --M.create
   end
 end
 
-M.ArgComp = require("infra.cmds.ArgComp")
-M.Spell = require("infra.cmds.Spell")
-M.FlagComp = require("infra.cmds.FlagComp")
-M.cast = require("infra.cmds.cast")
+M.ArgComp = oop.proxy("infra.cmds.ArgComp")
+M.FlagComp = oop.proxy("infra.cmds.FlagComp")
+M.Spell = oop.proxy("infra.cmds.Spell")
+M.cast = oop.proxy("infra.cmds.cast")
 
 return M
